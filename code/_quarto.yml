@@ -11,6 +11,7 @@ format:
     theme: lux
     toc: true
     toc-depth: 2
+    standalone: true
     embed-resources: true
     
 website:

@@ -1,0 +1,31 @@
+project: 
+  type: website
+  execute-dir: file
+  output-dir: ../docs
+
+execute: 
+  cache: true
+
+format:
+  html:
+    theme: lux
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    
+website:
+  navbar:
+    search: false
+    left:
+      - text: "Home"
+        file: 00-home.qmd
+      - text: "Setup"
+        file: 00-setup.qmd
+      - text: "Unmarked"
+        file: 01-unmarked.qmd
+      - text: "Discrete"
+        file: 02-discmarked.qmd
+      - text: "Continuous"
+        file: 03-contmarked.qmd
+      - text: "Both"
+        file: 04-bothmarked.qmd

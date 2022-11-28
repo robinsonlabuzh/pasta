@@ -1,0 +1,4 @@
+.DS_Store
+data/*
+outs/*
+code/*_cache

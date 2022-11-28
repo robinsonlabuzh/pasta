@@ -1,4 +1,4 @@
 .DS_Store
-data/*
-outs/*
+data/*rds
+outs/*rds
 code/*_cache

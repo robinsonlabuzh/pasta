@@ -17,12 +17,71 @@ source("utils.R")
 spe <- readRDS("../data/spe.rds")
 ```
 
-# ...
+If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns.
+
+# Concepts and Definitions of Point Processes
 
 ```{r}
 sub <- spe[, spe$sample_id == 0.01]
 (pp <- .ppp(sub, marks = "cluster_id"))
 ```
+
+## Point Process
+
+```{r}
+
+```
+
+## Complete Spatial Randomness
+
+Complete spatial randomness (CSR) is the null model of point patterns, being the result of a poisson process. A completely random process is characterised by two properties
+
+### Homogeneity
+
+Homogeneity means that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ is the intensity of the process, so the average number of points in a unit area.
+
+$$
+\mathbb{E}[X\cap B] = \lambda |B|
+\label{eq:expected_number_points}
+$$
+
+### Independence
+
+Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a poisson distribution:
+
+$$
+\mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
+\label{eq:poisson_process}
+$$
+
+## Inhomogeneous Poisson Process
+
+A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is 
+
+$$
+\mu = \int_{B} \lambda(u)du 
+\label{eq:expected_number_inhomogeneous}
+$$
+
+## Stationarity
+
+"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space."
+
+## Isotropy
+
+A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic.
+
+## Intensity
+
+Intensity is the expected density of points per unit area, as seen above. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity itself is called a first moment property - being related to the expected number of points.
+
+### Estimating Intensity
+
+#### Quadrat Counting
+
+
+
+#### Kernel Estimation
 
 # Appendix
 

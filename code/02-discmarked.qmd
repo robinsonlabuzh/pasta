@@ -8,6 +8,7 @@
 #| warning: false
 #| results: hide
 source("utils.R")
+library(spatstat)
 ```
 
 ## Setup
@@ -17,12 +18,300 @@ source("utils.R")
 spe <- readRDS("../data/spe.rds")
 ```
 
-# ...
+# Load data
 
 ```{r}
 sub <- spe[, spe$sample_id == 0.01]
 (pp <- .ppp(sub, marks = "cluster_id"))
 ```
+
+
+# Visualize 
+
+Plot using spatstat
+
+```{r, fig.width=12, fig.height=12}
+plot(pp)
+```
+
+Discrete labels, called "marks", can be extracted with `marks`.
+
+```{r}
+marks(pp)[1:5]
+```
+
+Marks can be removed from a point pattern with `unmark`.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+plot(unmark(pp))
+```
+
+
+The marks are now set to a factor.
+
+```{r}
+marks(pp) <- factor(marks(pp))
+```
+
+Using `split` a point pattern can be directly split by mark type.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+ppls <- split(pp)
+plot(ppls)
+```
+
+
+And with `superimpose` point patterns can be combined. 
+
+```{r}
+do.call(superimpose,ppls)
+```
+
+The summary of `ppp` (point pattern) object returns general properties, plus intensities, combined and per mark type.
+
+```{r}
+summary(pp)
+```
+
+If the point pattern has discrete marks, the function `intensity` will return the intensity for each type. 
+```{r}
+intensity(pp)
+```
+
+To get the overall intensity the individual intensities can be summed up.
+```{r}
+sum(intensity(pp))
+```
+
+The kernel density estimates can again be showed for all points together or per type.
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+plot(density(pp))
+```
+
+```{r, fig.width=10 ,fig.height=10}
+plot(density(ppls))
+```
+
+
+
+The relative risk, i.e. the probability of observing a given celltype at a given location, can be calculated with `relrisk`. The bandwidth for smoothing is calculated with `bw.relrisk` and might need to be adjusted.
+
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+rp <- relrisk(pp,se=TRUE)
+plot(rp$estimate)
+plot(rp$SE)
+```
+
+
+```{r, eval=FALSE, echo=FALSE}
+im_sum <- im.apply(rp$estimate,sum)
+im_sum <- signif(im_sum,9)
+all(im_sum==1)
+```
+
+
+
+```{r, eval=FALSE, echo=FALSE}
+#| fig-width: 10
+#| fig-height: 10
+rpd <- relrisk(pp,diggle = TRUE)
+dom <- im.apply(rpd,which.max)
+dom <- eval.im(factor(dom,levels=seq_along(levels(unique(marks(pp)))),labels = levels(unique(marks(pp)))))
+plot(dom,las=2,main="Dominant mark")
+```
+
+
+
+# Random labeling
+
+A test of segregation of marks can be performed with `segregation.test`. It is based on the assumption of random labelling and the computed test statistic measures the similarity of the distribution of marks. The randomization is done by permuting the marks of the points while keeping the locations constant.
+
+```{r}
+#| warning: false
+segregation.test(pp,nsim=19)
+```
+
+In this case there is clear indication that the labeling of marks is not random.
+
+other measures of spatial segregation are available in the R package `seg` (https://cran.r-project.org/package=seg)
+
+
+# Multitype Poisson models
+
+Similar to the unmarked case marked point patterns can be fitted to specific modeling assumptions. The simples case is the homogeneous multitype poisson process. It can be fit again with `ppm` but this time using "marks" as the covariate, which essentially means a different intensity is assumed for each type. 
+
+```{r}
+ppfit <- ppm(pp~marks)
+ppfit
+```
+
+To fit a nonstationary multitype poisson process a additional covariates including the special variables "x" and "y" can be used. For example:
+
+```{r}
+ppfit <- ppm(pp~marks * polynom(x,y,1))
+ppfit
+```
+
+
+# Correlation and spacing
+
+## distances and nearest neighbors
+
+Investigating the nearest neighbor distance between point for all combinations of marks can be done as follows:
+
+```{r}
+d <- nndist(pp,by=marks(pp))
+a <- aggregate(d,by=list(from=marks(pp)),min)
+a
+```
+
+
+Annother option is to either use the `K` nearest neighbors or count the number of points of a given type with a distance closer than `R`. Both can be done with the function `marktable`, where the argument `R` stands for the neighborhood radius and `N` for number of neighbors.
+
+```{r}
+mt <- marktable(pp,N=5,collapse = TRUE)
+signif(mt/rowSums(mt),2)
+
+mt <- marktable(pp,R=10,collapse = TRUE)
+signif(mt/rowSums(mt),2)
+
+```
+
+Additionally the function `markstat` can be used to calculate more complicated expressions than just the sum.
+
+
+## Nearest neighbor correlations
+
+A overall correlation between marks can be calculated with `nncorr`. It returns two values: `unnormalised`, which is the probability that a point and its nearest neighbor have the same type and `normalised`, which divides the unnormalised probability by the probability of random labeling. So a value close to 1 indicates random labeling. A value much larger than 1 means neighboring point are often of the same type. 
+
+```{r}
+nncorr(pp)
+```
+
+The R package `spdep` (https://cran.r-project.org/package=spdep) contains many functions to calculate statistics based on nearest neighbors.
+
+Another possibility is to work with nearest neighborhood contingency tables to do statistical tests using the `dixon` function from the R package dixon. It allows to calculate the statistic "segregation of species" S which indicates either random labeling (if S=0), attraction (if S<0) or seggregation (if S>0).
+```{r}
+if(require(dixon)){
+  out <- dixon::dixon(as.data.frame(pp))
+  out$tablaZ
+}
+```
+
+## Summary functions for pairs of types
+
+Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. 
+
+
+### cross L-function:
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+lc <- alltypes(pp, Lcross)
+plot(lc, .-r~r)
+```
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+lce <- alltypes(pp, Lcross, envelope = TRUE, nsim=9)
+plot(lce, .-r~r)
+```
+
+
+### cross pair-correlation function
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+pcfc <- alltypes(pp, pcfcross)
+plot(pcfc)
+```
+
+
+### mark connection function
+
+The mark connection function is essentially the cross pair-correlation function divided by the unmarked pair-correlation function. It can be interpreted as the conditional probability that two points a distance r apart have labels of type 1 and of type 2, given the presence of those points. 
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+mc <- alltypes(pp, markconnect)
+plot(mc)
+```
+
+
+### cross F-function (empty space function)
+
+```{r}
+#| fig-width: 5
+#| fig-height: 10
+fc <- alltypes(pp, Fest)
+plot(fc)
+```
+
+### cross G-function (Nearest-neighbor function)
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+gc <- alltypes(pp, Gcross)
+plot(gc)
+```
+
+### cross J-function 
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+jc <- alltypes(pp, Jcross)
+plot(jc)
+```
+
+
+## Summary function within and between types
+
+### mark equality function
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+me <- markcorr(pp)
+plot(me)
+```
+
+### I-function 
+
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+ic <- Iest(pp)
+plot(ic)
+```
+
+## summary functions for non stationary processes
+
+
+### inhomogeneous L-function
+```{r}
+#| fig-width: 10
+#| fig-height: 10
+lci <- alltypes(pp, Lcross.inhom)
+plot(lci, .-r~r)
+```
+
+
 
 # Appendix
 

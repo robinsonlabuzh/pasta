@@ -15,16 +15,27 @@ source("utils.R")
 ```{r}
 #| label: load-data
 spe <- readRDS("../data/spe.rds")
+
+#subset the data to only look at sample ID 0.01
+sub <- spe[, spe$sample_id == 0.01]
+(pp <- .ppp(sub, marks = "cluster_id"))
+
+#split the multitype point process into several single type processes
+#fist, set the marks of the point process to be factors
+marks(pp) <- factor(marks(pp))
+ppls <- split(pp)
 ```
 
 If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns.
 
-# Concepts and Definitions of Point Processes
-
-```{r}
-sub <- spe[, spe$sample_id == 0.01]
-(pp <- .ppp(sub, marks = "cluster_id"))
+```{r, fig.width=12, fig.height=12}
+#Plot the entire point process where the marks are overlayed
+plot(unmark(pp), main = 'Point Pattern Unmarked')
+#Plot the marks separately 
+plot(ppls, main = 'Point Pattern Marks Seperated')
 ```
+
+# Concepts and Definitions of Point Processes
 
 ## Point Process
 
@@ -77,11 +88,55 @@ Intensity is the expected density of points per unit area, as seen above. It can
 
 ### Estimating Intensity
 
+The intensity can be estimated regardless of the type of the point pattern. In order to do so, we sum the individual intensities of the marks
+
+```{r}
+sum(intensity(pp))
+```
+
+else we can look at each mark individually
+
+```{r}
+intensity(pp)
+```
 #### Quadrat Counting
 
+quadrat counting can again be performed for the entire picture
 
+```{r, fig.width=12, fig.height=12}
+Q5 <- quadratcount(pp, nx=5, ny=5)
+plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
+plot(Q5, col='black', add=TRUE)
+```
 
+or for each type separately, treating each type as an unmarked process
+
+```{r, fig.width=12, fig.height=12}
+Q5sep <- quadratcount(ppls, nx=5, ny=5)
+plot(Q5sep, main = 'Separated Marks Quadrats')
+#plot(ppls, add=TRUE)
+```
+
+The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types
+
+```{r}
+#unmarked process
+quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo")
+
+#separate marks
+lapply(ppls, quadrat.test, 5, alternative="regular", method="MonteCarlo")
+```
 #### Kernel Estimation
+
+```{r, fig.width=12, fig.height=12}
+Dens <- density(pp)
+plot(Dens, main = 'Kernel Density')
+```
+
+```{r, fig.width=12, fig.height=12}
+Denssep <- density(ppls)
+plot(Denssep, main = 'Kernel Density Separated Marks')
+```
 
 # Appendix
 

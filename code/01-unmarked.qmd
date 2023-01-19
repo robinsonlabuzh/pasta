@@ -135,7 +135,7 @@ plot(Dens, main = 'Kernel Density')
 
 ```{r, fig.width=12, fig.height=12}
 Denssep <- density(ppls)
-plot(Denssep, main = 'Kernel Density Separated Marks')
+plot(Denssep, main = 'Kernel Density Separated Marks  ')
 ```
 
 # Appendix

@@ -91,13 +91,22 @@ Intensity is the expected density of points per unit area, as seen above. It can
 The intensity can be estimated regardless of the type of the point pattern. In order to do so, we sum the individual intensities of the marks
 
 ```{r}
-sum(intensity(pp))
+intensityPointProcess<- function(pp,mark){
+  if(mark == TRUE){
+    return(intensity(pp))
+  }
+  else{
+    return(sum(intensity(pp)))
+  }
+}
+
+intensityPointProcess(pp,mark=FALSE)
 ```
 
 else we can look at each mark individually
 
 ```{r}
-intensity(pp)
+intensityPointProcess(pp,mark=TRUE)
 ```
 #### Quadrat Counting
 
@@ -120,11 +129,17 @@ plot(Q5sep, main = 'Separated Marks Quadrats')
 The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types
 
 ```{r}
-#unmarked process
-quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo")
+quadratTestPointProcess <- function(pp, mark){
+  if(mark==TRUE){
+    return(lapply(split(pp), quadrat.test, 5, alternative="regular", method="MonteCarlo"))
+  }
+  else{
+    return(quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo"))
+  }
+}
 
-#separate marks
-lapply(ppls, quadrat.test, 5, alternative="regular", method="MonteCarlo")
+quadratTestPointProcess(pp, mark=TRUE)
+quadratTestPointProcess(pp, mark=FALSE)
 ```
 #### Kernel Estimation
 
@@ -136,6 +151,105 @@ plot(Dens, main = 'Kernel Density')
 ```{r, fig.width=12, fig.height=12}
 Denssep <- density(ppls)
 plot(Denssep, main = 'Kernel Density Separated Marks  ')
+```
+
+#### Summarising Functionality for Estimating Intensity
+
+```{r, eval=FALSE}
+#PRE:
+#POST:
+estimatingIntensity <- function(
+  pp
+  method = c('expectation', 'quadrat', 'kernel', 'density', 'adaptive-density'),
+  homogeneous = FALSE,
+  nx = NULL,
+  ny = NULL,
+  correction = c(),
+){
+
+}
+```
+
+```{r}
+
+```
+
+### Testing for CSR
+
+```{r}
+#PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
+#POST: returns if a point process or its individual point process marks are CSR or not.
+#TODO: Change maybe to a switch statment in terms of computing time; Change lapply to mclapply later on
+testingCSR <- function(
+    pp,
+    method = c('quadrat','cdf','bermans','clark-evans','hopkins-skellam'),
+    mark = FALSE,
+    covariate = NULL,
+    test = c('ks', 'cvm', 'ad'),
+    verbose = FALSE
+){
+  #perform a quadrattest for individual marks or for the entire pointprocess
+  if(method == 'quadrat'){
+    if(mark == TRUE){
+      test.result <- lapply(split(pp), quadrat.test, 5, alternative="regular", method="MonteCarlo")
+    }
+    else{
+      test.result <- quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo")
+    }
+   }
+  #perform a cdftest for individual marks or for the entire pointprocess given a covariate
+  else if(method == 'cdf' && !is.null(covariate)){
+    if(mark == TRUE){
+      test.result <- lapply(split(pp), cdf.test, covariate, test=test)
+    }
+    else{
+      test.result <- cdf.test(unmark(pp), covariate, test=test)
+    }
+  }
+  #perform a bermans test for individual marks or for the entire pointprocess
+  else if(method == 'bermans' && !is.null(covariate)){
+     if(mark == TRUE){
+      test.result <- lapply(split(pp), berman.test, covariate, test='Z1')
+    }
+    else{
+      test.result <- berman.test(unmark(pp), covariate, test='Z1')
+    } 
+  }
+  #perform a clark evans test for individual marks or for the entire pointprocess
+  else if(method == 'clark-evans'){
+     if(mark == TRUE){
+      test.result <- lapply(split(pp), clarkevans.test, alternative="regular")
+    }
+    else{
+      test.result <- clarkevans.test(unmark(pp), alternative="regular")
+    } 
+  }
+  #base case of the "switch" statement
+  else{
+    print("ERROR: non-specified arguments or methods")
+    return(NULL)
+  }
+  
+  
+  #summarise the results as a mask of booleans to indicate which structures are 
+  #random and which are not
+  if(mark==TRUE){
+    p.value.mask <- lapply(test.result, function(x) x$p.value<=0.05)
+  }
+  else{
+    p.value.mask <- test.result$p.value<=0.05
+  }
+  #return the values of the test calculations, either just the boolean if 
+  #CSR or not or the entire test statistics
+  if(verbose == TRUE){
+    return(test.result)
+  }
+  else{
+    return(p.value.mask)
+  }
+}
+result <- testingCSR(pp,method='clark-evans',mark=TRUE, verbose=TRUE)
+result
 ```
 
 # Appendix

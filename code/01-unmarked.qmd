@@ -153,6 +153,22 @@ Denssep <- density(ppls)
 plot(Denssep, main = 'Kernel Density Separated Marks  ')
 ```
 
+### Nearest Neighbour cleaning
+
+```{r}
+nearestNeighbourCleaning <- function(pp, mark){
+  if(mark==TRUE){
+    return(lapply(split(pp), nnclean, k=10, plothist=TRUE))
+  }
+  else{
+    return(nnclean(pp, k=10, plothist=TRUE))
+  }
+}
+
+nearestNeighbourCleaning(pp, mark=TRUE)
+nearestNeighbourCleaning(pp, mark=FALSE)
+```
+
 #### Summarising Functionality for Estimating Intensity
 
 ```{r, eval=FALSE}
@@ -191,10 +207,10 @@ testingCSR <- function(
   #perform a quadrattest for individual marks or for the entire pointprocess
   if(method == 'quadrat'){
     if(mark == TRUE){
-      test.result <- lapply(split(pp), quadrat.test, 5, alternative="regular", method="MonteCarlo")
+      test.result <- lapply(split(pp), quadrat.test, 5, method="MonteCarlo")
     }
     else{
-      test.result <- quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo")
+      test.result <- quadrat.test(unmark(pp), 5, method="MonteCarlo")
     }
    }
   #perform a cdftest for individual marks or for the entire pointprocess given a covariate
@@ -218,10 +234,19 @@ testingCSR <- function(
   #perform a clark evans test for individual marks or for the entire pointprocess
   else if(method == 'clark-evans'){
      if(mark == TRUE){
-      test.result <- lapply(split(pp), clarkevans.test, alternative="regular")
+      test.result <- lapply(split(pp), clarkevans.test)
     }
     else{
-      test.result <- clarkevans.test(unmark(pp), alternative="regular")
+      test.result <- clarkevans.test(unmark(pp))
+    } 
+  }
+  #perform a hopkins-skellam test for individual marks or for the entire pointprocess
+  else if(method == 'hopkins-skellam'){
+     if(mark == TRUE){
+      test.result <- lapply(split(pp), hopskel.test)
+    }
+    else{
+      test.result <- hopskel.test(unmark(pp))
     } 
   }
   #base case of the "switch" statement
@@ -234,10 +259,10 @@ testingCSR <- function(
   #summarise the results as a mask of booleans to indicate which structures are 
   #random and which are not
   if(mark==TRUE){
-    p.value.mask <- lapply(test.result, function(x) x$p.value<=0.05)
+    p.value.mask <- lapply(test.result, function(x) x$p.value>0.05)
   }
   else{
-    p.value.mask <- test.result$p.value<=0.05
+    p.value.mask <- test.result$p.value>0.05
   }
   #return the values of the test calculations, either just the boolean if 
   #CSR or not or the entire test statistics
@@ -248,9 +273,10 @@ testingCSR <- function(
     return(p.value.mask)
   }
 }
-result <- testingCSR(pp,method='clark-evans',mark=TRUE, verbose=TRUE)
+result <- testingCSR(pp,method='hopkins-skellam',mark=TRUE, verbose=FALSE)
 result
 ```
+
 
 # Appendix
 

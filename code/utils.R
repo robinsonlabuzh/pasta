@@ -2,6 +2,10 @@ suppressPackageStartupMessages({
   library(spatstat.core)
   library(spatstat.geom)
   library(SpatialExperiment)
+  library(spatstat)
+  library(mixR)
+  library(dplyr)
+  library(ggplot2)
 })
 
 .ppp <- \(spe, marks = NULL) {

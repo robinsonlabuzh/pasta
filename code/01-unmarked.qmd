@@ -158,15 +158,44 @@ plot(Denssep, main = 'Kernel Density Separated Marks  ')
 ```{r}
 nearestNeighbourCleaning <- function(pp, mark){
   if(mark==TRUE){
-    return(lapply(split(pp), nnclean, k=10, plothist=TRUE))
+    return(lapply(split(pp), nnclean, k=10, plothist = TRUE))
   }
   else{
-    return(nnclean(pp, k=10, plothist=TRUE))
+    return(nnclean(pp, k=10, plothist = TRUE))
   }
 }
+#as a histogram this fits a mixture model with 2 (?) gamma distributions one representing cluster feature and one representing noise
+nearestNeighbourCleaning(ppls$Ependymal, mark=FALSE)
+nearestNeighbourCleaning(ppls$Microglia, mark=FALSE)
 
-nearestNeighbourCleaning(pp, mark=TRUE)
-nearestNeighbourCleaning(pp, mark=FALSE)
+# potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
+nndistances_k10_ependymal <- nndist(ppls$Ependymal, k = 5)
+nndistances_k10_microglia <- nndist(ppls$Microglia, k = 5)
+hist_ependymal <- hist(nndistances_k10_ependymal, breaks = 60, plot = FALSE)
+hist_microglia <- hist(nndistances_k10_microglia, breaks = 60, plot = FALSE)
+
+#fit now a gamma mixture model to this nndist data
+gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_k10_ependymal, ncomp=2,family = 'gamma')
+gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_k10_microglia, ncomp=2,family = 'gamma')
+
+#plot this
+c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
+c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
+
+plot(hist_ependymal, col = c1, main = "Histogram of Ependymal and Microglial Cells", freq=FALSE)
+lines(density(gamma_mm_comp2_ependymal),col='blue')
+plot(hist_microglia, col = c2, add = TRUE, legend=c("Ependymal", "Microglia"),freq=FALSE)
+lines(density(gamma_mm_comp2_microglia),col='red')
+legend(400, 95, legend=c("Ependymal", "Microglia"),
+       col=c(c1,c2), lty=1:2, cex=0.8)
+
+# nndistances_k10_ependymal_df <- as.data.frame(nndistances_k10_ependymal)
+# nndistances_k10_microglia_df <- as.data.frame(nndistances_k10_microglia)
+# 
+# p <- ggplot(nndistances_k10_ependymal_df, aes(x = nndistances_k10_ependymal, alpha = 0.2)) +
+#   geom_histogram(fill=c1, binwidth = 10) + 
+#   geom_histogram(data = nndistances_k10_microglia_df,aes(x = nndistances_k10_microglia,fill = c2, alpha = 0.2), binwidth = 10)
+# p
 ```
 
 #### Summarising Functionality for Estimating Intensity
@@ -255,7 +284,6 @@ testingCSR <- function(
     return(NULL)
   }
   
-  
   #summarise the results as a mask of booleans to indicate which structures are 
   #random and which are not
   if(mark==TRUE){
@@ -275,7 +303,18 @@ testingCSR <- function(
 }
 result <- testingCSR(pp,method='hopkins-skellam',mark=TRUE, verbose=FALSE)
 result
+
+testingCSR(ppls$Ependymal, method='hopkins-skellam')
+
+testingCSR(ppls$Microglia, method='hopkins-skellam')
 ```
+
+## Correlation
+
+Correlation or more generally covariance is called a second order quantity and measures dependence between data points. In point processes 
+
+### Morisita Index
+
 
 
 # Appendix

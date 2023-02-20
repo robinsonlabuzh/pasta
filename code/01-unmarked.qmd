@@ -137,8 +137,6 @@ quadratTestPointProcess <- function(pp, mark){
     return(quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo"))
   }
 }
-
-quadratTestPointProcess(pp, mark=TRUE)
 quadratTestPointProcess(pp, mark=FALSE)
 ```
 #### Kernel Estimation
@@ -151,51 +149,6 @@ plot(Dens, main = 'Kernel Density')
 ```{r, fig.width=12, fig.height=12}
 Denssep <- density(ppls)
 plot(Denssep, main = 'Kernel Density Separated Marks  ')
-```
-
-### Nearest Neighbour cleaning
-
-```{r}
-nearestNeighbourCleaning <- function(pp, mark){
-  if(mark==TRUE){
-    return(lapply(split(pp), nnclean, k=10, plothist = TRUE))
-  }
-  else{
-    return(nnclean(pp, k=10, plothist = TRUE))
-  }
-}
-#as a histogram this fits a mixture model with 2 (?) gamma distributions one representing cluster feature and one representing noise
-nearestNeighbourCleaning(ppls$Ependymal, mark=FALSE)
-nearestNeighbourCleaning(ppls$Microglia, mark=FALSE)
-
-# potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
-nndistances_k10_ependymal <- nndist(ppls$Ependymal, k = 5)
-nndistances_k10_microglia <- nndist(ppls$Microglia, k = 5)
-hist_ependymal <- hist(nndistances_k10_ependymal, breaks = 60, plot = FALSE)
-hist_microglia <- hist(nndistances_k10_microglia, breaks = 60, plot = FALSE)
-
-#fit now a gamma mixture model to this nndist data
-gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_k10_ependymal, ncomp=2,family = 'gamma')
-gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_k10_microglia, ncomp=2,family = 'gamma')
-
-#plot this
-c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
-c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
-
-plot(hist_ependymal, col = c1, main = "Histogram of Ependymal and Microglial Cells", freq=FALSE)
-lines(density(gamma_mm_comp2_ependymal),col='blue')
-plot(hist_microglia, col = c2, add = TRUE, legend=c("Ependymal", "Microglia"),freq=FALSE)
-lines(density(gamma_mm_comp2_microglia),col='red')
-legend(400, 95, legend=c("Ependymal", "Microglia"),
-       col=c(c1,c2), lty=1:2, cex=0.8)
-
-# nndistances_k10_ependymal_df <- as.data.frame(nndistances_k10_ependymal)
-# nndistances_k10_microglia_df <- as.data.frame(nndistances_k10_microglia)
-# 
-# p <- ggplot(nndistances_k10_ependymal_df, aes(x = nndistances_k10_ependymal, alpha = 0.2)) +
-#   geom_histogram(fill=c1, binwidth = 10) + 
-#   geom_histogram(data = nndistances_k10_microglia_df,aes(x = nndistances_k10_microglia,fill = c2, alpha = 0.2), binwidth = 10)
-# p
 ```
 
 #### Summarising Functionality for Estimating Intensity
@@ -225,6 +178,7 @@ estimatingIntensity <- function(
 #PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
 #POST: returns if a point process or its individual point process marks are CSR or not.
 #TODO: Change maybe to a switch statment in terms of computing time; Change lapply to mclapply later on
+#TODO: There is a conceptual mistake - we pull out marks and test them against a markov simulation. It should rather be to test against all the other cells
 testingCSR <- function(
     pp,
     method = c('quadrat','cdf','bermans','clark-evans','hopkins-skellam'),
@@ -301,12 +255,10 @@ testingCSR <- function(
     return(p.value.mask)
   }
 }
-result <- testingCSR(pp,method='hopkins-skellam',mark=TRUE, verbose=FALSE)
-result
+result <- testingCSR(pp,method='clark-evans',mark=TRUE, verbose=FALSE)
 
-testingCSR(ppls$Ependymal, method='hopkins-skellam')
-
-testingCSR(ppls$Microglia, method='hopkins-skellam')
+testingCSR(ppls$Ependymal, method='clark-evans')
+testingCSR(ppls$Microglia, method='clark-evans')
 ```
 
 ## Correlation
@@ -315,7 +267,44 @@ Correlation or more generally covariance is called a second order quantity and m
 
 ### Morisita Index
 
+### Nearest Neighbour approaches
 
+Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `nndist`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances. The aim would be to compare these parameteric models via statistical tests such as Anderson-Darling or Kolmogorov Smirnov. Another idea would be to compute the distance between these models with e.g. a Kullback-Leibler Divergence.
+
+```{r}
+nearestNeighbourCleaning <- function(pp, mark){
+  if(mark==TRUE){
+    return(lapply(split(pp), nnclean, k=10, plothist = TRUE))
+  }
+  else{
+    return(nnclean(pp, k=10, plothist = TRUE))
+  }
+}
+#as a histogram this fits a mixture model with 2 (?) gamma distributions one representing cluster feature and one representing noise. They add the probability of belonging to this very gamma distribution to get better (?) separation of the two curves
+nearestNeighbourCleaning(ppls$Ependymal, mark=FALSE)
+nearestNeighbourCleaning(ppls$`OD Mature`, mark=FALSE)
+
+# potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
+nndistances_k10_ependymal <- nndist(ppls$Ependymal, k = 5)
+nndistances_k10_microglia <- nndist(ppls$`OD Mature`, k = 5)
+hist_ependymal <- hist(nndistances_k10_ependymal, breaks = 50, plot = FALSE)
+hist_microglia <- hist(nndistances_k10_microglia, breaks = 50, plot = FALSE)
+
+#fit now a gamma mixture model to this nndist data
+gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_k10_ependymal, ncomp=2,family = 'gamma')
+gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_k10_microglia, ncomp=2,family = 'gamma')
+
+#plot this
+c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
+c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
+
+plot(hist_ependymal, col = c1, main = "Histogram of Ependymal and OD Mature Cells", freq=FALSE)
+legend(400, 95, legend=c("Ependymal", "Microglia"),
+       col=c(c1,c2), lty=1:2, cex=0.8)
+lines(density(gamma_mm_comp2_ependymal),col='blue')
+plot(hist_microglia, col = c2, add = TRUE, legend=c("Ependymal", "OD Mature"),freq=FALSE)
+lines(density(gamma_mm_comp2_microglia),col='red')
+```
 
 # Appendix
 

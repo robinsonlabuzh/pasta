@@ -8,25 +8,430 @@
 #| warning: false
 #| results: hide
 source("utils.R")
+library(rgeoda)
+library(spatstat)
+library(sf)
+library(dplyr)
+library(parallel)
+library(ggplot2)
+# spatial correlogram
+library(ncf)
 ```
 
 ## Setup
 
-```{r}
+```{r, message=FALSE}
 #| label: load-data
-spe <- readRDS("../data/spe.rds")
+spe = readRDS("../data/spe.rds")
+
+#subset the data to only look at sample ID 0.01
+sub = spe[, spe$sample_id == 0.01]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp = .ppp(sub, marks = "cluster_id"))
+
+
+#subset the data to only look at sample ID 0.01
+sub_2CT = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
+
+#split the multitype point process into several single type processes
+#fist, set the marks of the point process to be factors
+marks(pp) = factor(marks(pp))
+ppls = split(pp)
 ```
 
-# ...
+```{r, fig.height=15, fig.width=15}
+plot(ppls)
+```
+
+# Local Indicators of Spatial Association–LISA
+
+## Bivariate Global Moran's I
+
+**Global morans'I concept is equal to local but one can plot continuous variable on x axis and spatial lag on y axis and the slope is equal to morans I value. With 4 quadrants that allow us to understand the global picture of spatial correlation**
+
+**While the local one gives us information about more local environments**
+
+$B$
+
+**Concept**
+-> Moran's I is a correlation coefficient that measures the **overall spatial autocorrelation** of a dataset.
+
+-> Moran's I values ranging from –1 to 1. 
+
+  + -1 is + perfect clustering of dissimilar values (perfect dispersion) 
+  + 0 is no autocorrelation (perfect randomness) 
+  + 1 indicates perfect clustering (opposite of perfect dispersion) 
+
+-> Moran's I **output cannot be taken directly for interpretation**. It is an inferential statistic, and one has to determine statistical significance by using **hypothesis test**, calculating z-score and its associated p-value. 
+
+  + The **null hypothesis** for the test is that the data is randomly distributed. 
+  + The **alternative hypothesis** is that the data is more spatially clustered than you would expect by chance alone. 2 scenarios: 
+    - Positive z-score: data is spatially clustered in some way. 
+    - Negative z-score: data is clustered in a competitive way. For example, high values may be repelling high values or negative values may be repelling negative values in a competitive way. 
+    
+**Calculations** 
+
+-> Calculations for Moran's I are based on a weighted matrix, with units i and j. Similarities between units is calculated as the product of the differences between yi and yj with the overall mean. 
+
+$$ 
+similarity = (y_i - \overline{y}) * (y_j - \overline{y})
+\\where \ \overline{y} = \sum_{i = 1}^{n} y_i / n 
+$$
+
+-> Moran's statistic is calculated using the basic form, which is divided by s (sample variance)
+
+$$
+I = \frac{\sum_{i} \sum_{j} (y_i - \overline{y}) * (y_j - \overline{y}) }{\sum_{i} \sum_{j} w_{ij}} * \frac{1}{S²}
+\\S² = \frac{\sum_{(y_i - \overline{y})²}}{n}
+$$
+
+wij as the elements of the spatial weights matrix
+
+N is the number of observations
+
+-> The distribution of the statistic under the null can be derived using either an **assumption of normality** or so-called **randomization**. While the analytical derivations provide easy way to interpret the mean and the variance of the statistic under the null hypothesis, inference based on them employs an approximation to a standard normal distribution, which may be inappropriate when the underlying assumptions are not satisfied. 
+
+-> An alternative to the analytical derivation is a computation approach based on **permutation**. This calculates a reference distribution for the statistic under the null hypothesis of spatial randomnes by **randomly permuting the observed values over the locations**. The statistic is computed for each of these randomly reshuffled data sets, which yields a **reference distribution**. 
+
+-> The reference distribution is used to calculate so-called pseudo p-value as follows: 
+
+
+$$
+p=\frac{R + 1}{M + 1} 
+$$
+
+Where R is the number of times the computed Moran's I from the spatial random datasets is equal to or more extreme than the observed statistic.
+M equals the number of permutations. 
+ 
+Generate spatial weights (The weight matrix is often row-standardized - all the wieghts in a row sum to 1)
+
+  + Contiguity Based Weights: `queen_weights()`, `rook_weights()`
+  + Distance Based Weights: `distance_weights()`
+  + K-Nearest Neighbor Weights: `knn_weights()`
+  + Kernel Weights: `distance_weights()` and `knn_weights()` with kernel parameters
+
+### Morans'I scatter plot
+
+-> Plot with the spatially lagged variable on the y-axis and the original variable on the x-axis. The **slope of the linear fit to the scatter plot equals Moran’s I value**.
+
+-> An important aspect of the visualization in the Moran scatter plot is the classification of the nature of spatial autocorrelation into four categories. Since the plot is centered on the mean (of zero), all points to the right of the mean have zi>0 and all points to the left have zi<0 .We refer to these values respectively as high and low, in the limited sense of higher or lower than average. Similarly, we can classify the values for the spatial lag above and below the mean as high and low.
+
+-> as such, we have 4 quadrants:
+  + (>0 >0 -> High-high) | (<0 <0 -> Low-low) Correspond to positive spatial correlation (Similar values at the neighborhood locations)
+  + (<0 >0 -> Low-high) | (>0 <0 -> High-low) Correspond to negative spatial correlation (Dissimilar values at the neighborhood locations)
+
+-> Spatial lag is calculated on standardized values of the variable of interest and thus, the plot is in x axis (standardized values of variable of interest) and y axis (spatial lag)
+
+-> A **spatial lag** of a specified variable is computed by taking the **weighted average of neighboring polygons**, as specified in the weights matrix. For example: a census tract with three neighboring tracts that have 10%, 15%, and 20% black population would have a spatial lag of 15%; that is, [(10%+15%+20%)/3]. The row-standardized spatial weights matrix is used in the calculation of the spatial lag. 
+
+Calculate spatial lag
+```{r,eval=FALSE}
+sptl_lag = spatial_lag(knn_weights_sfObj, sfObj["mark"])
+
+sptl_lag %>% as.vector() %>% unlist %>% hist
+```
+
+**I am not sure how to represent non-numerical variables for the morans plot**
+
+## Local Moran's I
+
+-> With row-standardized weights, the sum of all weights:
+
+$$
+S_0 = \sum_{i}\sum_{j}w_{ij}
+$$
+equals the number of observations, n. As a result, Moran's statistic simplifies to:
+$$
+I = \frac{\sum_{i}\sum_{j} w_{ij} z_iz_j}{\sum_{i}z²}
+$$
+where z is the deviations from the mean. This can be simplified to:
+$$
+I_i = c.z_i \sum_{j} w_{ij}z_j
+$$
+since the dominator of previous equation is constant, it is replaced by c for simplicity...
+
+The equation represents product of the value at location i with its spatial lag, the weighted sum of the values at neighboring locations. A little bit of algebra shows that the sum of the local statistics is proportional to the global Moran’s I, or, alternatively, that the global Moran’s I corresponds with the average of the local statistics
+ 
+-> Significance can be based on an analytical approximation, but, as argued in Anselin (1995), this is not very reliable in practice. A preferred approach consists of a **conditional permutation method**. This is similar to the permutation approach mentioned above, except that the value of each zi is held fixed at its location i. The remaining n-1 z-values are then randomly permuted to yield a reference distribution for the local statistic (one for each location).
+
 
 ```{r}
-sub <- spe[, spe$sample_id == 0.01]
-(pp <- .ppp(sub, marks = "cluster_id"))
+# convert ppp object to sf object
+sfObj = st_as_sf(pp)
+
+# Remove 1st row -> window info (otherwise crash)
+sfObj = sfObj[-1,]
+
+# change name of 1st column
+colnames(sfObj)[1] = c("mark")
+
+# convert marks to factors
+sfObj$mark = as.factor(sfObj$mark)
+
+# calculate weights based on knn -> others algos can be used
+knn_weights_sfObj = knn_weights(sfObj, k = sqrt(dim(sfObj)[1]) %>% floor) # 
 ```
 
-# Appendix
+Moran's test
+```{r}
+lisa = local_moran(knn_weights_sfObj, sfObj["mark"], cpu_threads = parallel::detectCores() * 0.75)
 
-## Session info
+#lisa_clusters(): Get the local cluster indicators returned from LISA computation.
+#lisa_colors(): Get the cluster colors of LISA computation.
+#lisa_labels(): Get the cluster labels of LISA computation.
+#lisa_values(): Get the local spatial autocorrelation values returned from LISA computation.
+#lisa_num_nbrs(): Get the number of neighbors of every observations in LISA computation.
+#lisa_pvalues(): Get the local pseudo-p values of significance returned from LISA computation.
+#lisa_fdr(): Get the False Discovery Rate (FDR) in LISA.
+#lisa_bo(): Get the False Discovery Rate (FDR) in LISA.
+```
+
+Get the False Discovery Rate value based on current pseudo-p values:
+```{r}
+fdr = lisa_fdr(lisa, 0.05)
+fdr
+```
+
+Then, one can set 0.05 as the cutoff p-value to filter the cluster results: 
+```{r}
+#lisa_clust = lisa_clusters(lisa, cutoff = fdr)
+lisa_clust = lisa_clusters(lisa, cutoff = 0.05)
+table(lisa_clust)
+
+#0 Not significant
+#1 High-High
+#2 Low-Low
+#3 High-Low
+#4 Low-High
+#5 Undefined
+#6 Isolated
+```
+
+plot lisa output (clusters of correlation)
+```{r}
+lisa_pvalues = lisa_pvalues(lisa)
+lisa_colors = lisa_colors(lisa)
+#change white to blue for the non significant
+lisa_colors[1] = "#47E5DA"
+lisa_labels = lisa_labels(lisa)
+
+plot(st_geometry(sfObj), 
+     col=sapply(lisa_clust, function(x){return(lisa_colors[[x+1]])}), 
+     border = "#333333", lwd=0.2)
+
+title(main = "Local Moran Map")
+legend('bottomleft', legend = lisa_labels, fill = lisa_colors, border = "#eeeeee")
+
+p_labels = c("Not significant", "p <= 0.05", "p <= 0.01", "p <= 0.001")
+p_colors = c("#47E5DA", "#7C47E5", "#479BE5", "#F34A4A")
+plot(st_geometry(sfObj), 
+     col=sapply(lisa_pvalues, function(x){
+       if (x <= 0.001) return(p_colors[4])
+       else if (x <= 0.01) return(p_colors[3])
+       else if (x <= 0.05) return (p_colors[2])
+       else return(p_colors[1])
+       }), 
+     border = "#333333", lwd=0.2)
+title(main = "Local Moran Map")
+legend('bottomleft', legend = p_labels, fill = p_colors, border = "#eeeeee")
+```
+
+## Only 2 CT c("Astrocyte", "Inhibitory")
+
+```{r}
+# convert ppp object to sf object
+sfObj_2CT = st_as_sf(pp_2CT)
+
+# Remove 1st row -> window info (otherwise crash)
+sfObj_2CT = sfObj_2CT[-1,]
+
+# change name of 1st column
+colnames(sfObj_2CT)[1] = c("mark")
+
+# convert marks to factors
+sfObj_2CT$mark = as.factor(sfObj_2CT$mark)
+
+# weights
+knn_weights_sfObj_2CT = knn_weights(sfObj_2CT, k = sqrt(dim(sfObj_2CT)[1]) %>% floor) # 
+```
+
+Moran's test
+```{r}
+lisa_2CT = local_moran(knn_weights_sfObj_2CT, sfObj_2CT["mark"], cpu_threads = parallel::detectCores() * 0.75)
+```
+
+plot lisa_2CT output
+```{r}
+lisa_2CT_clust = lisa_clusters(lisa, cutoff = FALSE)
+lisa_2CT_pvalues = lisa_pvalues(lisa_2CT)
+lisa_2CT_colors = lisa_colors(lisa_2CT)
+#change white to blue for the non significant
+lisa_2CT_colors[1] = "#47E5DA"
+lisa_2CT_labels = lisa_labels(lisa_2CT)
+
+plot(st_geometry(sfObj_2CT), 
+     col=sapply(lisa_2CT_clust, function(x){return(lisa_colors[[x+1]])}), 
+     border = "#333333", lwd=0.2)
+
+title(main = "Local Moran Map")
+legend('bottomleft', legend = lisa_2CT_labels, fill = lisa_2CT_colors, border = "#eeeeee")
+
+p_labels = c("Not significant", "p <= 0.05", "p <= 0.01", "p <= 0.001")
+p_colors = c("#47E5DA", "#7C47E5", "#479BE5", "#F34A4A")
+plot(st_geometry(sfObj_2CT), 
+     col=sapply(lisa_2CT_pvalues, function(x){
+       if (x <= 0.001) return(p_colors[4])
+       else if (x <= 0.01) return(p_colors[3])
+       else if (x <= 0.05) return (p_colors[2])
+       else return(p_colors[1])
+       }), 
+     border = "#333333", lwd=0.2)
+title(main = "Local Moran Map")
+legend('bottomleft', legend = p_labels, fill = p_colors, border = "#eeeeee")
+```
+
+## Multivariate Local Geary test
+
+-> Geary's C is inversely related to Moran's I, but it is not identical. Moran's I is a measure of global spatial autocorrelation, while Geary's C is **more sensitive to local spatial autocorrelation**. 
+
+$$
+C = \frac{(N = 1) \sum_{i}  \sum_{j} w_{ij} (x_i - x_j)²} {2W \sum_{i} (x_i - \overline{x})²}
+$$
+
+Where N is the number of spatial units indexed by i and j.
+$x$ is the variable of interest, $\overline{x}$ is the mean of $x$ 
+$Wij$ is a matrix of spatial weights with zeroes on the diagonal
+
+-> The value of Geary's C lies between 0 and some unspecified value greater than 1. 
+  + Values significantly lower than 1 demonstrate increasing positive spatial autocorrelation, 
+  + Values significantly higher than 1 illustrate increasing negative spatial autocorrelation.
+
+```{r}
+lisa_geary = local_multigeary(knn_weights_sfObj, sfObj["mark"])
+
+lisa_pvalues = lisa_pvalues(lisa_geary)
+#change white to blue for the non significant
+lisa_labels = lisa_labels(lisa_geary)
+
+plot(st_geometry(sfObj), 
+     col=sapply(lisa_clust, function(x){return(lisa_2CT_colors[[x+1]])}), 
+     border = "#333333", lwd=0.2)
+
+title(main = "Multivariate Local Geary")
+legend('bottomleft', legend = lisa_labels, fill = lisa_2CT_colors, border = "#eeeeee")
+
+p_labels = c("Not significant", "p <= 0.05", "p <= 0.01", "p <= 0.001")
+p_colors = c("#47E5DA", "#7C47E5", "#479BE5", "#F34A4A")
+plot(st_geometry(sfObj), 
+     col=sapply(lisa_pvalues, function(x){
+       if (x <= 0.001) return(p_colors[4])
+       else if (x <= 0.01) return(p_colors[3])
+       else if (x <= 0.05) return (p_colors[2])
+       else return(p_colors[1])
+       }), 
+     border = "#333333", lwd=0.2)
+title(main = "Multivariate Local Geary")
+legend('bottomleft', legend = p_labels, fill = p_colors, border = "#eeeeee")
+```
+
+## Spatial Correlogram
+
+-> A non-parametric spatial correlogram is an alternative measure of global spatial autocorrelation that **does not rely on the specification of a spatial weights matrix**. Instead, a local regression is fit to the covariances or correlations computed for all pairs of observations as a function of the distance between them.
+
+-> If data is univariate, the spatial dependence is measured by Moran's I. If it is multivariate, it is measure by the centered **Mantel statistics**. The latter is used to calculate correlations between corresponding positions of 2 (dis)similarity or distance matrices.
+
+
+-> With standardized variables z, this boils down to a local regression:
+
+$$
+z_i.z_j = f(d_{ij}) + \mu
+$$
+
+where $dij$ is the distance between a pair of locations i-j
+$\mu$ is an error term
+$f$ is the non-parametric function to be determined from the data (typically **LOWESS** or **kernel regression**)
+
+## Spatial correlogram plot
+-> The plot depicts how the spatial autocorrelation changes with distance.
+  + The intersection between correlogram and the red line is the turning point from autocorrelation to spatial randomness
+  
+  
+```{r}
+## Adapted function from their github
+plot.correlog = function(x, ...) {
+##############################################################################
+# this is the generic plot function for correlog objects
+# significant values are represented by filled circles
+##############################################################################
+  args.default = list(xlab = "distance (mean-of-class)", ylab = "correlation", 
+                       main = "Correlogram")
+  args.input = list(...)
+  args = c(args.default[!names(args.default) %in% names(args.input)], args.input)
+  loess = loess(x$correlation ~ x$mean.of.class)
+  do.call(plot, c(list(x = x$mean.of.class, y = x$correlation), args))
+  
+  lines(x$mean.of.class, x$correlation)
+  lines(x$mean.of.class,  predict(loess), col = "blue",lwd = 3)
+  abline(h=0, col = "red")
+  if (!is.null(x$p)) {
+      points(x$mean.of.class[x$p < 0.025], x$correlation[x$p < 0.025], pch = 21, 
+             bg = "black")
+  }
+}
+```
+
+### Astrocyte and Inhibitory (Little correlation)
+
+```{r}
+#subset the data to only look at sample ID 0.01
+sub_2CT = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte","Inhibitory")]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
+```
+
+```{r, results='hide'}
+sptl_correlogram = correlog(x = pp_2CT$x, y = pp_2CT$y, z = ifelse(pp_2CT$marks == "Astrocyte", 0 , 1), increment = 10, resamp = 50)
+```
+
+```{r}
+#' {correlation}{the value for the Moran (or Mantel) similarity.}
+#' {mean.of.class}{the actual average of the distances within each distance class.}
+#' {nlok}{the number of pairs within each distance class.}
+#' {x.intercept}{the interpolate x.intercept of Epperson (1993).}
+#' {p}{the permutation p-value for each distance-class.}
+#' {corr0}{If a cross-correlogram is calculated, corr0 gives the empirical within-patch cross-correlation.}
+
+plot.correlog(sptl_correlogram) 
+```
+
+### OD Mature and Excitatory (Bigger correlation)
+
+```{r}
+#subset the data to only look at sample ID 0.01
+sub_2CT = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("OD Mature","Excitatory")]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
+```
+
+
+```{r, results='hide'}
+sptl_correlogram = correlog(x = pp_2CT$x, y = pp_2CT$y, z = ifelse(pp_2CT$marks == "OD Mature", 0 , 1), increment = 10, resamp = 50)
+```
+
+```{r}
+#' {correlation}{the value for the Moran (or Mantel) similarity.}
+#' {mean.of.class}{the actual average of the distances within each distance class.}
+#' {nlok}{the number of pairs within each distance class.}
+#' {x.intercept}{the interpolate x.intercept of Epperson (1993).}
+#' {p}{the permutation p-value for each distance-class.}
+#' {corr0}{If a cross-correlogram is calculated, corr0 gives the empirical within-patch cross-correlation.}
+
+plot.correlog(sptl_correlogram) 
+```
+
+# Session info
 
 ```{r}
 #| label: session-info

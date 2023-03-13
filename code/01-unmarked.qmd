@@ -304,15 +304,15 @@ nndistances_k5_ependymal <- nndist(ppls$Ependymal, k = 5)
 nndistances_k5_odmature <- nndist(ppls$`OD Mature`, k = 5)
 nndistances_k5_microglia <- nndist(ppls$Microglia, k = 5)
 
-#scale by the median nearest-neighbour distance
-nndistances_k5_ependymal <- nndistances_k5_ependymal/median(nndistances_k5_ependymal)
-nndistances_k5_odmature <- nndistances_k5_odmature/median(nndistances_k5_odmature)
-nndistances_k5_microglia <- nndistances_k5_microglia/median(nndistances_k5_microglia)
+#transform the distances to sqrt
+nndistances_k5_ependymal <- sqrt(nndistances_k5_ependymal)#/median(nndistances_k5_ependymal)
+nndistances_k5_odmature <- sqrt(nndistances_k5_odmature)#/median(nndistances_k5_odmature)
+nndistances_k5_microglia <- sqrt(nndistances_k5_microglia)#/median(nndistances_k5_microglia)
 
 #create a histogram of the nearest-neighbour distances
-hist_ependymal <- hist(nndistances_k5_ependymal, breaks = 50, plot = FALSE)
-hist_odmature <- hist(nndistances_k5_odmature, breaks = 50, plot = FALSE)
-hist_microglia <- hist(nndistances_k5_microglia, breaks = 50, plot = FALSE)
+hist_ependymal <- hist(nndistances_k5_ependymal, breaks = 25, plot = FALSE)
+hist_odmature <- hist(nndistances_k5_odmature, breaks = 25, plot = FALSE)
+hist_microglia <- hist(nndistances_k5_microglia, breaks = 25, plot = FALSE)
 
 #fit now a gamma mixture model to this nndist data
 gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_k5_ependymal, ncomp=2,family = 'gamma')
@@ -324,8 +324,8 @@ c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
 c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
 c3 <- rgb(144,238,144, max = 255, alpha = 100, names = "lt.green")
 
-plot(hist_ependymal, col = c1, main = "Histogram of nn-distances with Gamma Mixtures fitted", freq=FALSE)
-legend(400, 0.04, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
+plot(hist_ependymal, col = c1, main = "Histogram of nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Nearest neighbour distances k=5')
+legend(15,0.8, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
 #plot the probability density of the finite mixture model
 lines(density(gamma_mm_comp2_ependymal),col='blue')
 plot(hist_odmature, col = c2, add = TRUE, freq=FALSE)
@@ -336,21 +336,26 @@ lines(density(gamma_mm_comp2_microglia),col='green')
 #kolmogorov smirnov test
 ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_odmature$data)
 ks.test(gamma_mm_comp2_microglia$data,gamma_mm_comp2_odmature$data)
+ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_microglia$data)
 ```
 
-#### small simulation to test nndistance approach
+#### small simulation to test nndistance approach using 2D Gaussian
 
 ```{r}
 set.seed(123)
-create_multivariate_normal <- function(Sigma, number){
-  return (data <- MASS::mvrnorm(n = number, rep(0, 2), Sigma))
+create_multivariate_normal <- function(Sigma, mu, number){
+  return (data <- MASS::mvrnorm(n = number, mu, Sigma))
 }
+n1 <- 1e3
+n2 <- 1e3
+data1 <- create_multivariate_normal(matrix(c(5,3,3,5),2,2),mu=c(1,1), number = n1)
+data2 <- create_multivariate_normal(matrix(c(5,3,3,5),2,2),mu=c(1,1), number = n2)
 
-data1 <- create_multivariate_normal(matrix(c(5,3,3,5),2,2), number = 1e4)
-data2 <- create_multivariate_normal(matrix(c(5,3,3,5),2,2), number = 1e4)
+w1 <- c(-10,10,-10,10)
+w2 <- c(-10,10,-10,10)
 
-data.pp1 <- as.ppp(data1,c(-10,10,-10,10))
-data.pp2 <- as.ppp(data2,c(-10,10,-10,10))
+data.pp1 <- as.ppp(data1,w1)
+data.pp2 <- as.ppp(data2,w2)
 
 
 plot(data.pp1)
@@ -360,9 +365,9 @@ plot(data.pp2)
 nndistances_k5_pp1 <- nndist(data.pp1, k = 5)
 nndistances_k5_pp2 <- nndist(data.pp2, k = 5)
 
-#scale by the median nearest-neighbour distance
-nndistances_k5_pp1 <- nndistances_k5_pp1/median(nndistances_k5_pp1)
-nndistances_k5_pp2 <- nndistances_k5_pp2/median(nndistances_k5_pp2)
+#scale by the median nearest-neighbour distance or the window size
+nndistances_k5_pp1 <- sqrt(nndistances_k5_pp1)/(median(sqrt(nndistances_k5_pp1)))#/diff(range(w1))#/(median(sqrt(nndistances_k5_pp1)))
+nndistances_k5_pp2 <- sqrt(nndistances_k5_pp2)/(median(sqrt(nndistances_k5_pp2)))#/diff(range(w2))#/(median(sqrt(nndistances_k5_pp2)))
 
 #create a histogram of the nearest neighbour distances
 hist_pp1 <- hist(nndistances_k5_pp1, breaks = 50, plot = FALSE)
@@ -376,7 +381,8 @@ gamma_mm_comp2_pp2 <- mixR::mixfit(nndistances_k5_pp2, ncomp=2,family = 'gamma')
 c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
 c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
 
-plot(hist_pp1, col=c1, main = "Histogram of k=5 nn-distances with Gamma Mixtures fitted",freq=FALSE, ylim=c(0,1.2), xlab = "nn-distance")
+plot(hist_pp1, col=c1, main = "Histogram of k=5 nn-distances with Gamma Mixtures fitted",freq=FALSE, ylim=c(0,3), xlab = "nn-distance")
+legend(1.1,4, legend=c("pp1", "pp2"),col=c('blue', 'red'), lty=1, cex=0.8)
 lines(density(gamma_mm_comp2_pp1),col='blue')
 plot(hist_pp2, col=c2, n=25, add=TRUE, freq=FALSE)
 lines(density(gamma_mm_comp2_pp2),col='red')
@@ -419,7 +425,6 @@ The standardisation make it possible to compare point patterns with different ob
 We can add bootstrapped confidence intervals
 
 ```{r}
-library(ggplot2)
 K_ependymal <- lohboot(ppls$Ependymal, fun='Kest')
 K_ependymal$type <- 'Ependymal'
 
@@ -657,7 +662,32 @@ p
 
 #### Locally-scaled $K$-function
 
+#### DBSCAN
 
+could be useful to detect spatial patterns and clusters
+
+```{r}
+pp_df <- as.data.frame(ppls$`OD Mature`)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+
+pp_df <- as.data.frame(ppls$Ependymal)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+
+pp_df <- as.data.frame(ppls$Microglia)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =100, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+```
 
 # Appendix
 

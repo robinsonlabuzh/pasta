@@ -6,6 +6,8 @@ suppressPackageStartupMessages({
   library(mixR)
   library(dplyr)
   library(ggplot2)
+  library(rlang)
+  library(spdep)
 })
 
 .ppp <- \(spe, marks = NULL) {

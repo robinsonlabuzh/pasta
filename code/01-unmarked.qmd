@@ -2,7 +2,7 @@
 
 ## Dependencies
 
-```{r}
+```{r, cache=FALSE}
 #| label: load-libs
 #| message: false
 #| warning: false
@@ -12,7 +12,7 @@ source("utils.R")
 
 ## Setup
 
-```{r}
+```{r, cache=FALSE}
 #| label: load-data
 spe <- readRDS("../data/spe.rds")
 
@@ -28,7 +28,7 @@ ppls <- split(pp)
 
 If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns.
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=12, fig.height=12, cache=FALSE}
 #Plot the entire point process where the marks are overlayed
 plot(unmark(pp), main = 'Point Pattern Unmarked')
 #Plot the marks separately 
@@ -90,7 +90,7 @@ Intensity is the expected density of points per unit area, as seen above. It can
 
 The intensity can be estimated regardless of the type of the point pattern. In order to do so, we sum the individual intensities of the marks
 
-```{r}
+```{r, cache=FALSE}
 intensityPointProcess<- function(pp,mark){
   if(mark == TRUE){
     return(intensity(pp))
@@ -105,14 +105,14 @@ intensityPointProcess(pp,mark=FALSE)
 
 else we can look at each mark individually
 
-```{r}
+```{r, cache=FALSE}
 intensityPointProcess(pp,mark=TRUE)
 ```
 #### Quadrat Counting
 
 quadrat counting can again be performed for the entire picture
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=12, fig.height=12, cache=FALSE}
 Q5 <- quadratcount(pp, nx=5, ny=5)
 plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
@@ -120,7 +120,7 @@ plot(Q5, col='black', add=TRUE)
 
 or for each type separately, treating each type as an unmarked process
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=12, fig.height=12, cache=FALSE}
 Q5sep <- quadratcount(ppls, nx=5, ny=5)
 plot(Q5sep, main = 'Separated Marks Quadrats')
 #plot(ppls, add=TRUE)
@@ -128,7 +128,7 @@ plot(Q5sep, main = 'Separated Marks Quadrats')
 
 The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types
 
-```{r}
+```{r, cache=FALSE}
 quadratTestPointProcess <- function(pp, mark){
   if(mark==TRUE){
     return(lapply(split(pp), quadrat.test, 5, alternative="regular", method="MonteCarlo"))
@@ -141,19 +141,19 @@ quadratTestPointProcess(pp, mark=FALSE)
 ```
 #### Kernel Estimation
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=12, fig.height=12, cache=FALSE}
 Dens <- density(pp)
 plot(Dens, main = 'Kernel Density')
 ```
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=12, fig.height=12, cache=FALSE}
 Denssep <- density(ppls)
 plot(Denssep, main = 'Kernel Density Separated Marks  ')
 ```
 
 ### Summarising Functionality for Estimating Intensity
 
-```{r, eval=FALSE}
+```{r, eval=FALSE, cache=FALSE}
 #PRE:
 #POST:
 estimatingIntensity <- function(
@@ -168,13 +168,13 @@ estimatingIntensity <- function(
 }
 ```
 
-```{r}
+```{r, cache=FALSE}
 
 ```
 
 ### Testing for CSR
 
-```{r}
+```{r, cache=FALSE}
 #PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
 #POST: returns if a point process or its individual point process marks are CSR or not.
 #TODO: Change maybe to a switch statment in terms of computing time; Change lapply to mclapply later on
@@ -278,7 +278,7 @@ $$
 I = \frac{s^2}{\bar{n}} = \frac{m}{n(m-1)}\sum_{j=1}^m\left(n_j-\frac{n}{m}\right)^2
 $$
 
-```{r}
+```{r, cache=FALSE}
 miplot(ppls$Ependymal)
 miplot(ppls$`OD Mature`)
 miplot(ppls$Microglia)
@@ -288,7 +288,7 @@ miplot(ppls$Microglia)
 
 A fryplot is a scatterplot of the vector differences $x_j-x_i$ between all paris of distinct points in the pattern.
 
-```{r}
+```{r, cache=FALSE}
 fryplot(ppls$Ependymal)
 fryplot(ppls$`OD Mature`)
 fryplot(ppls$Microglia)
@@ -298,34 +298,43 @@ fryplot(ppls$Microglia)
 
 Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `nndist`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances. The aim would be to compare these parameteric models via statistical tests such as Anderson-Darling or Kolmogorov Smirnov. Another idea would be to compute the distance between these models with e.g. a Kullback-Leibler Divergence.
 
-```{r}
+```{r, cache=FALSE}
 # potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
-nndistances_k5_ependymal <- nndist(ppls$Ependymal, k = 5)
-nndistances_k5_odmature <- nndist(ppls$`OD Mature`, k = 5)
-nndistances_k5_microglia <- nndist(ppls$Microglia, k = 5)
+# nndistances_k5_ependymal <- nndist(ppls$Ependymal, k = 5)
+# nndistances_k5_odmature <- nndist(ppls$`OD Mature`, k = 5)
+# nndistances_k5_microglia <- nndist(ppls$Microglia, k = 5)
+# 
+# #transform the distances to sqrt and try out normalisation by intensity
+# nndistances_k5_ependymal <- sqrt(nndistances_k5_ependymal)#*intensity(ppls$Ependymal)#/median(sqrt(nndistances_k5_ependymal))
+# nndistances_k5_odmature <- sqrt(nndistances_k5_odmature)#*intensity(ppls$`OD Mature`)#/median(sqrt(nndistances_k5_odmature))
+# nndistances_k5_microglia <- sqrt(nndistances_k5_microglia)#*intensity(ppls$Microglia)#/median(sqrt(nndistances_k5_microglia))
 
-#transform the distances to sqrt
-nndistances_k5_ependymal <- sqrt(nndistances_k5_ependymal)#/median(nndistances_k5_ependymal)
-nndistances_k5_odmature <- sqrt(nndistances_k5_odmature)#/median(nndistances_k5_odmature)
-nndistances_k5_microglia <- sqrt(nndistances_k5_microglia)#/median(nndistances_k5_microglia)
+nndistances_k5_ependymal<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Ependymal), k = 15)$distance)
+nndistances_k5_odmature<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$`OD Mature`), k = 15)$distance)
+nndistances_k5_microglia<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Microglia), k = 15)$distance)
+
+#calculate the row Median distance of k 1-10
+nndistances_ependymal_median <- rowMedians((nndistances_k5_ependymal))
+nndistances_odmature_median <- rowMedians((nndistances_k5_odmature))
+nndistances_microglia_median <- rowMedians((nndistances_k5_microglia))
 
 #create a histogram of the nearest-neighbour distances
-hist_ependymal <- hist(nndistances_k5_ependymal, breaks = 25, plot = FALSE)
-hist_odmature <- hist(nndistances_k5_odmature, breaks = 25, plot = FALSE)
-hist_microglia <- hist(nndistances_k5_microglia, breaks = 25, plot = FALSE)
+hist_ependymal <- hist(nndistances_ependymal_median, breaks = 25, plot = FALSE)
+hist_odmature <- hist(nndistances_odmature_median, breaks = 25, plot = FALSE)
+hist_microglia <- hist(nndistances_microglia_median, breaks = 25, plot = FALSE)
 
 #fit now a gamma mixture model to this nndist data
-gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_k5_ependymal, ncomp=2,family = 'gamma')
-gamma_mm_comp2_odmature <- mixR::mixfit(nndistances_k5_odmature, ncomp=2,family = 'gamma')
-gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_k5_microglia, ncomp=2,family = 'gamma')
+gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_ependymal_median, ncomp=2,family = 'gamma')
+gamma_mm_comp2_odmature <- mixR::mixfit(nndistances_odmature_median, ncomp=2,family = 'gamma')
+gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_microglia_median, ncomp=2,family = 'gamma')
 
 #plot this
 c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
 c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
 c3 <- rgb(144,238,144, max = 255, alpha = 100, names = "lt.green")
 
-plot(hist_ependymal, col = c1, main = "Histogram of nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Nearest neighbour distances k=5')
-legend(15,0.8, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
+plot(hist_ependymal, col = c1, main = "Histogram of sqrt nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Median Nearest neighbour distances sqrt transformed')
+legend(20,1, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
 #plot the probability density of the finite mixture model
 lines(density(gamma_mm_comp2_ependymal),col='blue')
 plot(hist_odmature, col = c2, add = TRUE, freq=FALSE)
@@ -339,9 +348,25 @@ ks.test(gamma_mm_comp2_microglia$data,gamma_mm_comp2_odmature$data)
 ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_microglia$data)
 ```
 
+```{r, cache=FALSE}
+create_ridge_plot <- function(nndistances, label){
+  nndistances_df <- as.data.frame(nndistances)
+  nndistances_df$index <- 1:nrow(nndistances_df)
+  #add the row median
+  nndistances_df$median <- rowMedians((nndistances))
+  nndistances_df_melted <- reshape2::melt(nndistances_df, id = 'index')
+  nndistances_df_melted <-dplyr::rename(nndistances_df_melted, K = variable)
+  return(ggplot(nndistances_df_melted, aes(x = value, y = K, fill=K)) + theme(legend.position="none") + ggtitle(label) + ggridges::geom_density_ridges())
+}
+
+create_ridge_plot(nndistances_k5_ependymal, label='Ependymal')
+create_ridge_plot(nndistances_k5_odmature, label='OD Mature')
+create_ridge_plot(nndistances_k5_microglia, label='Microglia')
+```
+
 #### small simulation to test nndistance approach using 2D Gaussian
 
-```{r}
+```{r, cache=FALSE}
 set.seed(123)
 create_multivariate_normal <- function(Sigma, mu, number){
   return (data <- MASS::mvrnorm(n = number, mu, Sigma))
@@ -357,31 +382,39 @@ w2 <- c(-10,10,-10,10)
 data.pp1 <- as.ppp(data1,w1)
 data.pp2 <- as.ppp(data2,w2)
 
-
 plot(data.pp1)
 plot(data.pp2)
 
-#calculate the nearest neighbour distance
-nndistances_k5_pp1 <- nndist(data.pp1, k = 5)
-nndistances_k5_pp2 <- nndist(data.pp2, k = 5)
+#calculate full distance matrix of pairwise euclidean distances
+# dist.matrix1 <- pairdist.default(data.pp1)
+# dist.matrix2 <- pairdist.default(data.pp2)
 
-#scale by the median nearest-neighbour distance or the window size
-nndistances_k5_pp1 <- sqrt(nndistances_k5_pp1)/(median(sqrt(nndistances_k5_pp1)))#/diff(range(w1))#/(median(sqrt(nndistances_k5_pp1)))
-nndistances_k5_pp2 <- sqrt(nndistances_k5_pp2)/(median(sqrt(nndistances_k5_pp2)))#/diff(range(w2))#/(median(sqrt(nndistances_k5_pp2)))
+#calculate the distances to the 15 nearest neighbour and take the sqrt of the distances
+nndistances_pp1<-sqrt(BiocNeighbors::findKNN(as.data.frame(data.pp1), k = 10)$distance)
+nndistances_pp2<-sqrt(BiocNeighbors::findKNN(as.data.frame(data.pp2), k = 10)$distance)
+
+#create ridge plots
+create_ridge_plot(nndistances_pp1, label = 'pp1')
+create_ridge_plot(nndistances_pp2, label = 'pp2')
+
+#calculate the row Median distance of k 1-10
+nndistances_pp1_median <- rowMedians((nndistances_pp1))
+nndistances_pp2_median <- rowMedians((nndistances_pp2))
+
 
 #create a histogram of the nearest neighbour distances
-hist_pp1 <- hist(nndistances_k5_pp1, breaks = 50, plot = FALSE)
-hist_pp2 <- hist(nndistances_k5_pp2, breaks = 50, plot = FALSE)
+hist_pp1 <- hist(nndistances_pp1_median, breaks = 50, plot = FALSE)
+hist_pp2 <- hist(nndistances_pp2_median, breaks = 50, plot = FALSE)
 
 #fit a gamma mixture model
-gamma_mm_comp2_pp1 <- mixR::mixfit(nndistances_k5_pp1, ncomp=2,family = 'gamma')
-gamma_mm_comp2_pp2 <- mixR::mixfit(nndistances_k5_pp2, ncomp=2,family = 'gamma')
+gamma_mm_comp2_pp1 <- mixR::mixfit(nndistances_pp1_median, ncomp=2,family = 'gamma')
+gamma_mm_comp2_pp2 <- mixR::mixfit(nndistances_pp2_median, ncomp=2,family = 'gamma')
 
 #define the colour scheme
 c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
 c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
 
-plot(hist_pp1, col=c1, main = "Histogram of k=5 nn-distances with Gamma Mixtures fitted",freq=FALSE, ylim=c(0,3), xlab = "nn-distance")
+plot(hist_pp1, col=c1, main = "Histogram of k=5 nn-distances with Gamma Mixtures fitted",freq=FALSE, ylim=c(0,6), xlab = "nn-distance")
 legend(1.1,4, legend=c("pp1", "pp2"),col=c('blue', 'red'), lty=1, cex=0.8)
 lines(density(gamma_mm_comp2_pp1),col='blue')
 plot(hist_pp2, col=c2, n=25, add=TRUE, freq=FALSE)
@@ -389,6 +422,227 @@ lines(density(gamma_mm_comp2_pp2),col='red')
 
 #calculate kolmogorov smirnov test on the two distributions
 ks.test(gamma_mm_comp2_pp1$data,gamma_mm_comp2_pp2$data)
+```
+
+
+Simulation from Pierre-Luc and approach of having a matrix of k x p dimension so for k values 1-15 e.g. the nn distances across space. Then comparing the median nndistance over space in a ks test
+
+```{r, eval = TRUE, cache=FALSE}
+set.seed(123)
+x1 <- rnorm(400,rep(10*1:5,each=40),sd=7)
+#y1 <- rep(0,200)
+y1 <- rnorm(400,rep(10*sample.int(5,5),each=40),sd=9)
+
+x2 <- rnorm(400,rep(10*1:5,each=40),sd=5)
+y2 <- rnorm(400,rep(10*sample.int(5,5),each=40),sd=5)
+
+# distance to the 5th NN transformed via sqrt
+nnd1 <- sqrt(BiocNeighbors::findKNN(cbind(x1,y1), k = 15)$distance)
+nnd2 <- sqrt(BiocNeighbors::findKNN(cbind(x2,y2), k = 15)$distance)
+
+#ridge plot to see dependence on k
+create_ridge_plot(nnd1, label = 'Scenario A')
+create_ridge_plot(nnd2, label = 'Scenario B')
+
+nnd1_mean <- rowMeans((nnd1))
+nnd2_mean <- rowMeans((nnd2))
+
+# plot all
+d <- data.frame(distance=c(nnd1_mean,nnd2_mean),
+                scenario = c(rep('A', length(nnd1_mean)),
+                             rep('B',length(nnd2_mean))))
+cowplot::plot_grid(nrow=2,
+  cowplot::plot_grid(nrow=1,
+    ggplot(data.frame(x=x1,y=y1), aes(x,y)) + geom_point() + ggtitle("Scenario A"),
+    ggplot(data.frame(x=x2,y=y2), aes(x,y)) + geom_point() + ggtitle("Scenario B")),
+  ggplot(d, aes(distance, colour=scenario)) + geom_density() + xlab("Mean of NN distance k=1-15"))
+
+ks.test(nnd1_mean,nnd2_mean)
+CDFt::CramerVonMisesTwoSamples(nnd1_mean,nnd2_mean)
+```
+
+instead taking a different approach and sampling two curves from the k x p matrix and performing a 2D peacock test on this matrix for both groups
+
+```{r, cache=FALSE}
+set.seed(123)
+#sub sample two columns via transpose at random from the dataframe (k vs. distances)
+index_k <-  sample(ncol(nnd1), 2)
+nnd1_sub <- nnd1[, index_k]
+nnd2_sub <- nnd2[, index_k]
+
+#eCDF of the sub sampled
+plot(ecdf(nnd1_sub[,1]), main='Scenario A and B sub sampled', col = 'red', xlim = c(min(nnd1_sub),max(nnd1_sub)))
+plot(ecdf(nnd1_sub[,2]), add=TRUE, col = 'red')
+plot(ecdf(nnd2_sub[,1]), add=TRUE, col = 'blue')
+plot(ecdf(nnd2_sub[,2]), add=TRUE, col = 'blue')
+
+#fasano-franceschini test - faster version of the peacock test by taking the max of points within the sample - peacock does so over the set of all coordinate-wise combinations
+fasano.franceschini.test::fasano.franceschini.test(nnd1_sub,nnd2_sub,nPermute=1000)
+```
+
+in another idea we can try to average the eCDFs we obtain and comparing the absolute difference between the resulting average eCDFs per group as done in the distinct paper by Simone Tiberi. In the end we compare this to a null distribution generated via permutation tests
+
+```{r}
+set.seed(123)
+#eCDF median k kurves
+plot(ecdf(nnd1_mean), main='Scenario A and B mean curves', col = 'red', xlim = c(min(c(nnd1_mean,nnd2_mean)),max(nnd1_mean)))
+plot(ecdf(nnd2_mean), add=TRUE, col = 'blue')
+
+#calculate the eCDF of the two processes
+ecdf1_fun <- ecdf(nnd1_mean)
+ecdf2_fun <- ecdf(nnd2_mean)
+
+#number of discrete steps
+P <- 400
+
+#calculate the sequence over which to discretise, has to be the min and max over all samples
+seq <- seq(from = min(c(nnd1_mean,nnd2_mean)), max(c(nnd1_mean,nnd2_mean)), length.out=P)
+#discretise the eCDFs such that we have comparable values for each vector - TODO: have to add the index here to the vector!
+ecdf1 <- unlist(lapply(seq, ecdf1_fun))
+
+ecdf2 <- unlist(lapply(seq, ecdf2_fun))
+
+plot(ecdf1, col = 'red')
+points(ecdf2, col = 'blue')
+#calculate the difference between the eCDFs how to handle if number of observations is not the same?
+ecdf.diffs <- abs(ecdf1 - ecdf2)
+
+#sum of the differences as the observed test statistic
+s_obs <- max(ecdf.diffs)
+
+
+permutation.test <- function(s_obs,pp1,pp2,nsim){
+  distribution=c()
+  for(i in 1:nsim){
+    #perform the permutation index which has the length of the combined processes
+    perm <- sample(length(pp1)+length(pp2), replace=FALSE)
+    #concatenate the samples to perform one large permutation
+    pp_total <- c(pp1,pp2)
+    #permute
+    pp_total <- pp_total[perm]
+    #get two samples of the original size again
+    pp1_sample <- pp_total[1:length(pp1)]
+    pp2_sample <- pp_total[(length(pp1)+1):length(pp_total)]
+
+    #calculate the eCDF of the two processes
+    ecdf1_fun <- ecdf(pp1_sample)
+    ecdf2_fun <- ecdf(pp2_sample)
+    
+    #calculate the sequence over which to discretise, has to be the min and max over all samples
+    seq <- seq(from = min(c(nnd1_mean,nnd2_mean)), max(c(nnd1_mean,nnd2_mean)), length.out=P)
+
+    #discretise the eCDFs such that we have comparable values for each vector
+    ecdf1 <- unlist(lapply(seq, ecdf1_fun))
+    ecdf2 <- unlist(lapply(seq, ecdf2_fun))
+    #calculate the absolute difference between the two patterns
+    ecdf.diffs <- abs(ecdf1 - ecdf2)
+    #aggreate the sum of the differences in our test statistic
+    s_p <- max(ecdf.diffs)
+    distribution[i] = s_p
+  }
+  hist(distribution, breaks = 25)
+  abline(v=s_obs,col="red")
+  return((sum(distribution>=s_obs)+1)/(nsim+1))
+}
+
+permutation.test(s_obs, nnd1_mean, nnd2_mean, 1000)
+ks.test(nnd1_mean,nnd2_mean)
+```
+
+in a third approach we can try to compare all 15 curves using an adapted version of Simones approach. We compute the abs difference between the pairwise k values for both scenarios and sum the test statistic for all of them. Then we compare that to a permutation based approach that was generated in the same way. 
+
+```{r}
+set.seed(123)
+#the possible k values
+k_ <- seq(1:15)
+#the cumulative test observed statistic
+s_obs <- 0
+for(k in k_){
+  #subset the data to the relevant column of k
+  nnd1_sub <- nnd1[,k]
+  nnd2_sub <- nnd2[,k]
+  
+  #calculate the eCDF of the two processes - this is a function in R
+  ecdf1_fun <- ecdf(nnd1_sub)
+  ecdf2_fun <- ecdf(nnd2_sub)
+  
+  #number of discrete steps
+  P <- 100
+  
+  #calculate the sequence over which to discretise, has to be the min and max over all samples
+  seq <- seq(from = min(c(nnd1_sub,nnd2_sub)), max(c(nnd1_sub,nnd2_sub)), length.out=P)
+    
+  #discretise the eCDFs such that we have comparable values for each vector - TODO: have to add the index here to the vector!
+  ecdf1 <- unlist(lapply(seq, ecdf1_fun))
+  ecdf2 <- unlist(lapply(seq, ecdf2_fun))
+  
+  #calculate the difference between the eCDFs how to handle if number of observations is not the same?
+  ecdf.diffs <- abs(ecdf1 - ecdf2)
+
+  #aggreate the sum of the differences in our test statistic
+  s_obs <- s_obs + sum(ecdf.diffs)
+}
+#the observed test statistic aggregated over all values of k
+s_obs
+
+# adapted from https://towardsdatascience.com/permutation-test-in-r-77d551a9f891 and https://mac-theobio.github.io/QMEE/lectures/permutation_examples.notes.html
+
+permutation.test.k <- function(s_obs,nsim){
+  distribution=c()
+  for(i in 1:nsim){
+    #initialise test statistic
+    s_p <- 0
+    #permute the index of the two dataframes combined
+    perm <- sample(nrow(nnd1) + nrow(nnd2))
+    
+    #concatenate the sampels
+    nnd_conc <- rbind(nnd1,nnd2)
+    #permute the actual dataframes
+    nnd_conc <- nnd_conc[perm,]
+    
+    #take the dataframe apart
+    nnd1 <- nnd_conc[1:nrow(nnd1),]
+    nnd2 <- nnd_conc[(nrow(nnd1)+1):nrow(nnd_conc),]
+    
+    for(k in k_){
+      #subset the data to the relevant column of k
+      nnd1_sub <- nnd1[,k]
+      nnd2_sub <- nnd2[,k]
+      #calculate the eCDF of the two processes
+      ecdf1_fun <- ecdf(nnd1_sub)
+      ecdf2_fun <- ecdf(nnd2_sub)
+      
+      #number of discrete steps
+      P <- 100
+      
+      #calculate the sequence over which to discretise, has to be the min and max over all samples
+      seq <- seq(from = min(c(nnd1_sub,nnd2_sub)), max(c(nnd1_sub,nnd2_sub)), length.out=P)
+      #discretise the eCDFs such that we have comparable values for each vector - TODO: have to add the index here to the vector!
+      ecdf1 <- unlist(lapply(seq, ecdf1_fun))
+      ecdf2 <- unlist(lapply(seq, ecdf2_fun))
+      
+      #calculate the difference between the eCDFs how to handle if number of observations is not the same?
+      ecdf.diffs <- abs(ecdf1 - ecdf2)
+      #aggreate the sum of the differences in our tst statistic
+      s_p <- s_p + sum(ecdf.diffs)
+    }
+    distribution[i] = s_p
+  }
+  hist(distribution)
+  abline(v=s_obs,col="red")
+  return((sum(distribution>=s_obs)+1)/(nsim+1))
+}
+
+permutation.test.k(s_obs, 1000)
+```
+
+```{r, cache=FALSE}
+#trying to center around the mean
+nnd1 <- nnd1 - nnd1_mean
+nnd2 <- nnd2 - nnd2_mean
+
+create_ridge_plot(nnd1, label = 'Scenario A')
+create_ridge_plot(nnd2, label = 'Scenario B')
 ```
 
 ### Ripley's $K$
@@ -424,7 +678,7 @@ The standardisation make it possible to compare point patterns with different ob
 
 We can add bootstrapped confidence intervals
 
-```{r}
+```{r, cache=FALSE}
 K_ependymal <- lohboot(ppls$Ependymal, fun='Kest')
 K_ependymal$type <- 'Ependymal'
 
@@ -496,7 +750,7 @@ $$
 
 We can add bootstrapped confidence intervals
 
-```{r}
+```{r, cache=FALSE}
 L_ependymal <- lohboot(ppls$Ependymal, fun='Lest')
 L_ependymal$type <- 'Ependymal'
 
@@ -545,7 +799,7 @@ $$
 In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$. 
 
 
-```{r}
+```{r, cache=FALSE}
 g_ependymal <- lohboot(ppls$Ependymal, fun='pcf')
 g_ependymal$type <- 'Ependymal'
 
@@ -590,7 +844,7 @@ $$
 D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
 $$
 
-```{r}
+```{r, cache=FALSE}
 K_ependymal_inhom <- lohboot(ppls$Ependymal, fun='Kinhom')
 K_ependymal_inhom$type <- 'Ependymal'
 
@@ -614,7 +868,7 @@ p
 
 #### Inhomogeneous $L$-function
 
-```{r}
+```{r, cache=FALSE}
 L_ependymal_inhom <- lohboot(ppls$Ependymal, fun='Linhom')
 L_ependymal_inhom$type <- 'Ependymal'
 
@@ -638,7 +892,7 @@ p
 
 #### Inhomogeneous pair-correlation function
 
-```{r}
+```{r, cache=FALSE}
 g_ependymal_inhom <- lohboot(ppls$Ependymal, fun='pcfinhom')
 g_ependymal_inhom$type <- 'Ependymal'
 
@@ -666,7 +920,7 @@ p
 
 could be useful to detect spatial patterns and clusters
 
-```{r}
+```{r, cache=FALSE}
 pp_df <- as.data.frame(ppls$`OD Mature`)
 #determine the correct epsilon neighbourhood
 dbscan::kNNdistplot(pp_df, k=5)
@@ -678,7 +932,7 @@ pp_df <- as.data.frame(ppls$Ependymal)
 #determine the correct epsilon neighbourhood
 dbscan::kNNdistplot(pp_df, k=5)
 #perform DBScan
-pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =75, minPts = 5)
 plot(pp_df[-3], col = pp_dbscan$cluster)
 
 pp_df <- as.data.frame(ppls$Microglia)
@@ -687,13 +941,34 @@ dbscan::kNNdistplot(pp_df, k=5)
 #perform DBScan
 pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =100, minPts = 5)
 plot(pp_df[-3], col = pp_dbscan$cluster)
+
+pp_df <- as.data.frame(ppls$Inhibitory)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =60, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+
+pp_df <- as.data.frame(ppls$Excitatory)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =75, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+
+pp_df <- as.data.frame(ppls$Pericytes)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
 ```
 
 # Appendix
 
 ## Session info
 
-```{r}
+```{r, cache=FALSE}
 #| label: session-info
 sessionInfo()
 ```

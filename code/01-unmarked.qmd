@@ -346,6 +346,8 @@ lines(density(gamma_mm_comp2_microglia),col='green')
 ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_odmature$data)
 ks.test(gamma_mm_comp2_microglia$data,gamma_mm_comp2_odmature$data)
 ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_microglia$data)
+
+kSamples::ad.test(gamma_mm_comp2_ependymal$data, gamma_mm_comp2_microglia$data, gamma_mm_comp2_odmature$data)
 ```
 
 ```{r, cache=FALSE}
@@ -429,16 +431,25 @@ Simulation from Pierre-Luc and approach of having a matrix of k x p dimension so
 
 ```{r, eval = TRUE, cache=FALSE}
 set.seed(123)
-x1 <- rnorm(400,rep(10*1:5,each=40),sd=7)
-#y1 <- rep(0,200)
-y1 <- rnorm(400,rep(10*sample.int(5,5),each=40),sd=9)
+x1 <- rnorm(300,rep(10*sample.int(3,3),each=40),sd=5)
+#x1 <- c(x1, rnorm(150,rep(10*sample.int(3,3),each=40),sd=10))
+y1 <- rep(0,300)
+#y1 <- rnorm(150,rep(10*sample.int(3,3),each=40),sd=3)
+#y1 <- c(y1, rnorm(150,rep(10*sample.int(3,3),each=40),sd=10))
 
-x2 <- rnorm(400,rep(10*1:5,each=40),sd=5)
-y2 <- rnorm(400,rep(10*sample.int(5,5),each=40),sd=5)
+x2 <- rnorm(300,rep(10*sample.int(5,5),each=40),sd=5)
+y2 <- rnorm(300,rep(10*sample.int(5,5),each=40),sd=5)
+
+
+d1 <- cbind(x1,y1)
+d2 <- cbind(x2,y2)
 
 # distance to the 5th NN transformed via sqrt
-nnd1 <- sqrt(BiocNeighbors::findKNN(cbind(x1,y1), k = 15)$distance)
-nnd2 <- sqrt(BiocNeighbors::findKNN(cbind(x2,y2), k = 15)$distance)
+nnd1 <- sqrt(BiocNeighbors::findKNN(d1, k = 15)$distance)
+nnd2 <- sqrt(BiocNeighbors::findKNN(d2, k = 15)$distance)
+
+d1 <- cbind(d1,nnd1)
+d2 <- cbind(d2,nnd2)
 
 #ridge plot to see dependence on k
 create_ridge_plot(nnd1, label = 'Scenario A')
@@ -447,26 +458,31 @@ create_ridge_plot(nnd2, label = 'Scenario B')
 nnd1_mean <- rowMeans((nnd1))
 nnd2_mean <- rowMeans((nnd2))
 
+d1 <- cbind(d1,nnd1_mean) %>% as.data.frame()
+d2 <- cbind(d2,nnd2_mean) %>% as.data.frame()
+
 # plot all
 d <- data.frame(distance=c(nnd1_mean,nnd2_mean),
                 scenario = c(rep('A', length(nnd1_mean)),
                              rep('B',length(nnd2_mean))))
 cowplot::plot_grid(nrow=2,
   cowplot::plot_grid(nrow=1,
-    ggplot(data.frame(x=x1,y=y1), aes(x,y)) + geom_point() + ggtitle("Scenario A"),
-    ggplot(data.frame(x=x2,y=y2), aes(x,y)) + geom_point() + ggtitle("Scenario B")),
+    ggplot(d1, aes(x1,y1, col = nnd1_mean)) + geom_point() + ggtitle("Scenario A") + labs(y='y', x = 'x', colour = "mean nndistance")+
+     scale_colour_gradient(low = "red", high = "yellow", na.value = NA,limits=c(min(nnd1_mean,nnd2_mean),max(nnd1_mean,nnd2_mean))),
+    ggplot(d2, aes(x2,y2, col = nnd2_mean)) + geom_point() + ggtitle("Scenario B")+ labs(y='y', x = 'x', colour = "mean nndistance")+
+     scale_colour_gradient(low = "red", high = "yellow", na.value = NA,limits=c(min(nnd1_mean,nnd2_mean),max(nnd1_mean,nnd2_mean)))),
   ggplot(d, aes(distance, colour=scenario)) + geom_density() + xlab("Mean of NN distance k=1-15"))
 
+#ks test on the two mean distributions
 ks.test(nnd1_mean,nnd2_mean)
-CDFt::CramerVonMisesTwoSamples(nnd1_mean,nnd2_mean)
 ```
 
 instead taking a different approach and sampling two curves from the k x p matrix and performing a 2D peacock test on this matrix for both groups
 
 ```{r, cache=FALSE}
 set.seed(123)
-#sub sample two columns via transpose at random from the dataframe (k vs. distances)
-index_k <-  sample(ncol(nnd1), 2)
+#sub sample two columns via transpose at random from the dataframe (k vs. distances) of the curves 5:15
+index_k <-  sample(5:ncol(nnd1), 2)
 nnd1_sub <- nnd1[, index_k]
 nnd2_sub <- nnd2[, index_k]
 
@@ -477,41 +493,40 @@ plot(ecdf(nnd2_sub[,1]), add=TRUE, col = 'blue')
 plot(ecdf(nnd2_sub[,2]), add=TRUE, col = 'blue')
 
 #fasano-franceschini test - faster version of the peacock test by taking the max of points within the sample - peacock does so over the set of all coordinate-wise combinations
-fasano.franceschini.test::fasano.franceschini.test(nnd1_sub,nnd2_sub,nPermute=1000)
+fasano.franceschini.test::fasano.franceschini.test(nnd1_sub,nnd2_sub,nPermute=10000)
 ```
 
 in another idea we can try to average the eCDFs we obtain and comparing the absolute difference between the resulting average eCDFs per group as done in the distinct paper by Simone Tiberi. In the end we compare this to a null distribution generated via permutation tests
 
 ```{r}
 set.seed(123)
-#eCDF median k kurves
-plot(ecdf(nnd1_mean), main='Scenario A and B mean curves', col = 'red', xlim = c(min(c(nnd1_mean,nnd2_mean)),max(nnd1_mean)))
-plot(ecdf(nnd2_mean), add=TRUE, col = 'blue')
+observed_teststatistic <- function(pp1, pp2, P){
+  #eCDF median k kurves
+  plot(ecdf(pp1), main='Scenario A and B mean curves', col = 'red', xlim = c(min(c(pp1,pp2)),max(pp1)))
+  plot(ecdf(pp2), add=TRUE, col = 'blue')
+  
+  #calculate the eCDF of the two processes
+  ecdf1_fun <- ecdf(pp1)
+  ecdf2_fun <- ecdf(pp2)
+  
+  #calculate the sequence over which to discretise, has to be the min and max over all samples
+  seq <- seq(from = min(c(pp1,pp2)), max(c(pp1,pp2)), length.out=P)
+  #discretise the eCDFs such that we have comparable values for each vector - TODO: have to add the index here to the vector!
+  ecdf1 <- unlist(lapply(seq, ecdf1_fun))
+  
+  ecdf2 <- unlist(lapply(seq, ecdf2_fun))
+  
+  plot(ecdf1, col = 'red')
+  points(ecdf2, col = 'blue')
+  #calculate the difference between the eCDFs how to handle if number of observations is not the same?
+  ecdf.diffs <- abs(ecdf1 - ecdf2)
+  
+  #sum of the differences as the observed test statistic
+  s_obs <- sum(ecdf.diffs)
+  return(s_obs)
+}
 
-#calculate the eCDF of the two processes
-ecdf1_fun <- ecdf(nnd1_mean)
-ecdf2_fun <- ecdf(nnd2_mean)
-
-#number of discrete steps
-P <- 400
-
-#calculate the sequence over which to discretise, has to be the min and max over all samples
-seq <- seq(from = min(c(nnd1_mean,nnd2_mean)), max(c(nnd1_mean,nnd2_mean)), length.out=P)
-#discretise the eCDFs such that we have comparable values for each vector - TODO: have to add the index here to the vector!
-ecdf1 <- unlist(lapply(seq, ecdf1_fun))
-
-ecdf2 <- unlist(lapply(seq, ecdf2_fun))
-
-plot(ecdf1, col = 'red')
-points(ecdf2, col = 'blue')
-#calculate the difference between the eCDFs how to handle if number of observations is not the same?
-ecdf.diffs <- abs(ecdf1 - ecdf2)
-
-#sum of the differences as the observed test statistic
-s_obs <- max(ecdf.diffs)
-
-
-permutation.test <- function(s_obs,pp1,pp2,nsim){
+permutation.test <- function(s_obs,pp1,pp2,P,nsim){
   distribution=c()
   for(i in 1:nsim){
     #perform the permutation index which has the length of the combined processes
@@ -529,7 +544,7 @@ permutation.test <- function(s_obs,pp1,pp2,nsim){
     ecdf2_fun <- ecdf(pp2_sample)
     
     #calculate the sequence over which to discretise, has to be the min and max over all samples
-    seq <- seq(from = min(c(nnd1_mean,nnd2_mean)), max(c(nnd1_mean,nnd2_mean)), length.out=P)
+    seq <- seq(from = min(c(pp1,pp2)), max(c(pp1,pp2)), length.out=P)
 
     #discretise the eCDFs such that we have comparable values for each vector
     ecdf1 <- unlist(lapply(seq, ecdf1_fun))
@@ -537,16 +552,15 @@ permutation.test <- function(s_obs,pp1,pp2,nsim){
     #calculate the absolute difference between the two patterns
     ecdf.diffs <- abs(ecdf1 - ecdf2)
     #aggreate the sum of the differences in our test statistic
-    s_p <- max(ecdf.diffs)
+    s_p <- sum(ecdf.diffs)
     distribution[i] = s_p
   }
   hist(distribution, breaks = 25)
   abline(v=s_obs,col="red")
-  return((sum(distribution>=s_obs)+1)/(nsim+1))
+  return(paste0('p-value permuted ', (sum(distribution>=s_obs)+1)/(nsim+1)))
 }
-
-permutation.test(s_obs, nnd1_mean, nnd2_mean, 1000)
-ks.test(nnd1_mean,nnd2_mean)
+s_obs <- observed_teststatistic(nnd1_mean,nnd2_mean, 400)
+permutation.test(s_obs, nnd1_mean, nnd2_mean, 400, 10000)
 ```
 
 in a third approach we can try to compare all 15 curves using an adapted version of Simones approach. We compute the abs difference between the pairwise k values for both scenarios and sum the test statistic for all of them. Then we compare that to a permutation based approach that was generated in the same way. 
@@ -633,8 +647,14 @@ permutation.test.k <- function(s_obs,nsim){
   return((sum(distribution>=s_obs)+1)/(nsim+1))
 }
 
-permutation.test.k(s_obs, 1000)
+permutation.test.k(s_obs, 10000)
 ```
+
+Further more we can just apply a $k$-sample version of the Anderson-Darling test of goodness of fit
+
+```{r}
+kSamples::ad.test(nnd1_mean, nnd2_mean)
+``` 
 
 ```{r, cache=FALSE}
 #trying to center around the mean
@@ -915,6 +935,14 @@ p
 ```
 
 #### Locally-scaled $K$-function
+
+In the inhomogeneous K approach above we assume that the local scale of the point process is not changed. The intensity is spatially varying. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdiveded in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that 
+
+$$
+g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
+$$
+
+In this example, $g_1$ is the pair correlation function of the template process
 
 #### DBSCAN
 

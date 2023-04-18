@@ -272,7 +272,7 @@ $$
 M = m \frac{\sum_jn_j(n_j-1)}{n(n-1)}
 $$
 
-where we subdivide the point process into $m$ quadrats. The formula above is called hte Morisita index which is the ratio of observed and expected fractions. If the points are independent the Morisita index is close to 1, greater than 1 if they are clustered, and less than 1 if they are regular. This concept is closely linked to the index of dispersion (in fact with a bit of algebra, these two can be transformed into each other)
+where we subdivide the point process into $m$ quadrats. The formula above is called the Morisita index which is the ratio of observed and expected fractions. If the points are independent the Morisita index is close to 1, greater than 1 if they are clustered, and less than 1 if they are regular. This concept is closely linked to the index of dispersion (in fact with a bit of algebra, these two can be transformed into each other)
 
 $$
 I = \frac{s^2}{\bar{n}} = \frac{m}{n(m-1)}\sum_{j=1}^m\left(n_j-\frac{n}{m}\right)^2
@@ -461,7 +461,7 @@ We can regard edge effect as a sampling bias. Larger distances (e.g. close to th
 
 A stationary point process $X$ is invariant to translations. So the entire point process can be shifted by a vector $s$ to be at the position $X+s$. 
 
-### $L$-function
+### The $L$-function
 
 The $K$-function can be centered which is then called the $L$-function
 
@@ -637,13 +637,162 @@ p
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous K approach above we assume that the local scale of the point process is not changed. The intensity is spatially varying. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdiveded in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that 
+In the inhomogeneous $K$ approach above we assume that the local scale of the point process is not changed. However, the intensity can vary spatially. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that 
 
 $$
 g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
 $$
 
-In this example, $g_1$ is the pair correlation function of the template process
+In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor.
+
+```{r}
+K_ependymal_scaled <- Kscaled(ppls$Ependymal)
+K_ependymal_scaled$type <- 'Ependymal'
+
+K_odmature_scaled <- Kscaled(ppls$`OD Mature`)
+K_odmature_scaled$type <- 'OD Mature'
+
+K_microglia_scaled <- Kscaled(ppls$Microglia)
+K_microglia_scaled$type <- 'Microglia'
+
+#create a list that combines bove values
+K_list_scaled<- rbind(K_ependymal_scaled, K_odmature_scaled, K_microglia_scaled)
+
+p <- ggplot(K_list_scaled, aes(x=r, y=iso, col= type))+
+  geom_line()+
+  ggtitle('Locally scaled K-function')+
+  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
+  theme_light()
+p
+```
+
+#### Locally-scaled $g$-function
+
+would work by taking the derivative of the locally scaled $K$-function
+
+#### Locally-scaled $L$-function
+
+As the $L$ is just a transformation of the $K$-function, the same local scaling can apply to the $L$-function
+
+```{r}
+L_ependymal_scaled <- Lscaled(ppls$Ependymal)
+L_ependymal_scaled$type <- 'Ependymal'
+
+L_odmature_scaled <- Lscaled(ppls$`OD Mature`)
+L_odmature_scaled$type <- 'OD Mature'
+
+L_microglia_scaled <- Lscaled(ppls$Microglia)
+L_microglia_scaled$type <- 'Microglia'
+
+#create a list that combines bove values
+L_list_scaled<- rbind(L_ependymal_scaled, L_odmature_scaled, L_microglia_scaled)
+
+p <- ggplot(L_list_scaled, aes(x=r, y=iso, col= type))+
+  geom_line()+
+  ggtitle('Locally scaled L-function')+
+  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
+  theme_light()
+p
+```
+
+#### Local Indicators of Spatial Association
+
+The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis.
+
+##### Local $K$ function
+
+```{r}
+K_ependymal_lisa <- localK(ppls$Ependymal)
+plot(K_ependymal_lisa, main = 'local K functions Ependymal', legend=FALSE)
+
+K_odmature_lisa <- localK(ppls$`OD Mature`)
+plot(K_odmature_lisa, main = 'local K functions OD Mature', legend=FALSE)
+
+K_microglia_lisa <- localK(ppls$Microglia)
+plot(K_microglia_lisa, main = 'local K functions Microglia', legend=FALSE)
+```
+
+##### Local pair correlation function
+
+```{r}
+g_ependymal_lisa <- localpcf(ppls$Ependymal)
+plot(g_ependymal_lisa, main = 'local pcf functions Ependymal', legend=FALSE)
+
+g_odmature_lisa <- localpcf(ppls$`OD Mature`)
+plot(g_odmature_lisa, main = 'local pcf functions OD Mature', legend=FALSE)
+
+g_microglia_lisa <- localpcf(ppls$Microglia)
+plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
+```
+
+##### Local $L$ function
+
+```{r}
+L_ependymal_lisa <- localL(ppls$Ependymal)
+plot(L_ependymal_lisa, main = 'local L functions Ependymal', legend=FALSE)
+
+L_odmature_lisa <- localL(ppls$`OD Mature`)
+plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
+
+L_microglia_lisa <- localL(ppls$Microglia)
+plot(L_microglia_lisa, main = 'local L functions Microglia', legend=FALSE)
+```
+
+##### Functional PCA for the $n$ Curves
+
+we will try to apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data
+
+```{r}
+functional.pca.pp <- function(df){
+  df_fdob <- df %>% as.matrix()
+  #remove theo column - we want only the actual estimations in there
+  df_fdob <- df_fdob[,-ncol(df_fdob)]
+  #remove r column - this has to be provided independently to the FPCA
+  df_fdob <- df_fdob[,-ncol(df_fdob)]
+  #number of columns
+  N <- ncol(df_fdob)
+  #number of rows
+  M <- nrow(df_fdob)
+  #the x values at which all the curves were evaluated
+  s <- df$r
+  #create the FPCA object
+  fd_obj <- fdapace::MakeFPCAInputs(IDs = rep(1:N, each=M),tVec=rep(s,N), yVec=df_fdob)
+  #check that the FPCA object is valid
+  fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
+  #run the computation of the FPCA - would work with sparse data.
+  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
+  fdapace::CreatePathPlot(fpca_obj, subset=1:2, main = 'Estimated Paths for first two curves'); grid()
+}
+
+#first for the K functions
+functional.pca.pp(K_ependymal_lisa)
+functional.pca.pp(K_odmature_lisa)
+functional.pca.pp(K_microglia_lisa)
+
+#g functions
+functional.pca.pp(g_ependymal_lisa)
+functional.pca.pp(g_odmature_lisa)
+functional.pca.pp(g_microglia_lisa)
+
+#L functions
+functional.pca.pp(L_ependymal_lisa)
+functional.pca.pp(L_odmature_lisa)
+functional.pca.pp(L_microglia_lisa)
+```
+
+### Third-Order Summary Statistics
+
+So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised exepected value of triangles where all edges are smaller than the radius r
+
+$$
+T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
+$$
+
+here m is the maximum side of the triangle
+
+$$
+m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
+$$
 
 #### DBSCAN
 
@@ -692,6 +841,8 @@ dbscan::kNNdistplot(pp_df, k=5)
 pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
 plot(pp_df[-3], col = pp_dbscan$cluster)
 ```
+
+## Spacing
 
 # Appendix
 

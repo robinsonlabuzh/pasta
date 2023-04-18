@@ -794,6 +794,27 @@ $$
 m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
 
+```{r}
+T_ependymal <- Tstat(ppls$Ependymal)
+T_ependymal $type <- 'Ependymal'
+
+T_odmature <- Tstat(ppls$`OD Mature`)
+T_odmature$type <- 'OD Mature'
+
+T_microglia <- Tstat(ppls$Microglia)
+T_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+T_list<- rbind(T_ependymal, T_odmature, T_microglia)
+
+p <- ggplot(T_list, aes(x=r, y=trans, col= type))+
+  geom_line()+
+  ggtitle('Third-order summary statistic')+
+  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
+  theme_light()
+p
+```
+
 #### DBSCAN
 
 could be useful to detect spatial patterns and clusters

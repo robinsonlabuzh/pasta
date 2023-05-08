@@ -294,78 +294,6 @@ fryplot(ppls$`OD Mature`)
 fryplot(ppls$Microglia)
 ```
 
-### Nearest Neighbour approaches
-
-Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `nndist`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances. The aim would be to compare these parameteric models via statistical tests such as Anderson-Darling or Kolmogorov Smirnov. Another idea would be to compute the distance between these models with e.g. a Kullback-Leibler Divergence.
-
-```{r, cache=FALSE}
-# potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
-# nndistances_k5_ependymal <- nndist(ppls$Ependymal, k = 5)
-# nndistances_k5_odmature <- nndist(ppls$`OD Mature`, k = 5)
-# nndistances_k5_microglia <- nndist(ppls$Microglia, k = 5)
-# 
-# #transform the distances to sqrt and try out normalisation by intensity
-# nndistances_k5_ependymal <- sqrt(nndistances_k5_ependymal)#*intensity(ppls$Ependymal)#/median(sqrt(nndistances_k5_ependymal))
-# nndistances_k5_odmature <- sqrt(nndistances_k5_odmature)#*intensity(ppls$`OD Mature`)#/median(sqrt(nndistances_k5_odmature))
-# nndistances_k5_microglia <- sqrt(nndistances_k5_microglia)#*intensity(ppls$Microglia)#/median(sqrt(nndistances_k5_microglia))
-
-nndistances_k5_ependymal<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Ependymal), k = 15)$distance)
-nndistances_k5_odmature<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$`OD Mature`), k = 15)$distance)
-nndistances_k5_microglia<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Microglia), k = 15)$distance)
-
-#calculate the row Median distance of k 1-10
-nndistances_ependymal_median <- rowMedians((nndistances_k5_ependymal))
-nndistances_odmature_median <- rowMedians((nndistances_k5_odmature))
-nndistances_microglia_median <- rowMedians((nndistances_k5_microglia))
-
-#create a histogram of the nearest-neighbour distances
-hist_ependymal <- hist(nndistances_ependymal_median, breaks = 25, plot = FALSE)
-hist_odmature <- hist(nndistances_odmature_median, breaks = 25, plot = FALSE)
-hist_microglia <- hist(nndistances_microglia_median, breaks = 25, plot = FALSE)
-
-#fit now a gamma mixture model to this nndist data
-gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_ependymal_median, ncomp=2,family = 'gamma')
-gamma_mm_comp2_odmature <- mixR::mixfit(nndistances_odmature_median, ncomp=2,family = 'gamma')
-gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_microglia_median, ncomp=2,family = 'gamma')
-
-#plot this
-c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
-c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
-c3 <- rgb(144,238,144, max = 255, alpha = 100, names = "lt.green")
-
-plot(hist_ependymal, col = c1, main = "Histogram of sqrt nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Median Nearest neighbour distances sqrt transformed')
-legend(20,1, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
-#plot the probability density of the finite mixture model
-lines(density(gamma_mm_comp2_ependymal),col='blue')
-plot(hist_odmature, col = c2, add = TRUE, freq=FALSE)
-lines(density(gamma_mm_comp2_odmature),col='red')
-plot(hist_microglia, col = c3, add = TRUE, freq=FALSE)
-lines(density(gamma_mm_comp2_microglia),col='green')
-
-#kolmogorov smirnov test
-ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_odmature$data)
-ks.test(gamma_mm_comp2_microglia$data,gamma_mm_comp2_odmature$data)
-ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_microglia$data)
-
-kSamples::ad.test(gamma_mm_comp2_ependymal$data, gamma_mm_comp2_microglia$data, gamma_mm_comp2_odmature$data)
-```
-
-```{r, cache=FALSE}
-create_ridge_plot <- function(nndistances, label){
-  nndistances_df <- as.data.frame(nndistances)
-  nndistances_df$index <- 1:nrow(nndistances_df)
-  #add the row median
-  nndistances_df$median <- rowMedians((nndistances))
-  nndistances_df_melted <- reshape2::melt(nndistances_df, id = 'index')
-  nndistances_df_melted <-dplyr::rename(nndistances_df_melted, K = variable)
-  return(ggplot(nndistances_df_melted, aes(x = value, y = K, fill=K)) + theme(legend.position="none") + ggtitle(label) + ggridges::geom_density_ridges())
-}
-
-create_ridge_plot(nndistances_k5_ependymal, label='Ependymal')
-create_ridge_plot(nndistances_k5_odmature, label='OD Mature')
-create_ridge_plot(nndistances_k5_microglia, label='Microglia')
-```
-
 ### Ripley's $K$
 
 #### Empirical Ripley's $K$
@@ -635,6 +563,8 @@ p <- ggplot(g_list_inhom, aes(x=r, y=border, col= type))+
 p
 ```
 
+### Local Scaling
+
 #### Locally-scaled $K$-function
 
 In the inhomogeneous $K$ approach above we assume that the local scale of the point process is not changed. However, the intensity can vary spatially. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that 
@@ -666,7 +596,7 @@ p <- ggplot(K_list_scaled, aes(x=r, y=iso, col= type))+
 p
 ```
 
-#### Locally-scaled $g$-function
+#### Locally-scaled pair-correlation function
 
 would work by taking the derivative of the locally scaled $K$-function
 
@@ -865,9 +795,384 @@ plot(pp_df[-3], col = pp_dbscan$cluster)
 
 ## Spacing
 
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. In the following chapter we will look at measures of spacing and shortest-distances to assess spatial arrangements.
+
+Baddeley et.al. summarises three basic distances to measure
+
+- pairwise distance: $d_{i,j} = ||x_i-x_j||$
+- nearest-neighbour distances: $d_i = \min_{j \neq i}d_{ij}$
+- empty-space distance: $d(u) = \min_j||u-x_j||$
+
+There are test of CSR that are based on spacing -> Clark-Evans test and Hopkins-Skellam Index that are both implemented above in the CSR testing function
+
+### Exploratory Graphics
+
+#### Stienen Diagram
+
+The stienen diagram is obtained by drawing circles around each point in the process of the size of its nearest neighbour distance
+
+```{r}
+stienen(ppls$Ependymal)
+stienen(ppls$`OD Mature`)
+stienen(ppls$Microglia)
+```
+
+#### Dirichlet Tiles
+
+Dirichlet tiles are considered as the space "that is closer to $x_i$ than to any other point in the pattern $x$:"
+
+$$
+C(x_i|x) = \{u \in \mathbb{R}^2:||u-x_i|| = \min_{j} ||u-x_j||\}
+$$
+
+These dirichlet tiles are convex polygons
+
+```{r}
+plot(dirichlet(ppls$Ependymal))
+plot(dirichlet(ppls$`OD Mature`))
+plot(dirichlet(ppls$Microglia))
+```
+
+### Nearest Neighbour approaches
+
+Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `nndist`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances. The aim would be to compare these parameteric models via statistical tests such as Anderson-Darling or Kolmogorov Smirnov. Another idea would be to compute the distance between these models with e.g. a Kullback-Leibler Divergence.
+
+```{r, cache=FALSE}
+# potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
+# nndistances_k5_ependymal <- nndist(ppls$Ependymal, k = 5)
+# nndistances_k5_odmature <- nndist(ppls$`OD Mature`, k = 5)
+# nndistances_k5_microglia <- nndist(ppls$Microglia, k = 5)
+# 
+# #transform the distances to sqrt and try out normalisation by intensity
+# nndistances_k5_ependymal <- sqrt(nndistances_k5_ependymal)#*intensity(ppls$Ependymal)#/median(sqrt(nndistances_k5_ependymal))
+# nndistances_k5_odmature <- sqrt(nndistances_k5_odmature)#*intensity(ppls$`OD Mature`)#/median(sqrt(nndistances_k5_odmature))
+# nndistances_k5_microglia <- sqrt(nndistances_k5_microglia)#*intensity(ppls$Microglia)#/median(sqrt(nndistances_k5_microglia))
+
+nndistances_k5_ependymal<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Ependymal), k = 15)$distance)
+nndistances_k5_odmature<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$`OD Mature`), k = 15)$distance)
+nndistances_k5_microglia<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Microglia), k = 15)$distance)
+
+#calculate the row Median distance of k 1-10
+nndistances_ependymal_median <- rowMedians((nndistances_k5_ependymal))
+nndistances_odmature_median <- rowMedians((nndistances_k5_odmature))
+nndistances_microglia_median <- rowMedians((nndistances_k5_microglia))
+
+#create a histogram of the nearest-neighbour distances
+hist_ependymal <- hist(nndistances_ependymal_median, breaks = 25, plot = FALSE)
+hist_odmature <- hist(nndistances_odmature_median, breaks = 25, plot = FALSE)
+hist_microglia <- hist(nndistances_microglia_median, breaks = 25, plot = FALSE)
+
+#fit now a gamma mixture model to this nndist data
+gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_ependymal_median, ncomp=2,family = 'gamma')
+gamma_mm_comp2_odmature <- mixR::mixfit(nndistances_odmature_median, ncomp=2,family = 'gamma')
+gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_microglia_median, ncomp=2,family = 'gamma')
+
+#plot this
+c1 <- rgb(173,216,230,max = 255, alpha = 100, names = "lt.blue")
+c2 <- rgb(255,192,203, max = 255, alpha = 100, names = "lt.pink")
+c3 <- rgb(144,238,144, max = 255, alpha = 100, names = "lt.green")
+
+plot(hist_ependymal, col = c1, main = "Histogram of sqrt nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Median Nearest neighbour distances sqrt transformed')
+legend(20,1, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('blue', 'red', 'green'), lty=1, cex=0.8)
+#plot the probability density of the finite mixture model
+lines(density(gamma_mm_comp2_ependymal),col='blue')
+plot(hist_odmature, col = c2, add = TRUE, freq=FALSE)
+lines(density(gamma_mm_comp2_odmature),col='red')
+plot(hist_microglia, col = c3, add = TRUE, freq=FALSE)
+lines(density(gamma_mm_comp2_microglia),col='green')
+
+#kolmogorov smirnov test
+ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_odmature$data)
+ks.test(gamma_mm_comp2_microglia$data,gamma_mm_comp2_odmature$data)
+ks.test(gamma_mm_comp2_ependymal$data,gamma_mm_comp2_microglia$data)
+
+kSamples::ad.test(gamma_mm_comp2_ependymal$data, gamma_mm_comp2_microglia$data, gamma_mm_comp2_odmature$data)
+```
+
+```{r, cache=FALSE}
+create_ridge_plot <- function(nndistances, label){
+  nndistances_df <- as.data.frame(nndistances)
+  nndistances_df$index <- 1:nrow(nndistances_df)
+  #add the row median
+  nndistances_df$median <- rowMedians((nndistances))
+  nndistances_df_melted <- reshape2::melt(nndistances_df, id = 'index')
+  nndistances_df_melted <-dplyr::rename(nndistances_df_melted, K = variable)
+  return(ggplot(nndistances_df_melted, aes(x = value, y = K, fill=K)) + theme(legend.position="none") + ggtitle(label) + ggridges::geom_density_ridges())
+}
+
+create_ridge_plot(nndistances_k5_ependymal, label='Ependymal')
+create_ridge_plot(nndistances_k5_odmature, label='OD Mature')
+create_ridge_plot(nndistances_k5_microglia, label='Microglia')
+```
+
+### Nearest-neighbour function $G$ and empty-space function $F$
+
+#### Definitions of $F$ and $G$ function
+
+Under a stationary spatial point process, the empty-space distance is defined as
+
+$$
+d(u,X) = \min\{||u-x_i||: x_i \in X\}
+$$
+
+The empty space function is then the cumulative distribution function of the empty-space distances defined above
+
+$$
+F(r) = \mathbb{P}\{d(u,X)\leq r\}
+$$
+
+The nearest-neighbour distance is defined as
+
+$$
+d_i = \min_{j\neq i}||x_j-x_i||
+$$
+
+The nearest-neighbour distance distribution function $G(r)$ is then defined as
+
+$$
+G(r) = \mathbb{P}\{d(x,X\backslash u \leq r |X\ has\ a\ point\ at\ u\}
+$$
+
+For a homogeneous Poisson process, the nearest-neighbour distance distribution is identical to the empty-space function of the same process
+
+$$
+G_{pois} \equiv F_{pois}
+$$
+
+For a general point process the $F$ and $G$ functions are different
+
+#### Estimating $F$ and $G$
+
+```{r}
+G_ependymal <- Gest(ppls$Ependymal)
+G_ependymal$type <- 'Ependymal'
+
+G_odmature <- Gest(ppls$`OD Mature`)
+G_odmature$type <- 'OD Mature'
+
+G_microglia <- Gest(ppls$Microglia)
+G_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+G_list<- rbind(G_ependymal, G_odmature, G_microglia)
+
+p <- ggplot(G_list, aes(x=r, y=rs, col= type))+
+  geom_line()+
+  ggtitle('estimated G function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+p
+
+plot(ecdf(nndist(ppls$Ependymal)), col = 'red', xlim = c(0,350) )
+plot(ecdf(nndist(ppls$`OD Mature`)), add=TRUE, col = 'blue')
+plot(ecdf(nndist(ppls$Microglia)), add=TRUE, col = 'green')
+```
+
+```{r}
+F_ependymal <- Fest(ppls$Ependymal)
+F_ependymal$type <- 'Ependymal'
+
+F_odmature <- Fest(ppls$`OD Mature`)
+F_odmature$type <- 'OD Mature'
+
+F_microglia <- Fest(ppls$Microglia)
+F_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+F_list<- rbind(F_ependymal, F_odmature, F_microglia)
+
+p <- ggplot(F_list, aes(x=r, y=rs, col= type))+
+  geom_line()+
+  ggtitle('estimated F function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+p
+```
+
+### Empty-space hazard
+
+The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For praticial reason in this case this is not the derivative of the $F$ function but rather a a hazard rate is considered
+
+$$
+h(r) = \frac{f(r)}{1-F(r)}
+$$
+
+For a completely spatially random process the hazard rate is 
+
+$$
+h_{pois}(r) = 2 \pi \lambda r
+$$
+
+Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$.
+
+```{r}
+fhazard_ependymal <- envelope(ppls$Ependymal, Fhazard, nsim=39, fix.n=TRUE,
+transform=expression(./(2*pi*r)))
+fhazard_ependymal$type <- 'Ependymal'
+
+fhazard_odmature <- envelope(ppls$`OD Mature`, Fhazard, nsim=39, fix.n=TRUE,
+transform=expression(./(2*pi*r)))
+fhazard_odmature$type <- 'OD Mature'
+
+fhazard_microglia <- envelope(ppls$Microglia, Fhazard, nsim=39, fix.n=TRUE,
+transform=expression(./(2*pi*r)))
+fhazard_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+fhazard_list<- rbind(fhazard_ependymal, fhazard_odmature, fhazard_microglia)
+
+p <- ggplot(fhazard_list, aes(x=r, y=obs, col= type))+
+  geom_line(key_glyph = "point")+
+  guides(color = guide_legend(override.aes = list(size = 3))) +
+  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)+
+  ggtitle('Empty-space hazard')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed", show.legend = FALSE)+
+  theme_light() + theme(legend.key.size = unit(0.5, "lines"))
+p
+```
+
+### $J$-Function
+
+The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above). 
+
+Another approach is the $J$ function. 
+
+$$
+J(r) = \frac{1-G(r)}{1-F(r)}
+$$
+
+"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and $J(r) < 1 is consistent with clustering." (Baddeley et. al.)
+
+```{r}
+J_ependymal <- Jest(ppls$Ependymal)
+J_ependymal$type <- 'Ependymal'
+
+J_odmature <- Jest(ppls$`OD Mature`)
+J_odmature$type <- 'OD Mature'
+
+J_microglia <- Jest(ppls$Microglia)
+J_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+J_list<- rbind(J_ependymal, J_odmature, J_microglia)
+
+p <- ggplot(J_list, aes(x=r, y=rs, col= type))+
+  geom_line()+
+  ggtitle('estimated J function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed", col='black')+
+  theme_light()
+p
+```
+
+### Accounting for Inhomogeneity in Spacing Functions
+
+There are inhomogeneous variants of the spacing functions explained above 
+
+```{r}
+G_inhom_ependymal <- Ginhom(ppls$Ependymal)
+G_inhom_ependymal$type <- 'Ependymal'
+
+G_inhom_odmature <- Ginhom(ppls$`OD Mature`)
+G_inhom_odmature$type <- 'OD Mature'
+
+G_inhom_microglia <- Ginhom(ppls$Microglia)
+G_inhom_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+G_inhom_list<- rbind(G_inhom_ependymal, G_inhom_odmature, G_inhom_microglia)
+
+p <- ggplot(G_inhom_list, aes(x=r, y=bord, col= type))+
+  geom_line()+
+  ggtitle('estimated inhomogneous G function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+p
+```
+
+```{r}
+F_inhom_ependymal <- Finhom(ppls$Ependymal)
+F_inhom_ependymal$type <- 'Ependymal'
+
+F_inhom_odmature <- Finhom(ppls$`OD Mature`)
+F_inhom_odmature$type <- 'OD Mature'
+
+F_inhom_microglia <- Finhom(ppls$Microglia)
+F_inhom_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+F_inhom_list<- rbind(F_inhom_ependymal, F_inhom_odmature, F_inhom_microglia)
+
+p <- ggplot(F_inhom_list, aes(x=r, y=bord, col= type))+
+  geom_line()+
+  ggtitle('estimated inhomogneous F function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+p
+```
+
+```{r}
+J_inhom_ependymal <- Jinhom(ppls$Ependymal)
+J_inhom_ependymal$type <- 'Ependymal'
+
+J_inhom_odmature <- Jinhom(ppls$`OD Mature`)
+J_inhom_odmature$type <- 'OD Mature'
+
+J_inhom_microglia <- Jinhom(ppls$Microglia)
+J_inhom_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+J_inhom_list<- rbind(J_inhom_ependymal, J_inhom_odmature, J_inhom_microglia)
+
+p <- ggplot(J_inhom_list, aes(x=r, y=bord, col= type))+
+  geom_line()+
+  ggtitle('estimated inhomogneous J function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed", col='black')+
+  theme_light()
+p
+```
+
+### Nearest-Neighbour Orientation
+
+Next to the distance to the nearest-neighbour we can estimate the orientation of the vector to the nearest-neighbour. This gives an indication of the orientation of the spacing.
+
+```{r}
+nnorient_ependymal <- nnorient(ppls$Ependymal)
+nnorient_ependymal$type <- 'Ependymal'
+
+nnorient_odmature <- nnorient(ppls$`OD Mature`)
+nnorient_odmature$type <- 'OD Mature'
+
+nnorient_microglia <- nnorient(ppls$Microglia)
+nnorient_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+nnorient_list<- rbind(nnorient_ependymal, nnorient_odmature, nnorient_microglia)
+
+p <- ggplot(nnorient_list, aes(x=phi, y=bordm, col= type))+
+  geom_line()+
+  ggtitle('Nearest-neighbour orientation function')+
+  geom_line(aes(x=phi,y=theo),linetype = "dashed", col = 'black')+
+  theme_light()
+p
+```
+
+The same can be portrayed as a rose diagram
+
+```{r}
+rose(nnorient_ependymal)
+rose(nnorient_odmature)
+rose(nnorient_microglia)
+```
+
+The concept of spacing is not only usable in point pattern analysis but more broadly in any spatial context.
+
+### Edge Corrections
+
+The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice. 
+
 # Appendix
 
-## Session info
+## Session info 
 
 ```{r, cache=FALSE}
 #| label: session-info

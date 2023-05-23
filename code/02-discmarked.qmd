@@ -309,6 +309,7 @@ if(require(dixon)){
 
 ### Cuzick-Edwards' k-NN test
 
+
 ```{r}
 # Function to calculate Cuzick and Edwards' T_k statistic for a marked ppp
 calculate_Tk_marked <- function(ppp, k_range) {
@@ -331,37 +332,30 @@ calculate_Tk_marked <- function(ppp, k_range) {
     # Separate the cases and controls
     cases <- subset(ppp, marks == mark)
     controls <- subset(ppp, marks != mark)
+    # Remark cases and control
+    marks(cases) <- as.factor('case')
+    marks(controls) <-  as.factor('control')
     
     # Combine the cases and controls into a single point pattern
     combined_ppp <- superimpose(cases, controls)
     
     # Loop through all k's
     for (k in k_range) {
-    # Calculate the k nearest neighbors of each point
-    nn <- RANN::nn2(data = cbind(cases$x, cases$y), 
-                    query = cbind(combined_ppp$x, combined_ppp$y), k = k)
-    
-    # Initialize the test statistic
-    T_k <- 0
-        
-    # Calculate the test statistic
-    for (i in 1:nrow(nn$nn.idx)) {
-      # Get the indices of the k nearest neighbors
-      indices <- nn$nn.idx[i, ]
-    
-      # Count the number of cases among the k nearest neighbors
-      d_ik <- sum(marks(combined_ppp)[indices] == mark)
-    
-      # Update the test statistic
-      T_k <- T_k + d_ik
-    }
-    
-    # divide by total number of points
-    # THIS IS NOT IN THE ORIGINAL TEST STATISTIC !
-    T_k <- T_k #/ npoints(subset(ppp, marks == mark))
-
+      
+      # Index of cases
+      idx <- marks(combined_ppp) == 'case'
+      
+      # Sum occurrences of cases
+      T_k <- sum(marktable(combined_ppp, N=k)
+                 [marks(combined_ppp) == 'case','case'])
+      
+      # NOT IN ORGINAL FORMULA: divide by total number of points
+      T_k <- T_k / sum(marks(combined_ppp) == 'case')
+      
       # Add the results to the data frame
-      results <- rbind(results, data.frame(Mark = as.character(mark), K = k, Tk = T_k))
+      results <- rbind(results, 
+                       data.frame(Mark = as.character(mark),
+                                  K = k, Tk = T_k))
     }
   }
   
@@ -379,6 +373,7 @@ calculate_Tk_marked(pp_sel, c(1:10))
 
 plot(split(pp_sel))
 ```
+
 
 ```{r}
 study_window <- square(10)
@@ -519,7 +514,21 @@ calculate_Tk_marked(pp_sup, c(1:20))
 
 Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. 
 
+These summary functions assume that the multitype process is stationary which might not be an appropriate assumption in spatial omcis data.
+
+### Cross K-function
+
+```{r}
+Kall <- alltypes(rescale(pp), Kcross)
+plot(Kall)
+```
+
+The diagonal shows the K-function for the different marks, with indication of Poisson or non-Poisson point processes. Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function and does not imply that the points are Poisson
+
+
 ### Cross L-function:
+
+Similiar to the the K-function, the cross L-function can be defined for all pairs of points.
 
 ```{r}
 #| fig-width: 10
@@ -534,7 +543,7 @@ plot(lc, .-r~r)
 lce <- alltypes(pp, Lcross, envelope = TRUE, nsim=9)
 plot(lce, .-r~r)
 ```
-
+- TODO: not sure what the off-diagonal plots show us
 
 ### Cross pair-correlation function
 
@@ -557,8 +566,11 @@ mc <- alltypes(pp, markconnect)
 plot(mc)
 ```
 
+The dashed lines indicate expected values under random labeling, revealing that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type.
 
 ### Cross F-function (empty space function)
+
+The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. Assumes that the process is stationary.
 
 ```{r}
 #| fig-width: 5
@@ -569,6 +581,8 @@ plot(fc)
 
 ### Cross G-function (Nearest-neighbor function)
 
+The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type. If the points are independent of each other the G and F function are identical. Assumes that the process is stationary.
+
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
@@ -578,13 +592,14 @@ plot(gc)
 
 ### Cross J-function 
 
+The value of 1 is consistent with CSR and independence between different points.
+
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
 jc <- alltypes(pp, Jcross)
 plot(jc)
 ```
-
 
 ## Summary function within and between types
 

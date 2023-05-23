@@ -11,6 +11,9 @@ source("utils.R")
 library(spatstat)
 library(seg)
 library(stats)
+library(RANN)
+library(ggplot2)
+library(spatstat.geom)
 ```
 
 ## Setup
@@ -303,6 +306,215 @@ if(require(dixon)){
 }
 ```
 
+
+### Cuzick-Edwards' k-NN test
+
+```{r}
+# Function to calculate Cuzick and Edwards' T_k statistic for a marked ppp
+calculate_Tk_marked <- function(ppp, k_range) {
+  # Check if the input point pattern is a marked ppp object
+  if (!is.ppp(ppp) || is.null(marks(ppp))) {
+    stop("The point pattern must be a marked ppp object.")
+  }
+  
+  # Get the unique marks
+  unique_marks <- unique(marks(ppp))
+  
+  # Initialize a data frame to store the T_k statistic for each mark and k
+  results <- data.frame()
+  
+  # Calculate the T_k statistic for each mark and k
+  for (mark in unique_marks) {
+    # Subset the point pattern by the current mark
+    ppp_marked <- subset(ppp, marks == mark)
+    
+    # Separate the cases and controls
+    cases <- subset(ppp, marks == mark)
+    controls <- subset(ppp, marks != mark)
+    
+    # Combine the cases and controls into a single point pattern
+    combined_ppp <- superimpose(cases, controls)
+    
+    # Loop through all k's
+    for (k in k_range) {
+    # Calculate the k nearest neighbors of each point
+    nn <- RANN::nn2(data = cbind(cases$x, cases$y), 
+                    query = cbind(combined_ppp$x, combined_ppp$y), k = k)
+    
+    # Initialize the test statistic
+    T_k <- 0
+        
+    # Calculate the test statistic
+    for (i in 1:nrow(nn$nn.idx)) {
+      # Get the indices of the k nearest neighbors
+      indices <- nn$nn.idx[i, ]
+    
+      # Count the number of cases among the k nearest neighbors
+      d_ik <- sum(marks(combined_ppp)[indices] == mark)
+    
+      # Update the test statistic
+      T_k <- T_k + d_ik
+    }
+    
+    # divide by total number of points
+    # THIS IS NOT IN THE ORIGINAL TEST STATISTIC !
+    T_k <- T_k #/ npoints(subset(ppp, marks == mark))
+
+      # Add the results to the data frame
+      results <- rbind(results, data.frame(Mark = as.character(mark), K = k, Tk = T_k))
+    }
+  }
+  
+  # Plot the T_k statistic vs. k for each mark
+  ggplot(results, aes(x = K, y = Tk, color = Mark)) +
+    geom_line() +
+    labs(title = "",
+         x = "k",
+         y = "Cuzick and Edwards' T_k statistic",
+         color = "Mark")
+}
+
+# Apply the function to a marked ppp
+calculate_Tk_marked(pp_sel, c(1:10))
+
+plot(split(pp_sel))
+```
+
+```{r}
+study_window <- square(10)
+
+# Generate the first CSR point pattern with n1 points
+n1 <- 1 # specify the number of points for the first point pattern
+pp1 <- rpoispp(lambda = n1, win = study_window)
+
+# Generate the second CSR point pattern with n2 points
+n2 <- 1.5 # specify the number of points for the second point pattern
+pp2 <- rpoispp(lambda = n2, win = study_window)
+
+n3 <-  0.75 # specify the number of points for the second point pattern
+pp3 <- rpoispp(lambda = n3, win = study_window)
+
+
+# Generate marks for the point patterns
+marks(pp1) <- 'A'
+marks(pp2) <- 'B'
+marks(pp3) <- 'C'
+
+
+# Join the point patterns with marks
+pp_sup <- superimpose(pp1, pp2, pp3)
+
+# marks and incidcator
+marks(pp_sup) <- factor(marks(pp_sup))
+
+plot(pp_sup)
+plot(split(pp_sup))
+
+calculate_Tk_marked(pp_sup, c(1:10))
+
+### 
+
+set.seed(12345)
+study_window <- square(1)
+
+# Unclustered
+n1 <- 15 # specify the number of points for the first point pattern
+pp1 <- rpoispp(lambda = n1, win = study_window)
+
+# Regular
+n2 <- 5 
+pp2 <- rSSI(0.09, 70, win = study_window)
+
+# Clustred
+n3 <- 1 
+pp3 <- rMatClust(30, 0.05, 4, win = study_window)
+
+
+# Generate marks for the point patterns
+
+marks(pp1) <- 'A'
+marks(pp2) <- 'B'
+marks(pp3) <- 'C'
+
+
+# Join the point patterns with marks
+pp_sup <- superimpose(pp1, pp2, pp3)
+
+# marks and incidcator
+marks(pp_sup) <- factor(marks(pp_sup))
+
+plot(pp_sup)
+plot(split(pp_sup))
+
+calculate_Tk_marked(pp_sup, c(1:10))
+
+```
+```{r}
+W <- study_window
+# Generate the first class of points (left side)
+n1 <- 50 # number of points
+x1 <- runif(n1, 0.1, 0.3) # x-coordinates
+y1 <- runif(n1, 0.1, 0.3) # y-coordinates
+pp1 <- ppp(x1, y1, window = W) # create point pattern object
+
+# Generate the second class of points (right side)
+n2 <- 50 # number of points
+x2 <- runif(n2, 0.7, 0.9) # x-coordinates
+y2 <- runif(n2, 0.7, 0.9) # y-coordinates
+pp2 <- ppp(x2, y2, window = W) # create point pattern object
+
+# Generate the second class of points (right side)
+n3 <- 50 # number of points
+x3 <- runif(n3, 0.4, 0.6) # x-coordinates
+y3 <- runif(n3, 0.4, 0.6) # y-coordinates
+pp3 <- ppp(x3, y3, window = W) # create point pattern object
+
+
+marks(pp1) <- 'A'
+marks(pp2) <- 'A'
+marks(pp3) <- 'B'
+
+pp_sup <- superimpose(pp1, pp2, pp3)
+
+plot(pp_sup)
+
+calculate_Tk_marked(pp_sup, c(1:20))
+```
+```{r}
+W <- study_window
+# Generate the first class of points (left side)
+n1 <- 50 # number of points
+x1 <- runif(n1, 0.1, 0.3) # x-coordinates
+y1 <- runif(n1, 0.1, 0.3) # y-coordinates
+pp1 <- ppp(x1, y1, window = W) # create point pattern object
+
+# Generate the second class of points (right side)
+n2 <- 50 # number of points
+x2 <- runif(n2, 0.4, 0.6) # x-coordinates
+y2 <- runif(n2, 0.4, 0.6) # y-coordinates
+pp2 <- ppp(x2, y2, window = W) # create point pattern object
+
+# Generate the second class of points (right side)
+n3 <- 50 # number of points
+x3 <- runif(n3, 0.4, 0.6) # x-coordinates
+y3 <- runif(n3, 0.4, 0.6) # y-coordinates
+pp3 <- ppp(x3, y3, window = W) # create point pattern object
+
+
+marks(pp1) <- 'A'
+marks(pp2) <- 'A'
+marks(pp3) <- 'B'
+
+pp_sup <- superimpose(pp1, pp2, pp3)
+
+plot(pp_sup)
+
+calculate_Tk_marked(pp_sup, c(1:20))
+```
+
+### Scan statistic and friends
+
+
 ## Summary functions for pairs of types
 
 Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. 
@@ -423,6 +635,8 @@ To fit a nonstationary multitype poisson process a additional covariates includi
 ppfit <- ppm(pp~marks * polynom(x,y,1))
 ppfit
 ```
+
+- TODO
 
 ## Multitype Gibbs models
 

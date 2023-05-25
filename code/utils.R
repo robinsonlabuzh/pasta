@@ -7,7 +7,9 @@ suppressPackageStartupMessages({
   library(dplyr)
   library(ggplot2)
   library(rlang)
-  library(spdep)
+  library(seg)
+  library(stats)
+  library(RANN)
 })
 
 .ppp <- \(spe, marks = NULL) {

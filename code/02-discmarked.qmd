@@ -175,6 +175,8 @@ A test of segregation of marks can be performed with `segregation.test`. It is b
 
 ```{r}
 #| warning: false
+pp
+
 segregation.test(pp,nsim=19)
 ```
 
@@ -217,8 +219,8 @@ isp(pp_sel,
 
 ```{r}
 selection <- c('Astrocyte', 'Ependymal')
-pp_sel <- pp[pp$marks %in% selection]
-marks(pp_sel) <- factor(as.vector(marks(pp[pp$marks %in% selection])))
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
 
 plot(pp_sel)
 
@@ -242,8 +244,8 @@ paste0('Index of spatial proximity: ',
 
 ```{r}
 selection <- c('Astrocyte', 'Microglia')
-pp_sel <- pp[pp$marks %in% selection]
-marks(pp_sel) <- factor(as.vector(marks(pp[pp$marks %in% selection])))
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
 
 plot(pp_sel)
 plot(unmark(pp_sel))

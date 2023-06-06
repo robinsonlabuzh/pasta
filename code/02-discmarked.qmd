@@ -380,6 +380,15 @@ plot(split(pp_sel))
 
 ## Summary functions for pairs of types
 
+```{r}
+# for a faster runtime we will use a subset of the data
+selection <- c('Astrocyte', 'OD Mature', 'Ependymal', 'Microglia', 'Pericytes')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+```
+
+
+
 Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. 
 
 These summary functions assume that the multitype process is stationary which might not be an appropriate assumption in spatial omcis data.
@@ -387,7 +396,7 @@ These summary functions assume that the multitype process is stationary which mi
 ### Cross K-function
 
 ```{r}
-Kall <- alltypes(rescale(pp), Kcross)
+Kall <- alltypes(rescale(pp_sel), Kcross)
 plot(Kall)
 ```
 
@@ -401,14 +410,14 @@ Similiar to the the K-function, the cross L-function can be defined for all pair
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-lc <- alltypes(pp, Lcross)
+lc <- alltypes(pp_sel, Lcross)
 plot(lc, .-r~r)
 ```
 
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-lce <- alltypes(pp, Lcross, envelope = TRUE, nsim=9)
+lce <- alltypes(pp_sel, Lcross, envelope = TRUE, nsim=9)
 plot(lce, .-r~r)
 ```
 - TODO: not sure what the off-diagonal plots show us
@@ -418,7 +427,7 @@ plot(lce, .-r~r)
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-pcfc <- alltypes(pp, pcfcross)
+pcfc <- alltypes(pp_sel, pcfcross)
 plot(pcfc)
 ```
 
@@ -430,9 +439,6 @@ The mark connection function is essentially the cross pair-correlation function 
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-
-# For computational reasons we will only use a subset
-pp_sel <-  subset(pp, marks %in% c("Astrocyte","OD Mature", "Ependymal" ), drop = TRUE)
 
 mc <- alltypes(pp_sel, markconnect)
 plot(mc)
@@ -447,7 +453,7 @@ The cross F-function is the cumulative distribution function of the distance fro
 ```{r}
 #| fig-width: 5
 #| fig-height: 10
-fc <- alltypes(pp, Fest)
+fc <- alltypes(pp_sel, Fest)
 plot(fc)
 ```
 
@@ -458,7 +464,7 @@ The cross G-function is the cumulative distribution function of the distance fro
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-gc <- alltypes(pp, Gcross)
+gc <- alltypes(pp_sel, Gcross)
 plot(gc)
 ```
 
@@ -469,7 +475,7 @@ The value of 1 is consistent with CSR and independence between different points.
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-jc <- alltypes(pp, Jcross)
+jc <- alltypes(pp_sel, Jcross)
 plot(jc)
 ```
 
@@ -478,7 +484,7 @@ plot(jc)
 For each K-, G- and J- function there also exist dot functions which is measuring distances from points of one type to points of any type.
 
 ```{r}
-jd <- alltypes(pp, Jdot)
+jd <- alltypes(pp_sel, Jdot)
 plot(jd)
 ```
 
@@ -492,7 +498,7 @@ The Mark or Type Equality function for a stationary multitype point process meas
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-me <- markcorr(pp)
+me <- markcorr(pp_sel)
 plot(me)
 ```
 
@@ -501,17 +507,23 @@ plot(me)
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-ic <- Iest(pp)
+ic <- Iest(pp_sel)
 plot(ic)
 ```
 
 ## Summary functions for non stationary processes
 
+The cross and dot functions described above assume a underlying stationary point process. If this assumption is not given, the interpretation of the result might be incorrect.
+
+The inhomogeneous equivalents of the described functions require the different intensities as inputs in `spatstat`. If they are not given the intensities are estimated using kernel smoothing.  
+
+
+
 ### Inhomogeneous L-function
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-lci <- alltypes(pp, Lcross.inhom)
+lci <- alltypes(pp_sel, Lcross.inhom)
 plot(lci, .-r~r)
 ```
 
@@ -543,6 +555,49 @@ ppfit
 
 ## Multitype Cluster processes
 
+# Correlation stationarity
+
+```{r}
+selection <- c('OD Mature')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+
+odrho <- rhohat(unmark(pp_sel), "x", method="tr")
+odlambda <- predict(odrho)
+
+od4 <- quantess(unmark(pp_sel), "x", 2)
+od42 <- nestsplit(pp_sel, od4, ny=3)
+
+plot(od42)
+
+od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
+
+studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
+
+studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
+               lambda=odlambda, minpoints = 10)
+```
+
+```{r}
+selection <- c('Ependymal')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+
+odrho <- rhohat(unmark(pp_sel), "x", method="tr")
+odlambda <- predict(odrho)
+
+od4 <- quantess(unmark(pp_sel), "x", 2)
+od42 <- nestsplit(pp_sel, od4, ny=3)
+
+plot(od42)
+
+od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
+
+studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
+
+studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
+               lambda=odlambda, minpoints = 10)
+```
 
 # Appendix
 

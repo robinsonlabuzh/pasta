@@ -1,0 +1,33 @@
+# Preamble
+
+## Dependencies
+
+```{r}
+#| label: load-libs
+#| message: false
+#| warning: false
+#| results: hide
+source("utils.R")
+```
+
+## Setup
+
+```{r}
+#| label: load-data
+spe_vis <- readRDS("../data/spe_spot.rds")
+```
+
+```{r}
+(pp <- .ppp(spe_vis, marks = "ground_truth"))
+
+plot(pp)
+```
+
+# Appendix
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```

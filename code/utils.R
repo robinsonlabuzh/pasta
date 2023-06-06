@@ -10,6 +10,7 @@ suppressPackageStartupMessages({
   library(seg)
   library(stats)
   library(RANN)
+  library(STexampleData)
 })
 
 .ppp <- \(spe, marks = NULL) {

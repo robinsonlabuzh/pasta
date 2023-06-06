@@ -30,3 +30,5 @@ website:
         file: 03-contmarked.qmd
       - text: "Both"
         file: 04-bothmarked.qmd
+      - text: "Spot based data"
+        file: 05-spotbased.qmd

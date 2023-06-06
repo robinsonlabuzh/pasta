@@ -10,7 +10,10 @@ library(ggplot2)
 library(RColorBrewer)
 library(ExperimentHub)
 library(SpatialExperiment)
+library(STexampleData)
 ```
+
+# Molecule-based dataset
 
 ## Setup
 
@@ -22,7 +25,7 @@ q <- query(eh, "MERFISH")
 df <- eh[["EH7546"]]
 ```
 
-# Wrangling
+## Wrangling
 
 ```{r}
 #| label: make-spe
@@ -65,6 +68,14 @@ ggplot(gg, aes(x, y, col = cluster_id)) +
   theme_void() + theme(legend.key.size = unit(0.5, "lines"))
 ```
 
+# Sequencing-based dataset
+
+## Setup
+
+```{r}
+spe_vis <- Visium_humanDLPFC()
+```
+
 # Appendix
 
 ## Save data
@@ -72,6 +83,7 @@ ggplot(gg, aes(x, y, col = cluster_id)) +
 ```{r}
 #| label: save-data
 saveRDS(spe, "../data/spe.rds")
+saveRDS(spe_vis, "../data/spe_spot.rds")
 ```
 
 ## Session info

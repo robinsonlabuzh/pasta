@@ -30,12 +30,11 @@ sub <- spe[, spe$sample_id == 0.01]
 (pp <- .ppp(sub, marks = "cluster_id"))
 ```
 
-
 # Visualize 
 
 Plot using spatstat
 
-```{r, fig.width=12, fig.height=12}
+```{r, fig.width=14, fig.height=14}
 plot(pp)
 ```
 
@@ -176,7 +175,6 @@ A test of segregation of marks can be performed with `segregation.test`. It is b
 ```{r}
 #| warning: false
 pp
-
 segregation.test(pp,nsim=19)
 ```
 
@@ -240,7 +238,6 @@ paste0('Index of spatial proximity: ',
 ```
 
 ### Example of less segregation
-
 
 ```{r}
 selection <- c('Astrocyte', 'Microglia')
@@ -375,9 +372,6 @@ calculate_Tk_marked(pp_sel, c(1:10))
 plot(split(pp_sel))
 ```
 
-### Scan statistic and friends
-
-
 ## Summary functions for pairs of types
 
 ```{r}
@@ -386,8 +380,6 @@ selection <- c('Astrocyte', 'OD Mature', 'Ependymal', 'Microglia', 'Pericytes')
 pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
 
 ```
-
-
 
 Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. 
 
@@ -401,7 +393,6 @@ plot(Kall)
 ```
 
 The diagonal shows the K-function for the different marks, with indication of Poisson or non-Poisson point processes. Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function and does not imply that the points are Poisson
-
 
 ### Cross L-function:
 
@@ -430,7 +421,6 @@ plot(lce, .-r~r)
 pcfc <- alltypes(pp_sel, pcfcross)
 plot(pcfc)
 ```
-
 
 ### Mark connection function
 
@@ -488,7 +478,6 @@ jd <- alltypes(pp_sel, Jdot)
 plot(jd)
 ```
 
-
 ## Summary function within and between types
 
 ### Mark equality function
@@ -517,8 +506,6 @@ The cross and dot functions described above assume a underlying stationary point
 
 The inhomogeneous equivalents of the described functions require the different intensities as inputs in `spatstat`. If they are not given the intensities are estimated using kernel smoothing.  
 
-
-
 ### Inhomogeneous L-function
 ```{r}
 #| fig-width: 10
@@ -528,6 +515,38 @@ plot(lci, .-r~r)
 ```
 
 # Tests of randomness and independence
+
+In a multitype point process there are two interesting hypothesis:
+  - random labeling hypothesis: the allocation of lables to the points in random
+  - independent component hyopthesis: there is independence between different type of points
+If both statments are correct, the point pattern is considered to be complete spatially random and independent (CSRI), the marked analoug to complete spatial randomness (CSR).
+
+## Testing the indepenence of components assumption
+
+The i to j functions are useful to test the independence of different subprocesses. If the processes of type i and j are independent then
+$K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$.
+
+
+```{r}
+pp_scaled <- rescale(pp_sel)
+
+E1 <- envelope(pp_scaled, Kcross, nsim=10, i="Astrocyte", j="Pericytes", simulate=expression(rshift(pp_scaled, radius=150)))
+
+E2 <- envelope(pp_scaled, Gcross, nsim=10, i="Astrocyte", j="Pericytes", simulate=expression(rshift(pp_scaled, radius=150)))
+
+E3 <- envelope(pp_scaled, Jcross, nsim=10, i="Astrocyte", j="Pericytes", simulate=expression(rshift(pp_scaled, radius=150)))
+
+par(mfrow = c(3,1))
+plot(E1)
+plot(E2)
+plot(E3)
+```
+
+Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is no methods to handle edge effects appearing from random shifts when splitting.
+
+## Testing random labelling
+
+Random labelling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Test for random labelling can be done using permuation test, in which the labels are randomly permuted. Random labelling can be assumed if the permuted datasets are statistically equivalent to the original dataset.
 
 # Multitype models and processes
 

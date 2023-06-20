@@ -574,7 +574,17 @@ ppfit
 
 ## Multitype Cluster processes
 
-# Correlation stationarity
+# A closer look: Inhomogeneity assmuptions
+
+## Correlation stationarity
+
+It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern. 
+
+## Local scaling
+
+The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable.
+
+We can use a permutation test to test the inhomogeneoity assumption. In this scenarion we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
 
 ```{r}
 selection <- c('OD Mature')
@@ -591,7 +601,8 @@ plot(od42)
 
 od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
 
-studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
+studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled,
+               minpoints = 10)
 
 studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
                lambda=odlambda, minpoints = 10)

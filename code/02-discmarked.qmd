@@ -68,7 +68,6 @@ ppls <- split(pp)
 plot(ppls)
 ```
 
-
 And with `superimpose` point patterns can be combined. 
 
 ```{r}
@@ -550,6 +549,8 @@ Random labelling test is most logical when the marks represents its status, whic
 
 # Multitype models and processes
 
+This part will briefly cover the fundamentals of models and processes for multitype point processes. For more details we refer the reader to "Spatial Point Patterns: Methodology and Applications with R" written by Baddeley, Rubak and Turner.
+
 ## Multitype Poisson models
 
 Similar to the unmarked case marked point patterns can be fitted to specific modeling assumptions. The simples case is the homogeneous multitype poisson process. It can be fit again with `ppm` but this time using "marks" as the covariate, which essentially means a different intensity is assumed for each type. 
@@ -566,68 +567,23 @@ ppfit <- ppm(pp~marks * polynom(x,y,1))
 ppfit
 ```
 
-- TODO
+Multitype Poisson models can be used to test for segregation in a parametric fashion. A Poisson model is considered not segregated or separable when the logarithm of the intensity, log $\log \mu(u, m)$, can be expressed as the sum of two separate terms: $A(u)$ and $B(m)$. The term $A(u)$ solely depends on the location $u$, while the term $B(m)$  depends on the type of point $m$. Any terms that depend on both the location and the type of point $u$ and $m$ indicate segregation.
+
+```{r}
+f0 <- ppm(pp ~ polynom(x,y,3) + marks)
+f1 <- ppm(pp ~ polynom(x,y,3) * marks)
+
+anova(f0, f1, test="LR")
+```
+
+The first model `f0` corresponds to the null hypothesis which assumes an absence of segregation, in which the intercept is different between types but all other coefficients are the same for all types. On the other hand model `f1` corresponds to a segregated model.
 
 ## Multitype Gibbs models
 
+
 ## Multitype Cox processes
 
-## Multitype Cluster processes
-
-# A closer look: Inhomogeneity assmuptions
-
-## Correlation stationarity
-
-It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern. 
-
-## Local scaling
-
-The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable.
-
-We can use a permutation test to test the inhomogeneoity assumption. In this scenarion we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
-
-```{r}
-selection <- c('OD Mature')
-pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
-
-
-odrho <- rhohat(unmark(pp_sel), "x", method="tr")
-odlambda <- predict(odrho)
-
-od4 <- quantess(unmark(pp_sel), "x", 2)
-od42 <- nestsplit(pp_sel, od4, ny=3)
-
-plot(od42)
-
-od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
-
-studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled,
-               minpoints = 10)
-
-studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
-               lambda=odlambda, minpoints = 10)
-```
-
-```{r}
-selection <- c('Ependymal')
-pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
-
-
-odrho <- rhohat(unmark(pp_sel), "x", method="tr")
-odlambda <- predict(odrho)
-
-od4 <- quantess(unmark(pp_sel), "x", 2)
-od42 <- nestsplit(pp_sel, od4, ny=3)
-
-plot(od42)
-
-od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
-
-studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
-
-studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
-               lambda=odlambda, minpoints = 10)
-```
+### Multitype Cluster processes
 
 # Appendix
 

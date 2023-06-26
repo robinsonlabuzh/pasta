@@ -82,6 +82,59 @@ $$
 
 A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic.
 
+### Correlation stationarity
+
+It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern. 
+
+### Local scaling
+
+The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable.
+
+We can use a permutation test to test the inhomogeneoity assumption. In this scenarion we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
+
+```{r}
+selection <- c('OD Mature')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+
+odrho <- rhohat(unmark(pp_sel), "x", method="tr")
+odlambda <- predict(odrho)
+
+od4 <- quantess(unmark(pp_sel), "x", 2)
+od42 <- nestsplit(pp_sel, od4, ny=3)
+
+plot(od42)
+
+od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
+
+studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled,
+               minpoints = 10)
+
+studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
+               lambda=odlambda, minpoints = 10)
+```
+
+```{r}
+selection <- c('Ependymal')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+
+odrho <- rhohat(unmark(pp_sel), "x", method="tr")
+odlambda <- predict(odrho)
+
+od4 <- quantess(unmark(pp_sel), "x", 2)
+od42 <- nestsplit(pp_sel, od4, ny=3)
+
+plot(od42)
+
+od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
+
+studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
+
+studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
+               lambda=odlambda, minpoints = 10)
+```
+
 ### Intensity
 
 Intensity is the expected density of points per unit area, as seen above. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity itself is called a first moment property - being related to the expected number of points.

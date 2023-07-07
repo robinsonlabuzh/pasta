@@ -732,6 +732,8 @@ plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 
 In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight poisson line and others that are around/underneath the straight poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
 
+There are inhomogeneous versions of these (e.g. `localLinhom`). These are not shown here for brevity.
+
 ##### Functional PCA for the $n$ Curves
 
 We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data

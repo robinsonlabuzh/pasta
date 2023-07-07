@@ -75,15 +75,15 @@ $$
 \label{eq:expected_number_inhomogeneous}
 $$
 
-### Stationarity
-
-"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space."
-
 ### Isotropy
 
 A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic.
 
-### Correlation stationarity
+### Stationarity
+
+"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space."
+
+#### Correlation stationarity
 
 It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern. 
 
@@ -91,7 +91,7 @@ It is important to note that the inhomogeneous K-function does not apply to ever
 
 The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable.
 
-We can use a permutation test to test the inhomogeneoity assumption. In this scenarion we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
 
 ```{r}
 selection <- c('OD Mature')
@@ -114,7 +114,7 @@ studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled,
 studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
                lambda=odlambda, minpoints = 10)
 ```
-
+<!-- 
 ```{r}
 selection <- c('Ependymal')
 pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
@@ -134,7 +134,8 @@ studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled, minpoints = 10)
 
 studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
                lambda=odlambda, minpoints = 10)
-```
+``` 
+-->
 
 ### Intensity
 
@@ -164,7 +165,7 @@ intensityPointProcess(pp,mark=TRUE)
 ```
 #### Quadrat Counting
 
-quadrat counting can again be performed for the entire picture
+In quadrat counting all the points falling into a given quadrat are counted. This gives an overview on the characeterstics of the point pattern, such as correlation stationarity.
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
 Q5 <- quadratcount(pp, nx=5, ny=5)
@@ -181,7 +182,7 @@ plot(Q5sep, main = 'Separated Marks Quadrats')
 ``` 
 -->
 
-The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types
+The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types. This tells us if the counts of the points are distributed evenly across the quadrats.
 
 ```{r, cache=FALSE}
 quadratTestPointProcess <- function(pp, mark){
@@ -196,6 +197,8 @@ quadratTestPointProcess(pp, mark=FALSE)
 ```
 
 #### Kernel Estimation
+
+In kernel estimation we try to estimate the intensity function $\lambda(u)$ of the point process. There are different types of kernel estimators (see Baddeley). A popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth.
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
 Dens <- density(pp)
@@ -227,7 +230,10 @@ estimatingIntensity <- function(
 }
 ```
 -->
+
 ### Testing for CSR
+
+Whether or not a point process is completely spatially random depends on two characeteristics. The points have to be distributed homogeneously and they have to be independent of each other (see definitions above). There are different ways to test for CSR which are summarised in the wrapper below.
 
 ```{r, cache=FALSE}
 #PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
@@ -319,7 +325,8 @@ testingCSR(ppls$Microglia, method='clark-evans')
 
 ## Correlation
 
-Correlation or more generally covariance is called a second order quantity and measures dependence between data points. In point processes 
+Correlation or more generally covariance is called a second order quantity and measures dependence between data points. This is a very useful concept, allowing for the assessment of correlation between points.
+
 <!-- 
 ### Morisita Index
 
@@ -354,12 +361,11 @@ fryplot(ppls$Microglia)
 
 #### Empirical Ripley's $K$
 
-In the framework of correlation analysis we often look at distances $d_{ij} = ||x_i-x_j||$ of all ordered points. It is a natural idea to look at the summary of these distances $d_{ij}$, e.g. a histogram. The histogram of this point process is a difficult statistic, as it depends on the shape and size of the observation window, thus the histogram can change significantly. Let's instead look at the empirical distribution funciton of the distances $d_{ij}$ that are smaller or equal than a radius $r$
+In the framework of correlation analysis we often look at distances $d_{ij} = ||x_i-x_j||$ of all ordered points. It is a natural idea to look at the summary of these distances $d_{ij}$, e.g. a histogram. The histogram of this point process is a difficult statistic, as it depends on the observation window $W$, thus the histogram can change significantly with a changing window $W$. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$
 
 $$
 \hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n \sum_{j=1\\j\neq i}^n \{d_{ij}\leq r\}
 $$
-This empirical cumulative distribution function is closely linked to the Morisita index in that both capture the fraction of pairs of points that lie close together. The similarity comes from the idea of "closeness" which is defined in $\hat{H}(r)$ by $r$ and in the Morisita index by the size of the quadrats. 
 
 The contribution of each point $x_i$ to the sum above is
 
@@ -379,32 +385,8 @@ $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}
 $$
 
-The standardisation make it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though tha the point process has homogeneous intensity. 
-<!-- 
-We can add bootstrapped confidence intervals
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though tha the point process has homogeneous intensity. 
 
-```{r, cache=FALSE}
-K_ependymal <- lohboot(ppls$Ependymal, fun='Kest')
-K_ependymal$type <- 'Ependymal'
-
-K_odmature <- lohboot(ppls$`OD Mature`, fun='Kest')
-K_odmature$type <- 'OD Mature'
-
-K_microglia <- lohboot(ppls$Microglia, fun='Kest')
-K_microglia$type <- 'Microglia'
-
-#create a list that combines bove values
-K_list <- rbind(K_ependymal, K_odmature, K_microglia)
-
-p <- ggplot(K_list, aes(x=r, y=iso, col= type))+
-  geom_line()+
-  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
-  ggtitle('estimated K-function')+
-  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
-  theme_light()
-p
-``` 
--->
 
 #### True $K$-function
 
@@ -428,9 +410,9 @@ $$
 K_{pois}(r) = \pi r^2
 $$
 
-in our cases we don't find a homogeneous point process
+#### Edge effects and their corrections for spatial metrics
 
-#### Edge corrections for spatial metrics
+Edge effects describe the phenomenon that we never observe the entire point process but only a part of it within a window $W$. This means that parts of the point process at the border might not be observed and the value of the statistic biased along the edges.
 
 There are many corrections for edge effects. They are briefly listed here
 
@@ -448,37 +430,11 @@ A stationary point process $X$ is invariant to translations. So the entire point
 
 ### The $L$-function
 
-The $K$-function can be centered which is then called the $L$-function
+The $K$-function can be centered which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function (see spicyR for reference).
 
 $$
 L(r) = \sqrt{\frac{K(r)}{\pi}}
 $$
-
-<!-- 
-We can add bootstrapped confidence intervals
-
-```{r, cache=FALSE}
-L_ependymal <- lohboot(ppls$Ependymal, fun='Lest')
-L_ependymal$type <- 'Ependymal'
-
-L_odmature <- lohboot(ppls$`OD Mature`, fun='Lest')
-L_odmature$type <- 'OD Mature'
-
-L_microglia <- lohboot(ppls$Microglia, fun='Lest')
-L_microglia$type <- 'Microglia'
-
-#create a list that combines bove values
-L_list <- rbind(L_ependymal, L_odmature, L_microglia)
-
-p <- ggplot(L_list, aes(x=r, y=iso, col= type))+
-  geom_line()+
-  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
-  ggtitle('estimated L-function')+
-  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
-  theme_light()
-p
-``` 
--->
 
 ### Pair Correlation function
 
@@ -506,8 +462,45 @@ $$
 
 In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$. 
 
-<!-- 
 ```{r, cache=FALSE}
+K_ependymal <- lohboot(ppls$Ependymal, fun='Kest')
+K_ependymal$type <- 'Ependymal'
+
+K_odmature <- lohboot(ppls$`OD Mature`, fun='Kest')
+K_odmature$type <- 'OD Mature'
+
+K_microglia <- lohboot(ppls$Microglia, fun='Kest')
+K_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+K_list <- rbind(K_ependymal, K_odmature, K_microglia)
+
+p_K <- ggplot(K_list, aes(x=r, y=iso, col= type))+
+  geom_line()+
+  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
+  ggtitle('estimated K-function')+
+  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
+  theme_light()
+
+L_ependymal <- lohboot(ppls$Ependymal, fun='Lest')
+L_ependymal$type <- 'Ependymal'
+
+L_odmature <- lohboot(ppls$`OD Mature`, fun='Lest')
+L_odmature$type <- 'OD Mature'
+
+L_microglia <- lohboot(ppls$Microglia, fun='Lest')
+L_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+L_list <- rbind(L_ependymal, L_odmature, L_microglia)
+
+p_L <- ggplot(L_list, aes(x=r, y=iso, col= type))+
+  geom_line()+
+  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
+  ggtitle('estimated L-function')+
+  geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
+  theme_light()
+
 g_ependymal <- lohboot(ppls$Ependymal, fun='pcf')
 g_ependymal$type <- 'Ependymal'
 
@@ -520,21 +513,23 @@ g_microglia$type <- 'Microglia'
 #create a list that combines bove values
 g_list <- rbind(g_ependymal, g_odmature, g_microglia)
 
-p <- ggplot(g_list, aes(x=r, y=border, col= type))+
+p_g <- ggplot(g_list, aes(x=r, y=border, col= type))+
   geom_line()+
   geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
   ggtitle('pcf-function')+
   geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
   theme_light()
-p
 ```
- -->
+
+```{r, cache=FALSE, fig.height = 10, fig.width = 7}
+p_K/p_L/p_g
+```
 
 ### Correcting for Inhomogeneity
 
 #### Inhomogeneous $K$-function
 
-In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account for our analysis. Biological samples display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives. In the sample that we have chosen, Ependymal cells and OD mature cells are inhomogeneous by eye. Inhomogeneous alternatives can be calculated via:
+In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account for our analysis. Biological samples display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives. Inhomogeneous alternatives can be calculated via:
 
 $$
 K_{inhom}(r) = \mathbb{E} \left[\sum_{x_j \in X} \frac{1}{\lambda(x_j)}\mathbb{1}\{0<||u-x_j||\leq r\}|u \in X\right]
@@ -621,7 +616,7 @@ The $L$-function is a variance stabilised (source spicyR) version of the $K$-fun
 
 The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$. 
 
-The different y-axis are all variants of edge corrections as explained above.
+We have to note that inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another.
 
 ### Local Scaling
 
@@ -634,7 +629,16 @@ g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
 $$
 
 In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor.
-<!-- 
+
+#### Locally-scaled pair-correlation function
+
+would work by taking the derivative of the locally scaled $K$-function 
+
+
+#### Locally-scaled $L$-function
+
+As the $L$ is just a transformation of the $K$-function, the same local scaling can apply to the $L$-function
+
 ```{r}
 K_ependymal_scaled <- Kscaled(ppls$Ependymal)
 K_ependymal_scaled$type <- 'Ependymal'
@@ -648,24 +652,12 @@ K_microglia_scaled$type <- 'Microglia'
 #create a list that combines bove values
 K_list_scaled<- rbind(K_ependymal_scaled, K_odmature_scaled, K_microglia_scaled)
 
-p <- ggplot(K_list_scaled, aes(x=r, y=iso, col= type))+
+p_K <- ggplot(K_list_scaled, aes(x=r, y=iso, col= type))+
   geom_line()+
   ggtitle('Locally scaled K-function')+
   geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
   theme_light()
-p
-```
 
-#### Locally-scaled pair-correlation function
-
-would work by taking the derivative of the locally scaled $K$-function 
--->
-
-#### Locally-scaled $L$-function
-
-As the $L$ is just a transformation of the $K$-function, the same local scaling can apply to the $L$-function
-
-```{r}
 L_ependymal_scaled <- Lscaled(ppls$Ependymal)
 L_ependymal_scaled$type <- 'Ependymal'
 
@@ -678,12 +670,16 @@ L_microglia_scaled$type <- 'Microglia'
 #create a list that combines bove values
 L_list_scaled<- rbind(L_ependymal_scaled, L_odmature_scaled, L_microglia_scaled)
 
-p <- ggplot(L_list_scaled, aes(x=r, y=iso, col= type))+
+p_L <- ggplot(L_list_scaled, aes(x=r, y=iso, col= type))+
   geom_line()+
   ggtitle('Locally scaled L-function')+
   geom_line(aes(x=r,y=theo),col = 'black',linetype = "dashed")+
   theme_light()
-p
+```
+
+
+```{r, cache=FALSE, fig.height = 10, fig.width = 7}
+p_K/p_L
 ```
 
 The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed poisson line, unlike in the inhomogeneous version. 
@@ -734,7 +730,7 @@ plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 # plot(L_microglia_lisa, main = 'local L functions Microglia', legend=FALSE)
 ```
 
-In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, such that are clearly above the straight poisson line and such that are around/underneath the straight poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
+In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight poisson line and others that are around/underneath the straight poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
 
 ##### Functional PCA for the $n$ Curves
 
@@ -760,7 +756,7 @@ functional.pca.pp <- function(df){
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
   fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
-  #fdapace::CreateModeOfVarPlot(fpca_obj)
+  fdapace::CreateModeOfVarPlot(fpca_obj, title = 'Modes of Variation OD Mature cells')
 }
 
 # #first for the K functions
@@ -779,11 +775,13 @@ functional.pca.pp(L_odmature_lisa)
 #functional.pca.pp(L_microglia_lisa)
 ```
 
-Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve. The first eigenfunction is clearly always above the mean curve ($80 \%$ of the variance according to the Scree plot), whereas the second eigenfunction is first a deviation below and then above as well. -> check the source from the Springer book "Functional Data Analysis with R and Matlab".
+Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
+
+As such it is natural to display the eigenfunction as their contribution to the deviation around the mean as a confidence ribbon. The patterns in variation of the point process are captured in the mode of variation plot. The modes of variation capture the contribution of the first (in this case two) eigenfunctions around the mean. -> check the source from the Springer book "Functional Data Analysis with R and Matlab".
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised exepected value of triangles where all edges are smaller than the radius r
+So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r
 
 $$
 T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
@@ -914,7 +912,7 @@ plot(dirichlet(ppls$Microglia))
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `nndist`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances.
+Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `findKNN` from `BiocNeighbours`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances.
 
 ```{r, cache=FALSE}
 # potentially easier to just calculate the distances to a nearest neighbour and plot the hist and fit a mixture model - difficult to set the number of components in that case 
@@ -1015,55 +1013,6 @@ G_{pois} \equiv F_{pois}
 $$
 
 For a general point process the $F$ and $G$ functions are different
-<!-- 
-#### Estimating $F$ and $G$
-
-```{r}
-G_ependymal <- Gest(ppls$Ependymal)
-G_ependymal$type <- 'Ependymal'
-
-G_odmature <- Gest(ppls$`OD Mature`)
-G_odmature$type <- 'OD Mature'
-
-G_microglia <- Gest(ppls$Microglia)
-G_microglia$type <- 'Microglia'
-
-#create a list that combines bove values
-G_list<- rbind(G_ependymal, G_odmature, G_microglia)
-
-p <- ggplot(G_list, aes(x=r, y=rs, col= type))+
-  geom_line()+
-  ggtitle('estimated G function')+
-  geom_line(aes(x=r,y=theo),linetype = "dashed")+
-  theme_light()
-p
-
-plot(ecdf(nndist(ppls$Ependymal)), col = 'red', xlim = c(0,350) )
-plot(ecdf(nndist(ppls$`OD Mature`)), add=TRUE, col = 'blue')
-plot(ecdf(nndist(ppls$Microglia)), add=TRUE, col = 'green')
-```
-
-```{r}
-F_ependymal <- Fest(ppls$Ependymal)
-F_ependymal$type <- 'Ependymal'
-
-F_odmature <- Fest(ppls$`OD Mature`)
-F_odmature$type <- 'OD Mature'
-
-F_microglia <- Fest(ppls$Microglia)
-F_microglia$type <- 'Microglia'
-
-#create a list that combines bove values
-F_list<- rbind(F_ependymal, F_odmature, F_microglia)
-
-p <- ggplot(F_list, aes(x=r, y=rs, col= type))+
-  geom_line()+
-  ggtitle('estimated F function')+
-  geom_line(aes(x=r,y=theo),linetype = "dashed")+
-  theme_light()
-p
-``` 
--->
 
 ### Empty-space hazard
 
@@ -1119,8 +1068,44 @@ J(r) = \frac{1-G(r)}{1-F(r)}
 $$
 
 "For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and $J(r) < 1 is consistent with clustering." (Baddeley et. al.)
-<!-- 
-```{r}
+
+```{r, fig.height = 10, fig.width = 7}
+G_ependymal <- Gest(ppls$Ependymal)
+G_ependymal$type <- 'Ependymal'
+
+G_odmature <- Gest(ppls$`OD Mature`)
+G_odmature$type <- 'OD Mature'
+
+G_microglia <- Gest(ppls$Microglia)
+G_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+G_list<- rbind(G_ependymal, G_odmature, G_microglia)
+
+p_G <- ggplot(G_list, aes(x=r, y=rs, col= type))+
+  geom_line()+
+  ggtitle('estimated G function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+
+F_ependymal <- Fest(ppls$Ependymal)
+F_ependymal$type <- 'Ependymal'
+
+F_odmature <- Fest(ppls$`OD Mature`)
+F_odmature$type <- 'OD Mature'
+
+F_microglia <- Fest(ppls$Microglia)
+F_microglia$type <- 'Microglia'
+
+#create a list that combines bove values
+F_list<- rbind(F_ependymal, F_odmature, F_microglia)
+
+p_F <- ggplot(F_list, aes(x=r, y=rs, col= type))+
+  geom_line()+
+  ggtitle('estimated F function')+
+  geom_line(aes(x=r,y=theo),linetype = "dashed")+
+  theme_light()
+
 J_ependymal <- Jest(ppls$Ependymal)
 J_ependymal$type <- 'Ependymal'
 
@@ -1133,14 +1118,18 @@ J_microglia$type <- 'Microglia'
 #create a list that combines bove values
 J_list<- rbind(J_ependymal, J_odmature, J_microglia)
 
-p <- ggplot(J_list, aes(x=r, y=rs, col= type))+
+p_J <- ggplot(J_list, aes(x=r, y=rs, col= type))+
   geom_line()+
   ggtitle('estimated J function')+
   geom_line(aes(x=r,y=theo),linetype = "dashed", col='black')+
   theme_light()
-p
+
+p_G/p_F/p_J
 ``` 
--->
+
+```{r, cache=FALSE, fig.height = 10, fig.width = 7}
+p_G/p_F/p_J
+```
 
 ### Accounting for Inhomogeneity in Spacing Functions
 
@@ -1206,7 +1195,7 @@ p_J <- ggplot(J_inhom_list, aes(x=r, y=bord, col= type))+
 p_G/p_F/p_J
 ```
 
-The $G$ function indicates that the nearest-neighbour distances remain relatively small for increasing values of $r$ for Ependymal cells. Microglial cells increase along the dashed poisson curve. OD mature cells (what are these curves actually telling us?)
+Again here, comparing the homogeneous versions of the functions with the inhomogeneous ones reveals, that we seem to solve one problem (inhomogeneity) by assuming correlation stationarity. As this is not given, the inhomogeneous versions don't seem to be accurate. In fact, the homogeneous versions are more easily interpretable than the inhomogeneous alternatives.
 
 ### Nearest-Neighbour Orientation
 

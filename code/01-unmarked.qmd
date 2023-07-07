@@ -1123,8 +1123,6 @@ p_J <- ggplot(J_list, aes(x=r, y=rs, col= type))+
   ggtitle('estimated J function')+
   geom_line(aes(x=r,y=theo),linetype = "dashed", col='black')+
   theme_light()
-
-p_G/p_F/p_J
 ``` 
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 7}

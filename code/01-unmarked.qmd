@@ -94,7 +94,7 @@ It is important to note that the inhomogeneous K-function [MR: we have not defin
 
 The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions, the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case, the locally scaled version of the K-function is applicable.
 
-Furthermore, we can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the definition of the quadrats.
+Furthermore, we can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It should be noted that this test depends on the definition of the quadrats.
 
 ```{r}
 selection <- c('OD Mature')
@@ -108,6 +108,10 @@ od4 <- quantess(unmark(pp_sel), "x", 2)
 od42 <- nestsplit(pp_sel, od4, ny=3)
 
 plot(od42)
+
+# [MR: would it make more sense to plot the data in the 
+# original spatial context, but then draw lines of the
+# grids over top?]
 
 od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
 

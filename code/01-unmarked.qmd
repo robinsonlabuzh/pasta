@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Preamble
 
 ## Dependencies
@@ -20,33 +25,32 @@ spe <- readRDS("../data/spe.rds")
 sub <- spe[, spe$sample_id == 0.01]
 (pp <- .ppp(sub, marks = "cluster_id"))
 
-#split the multitype point process into several single type processes
-#fist, set the marks of the point process to be factors
+#split the multitype point process into single types
+#first, set the marks of the point process to be factors
 marks(pp) <- factor(marks(pp))
 ppls <- split(pp)
 ```
 
-If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns.
+To set the situation, we first visualize the annotated cell types in their original spatial context:
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
-#Plot the entire point process where the marks are overlayed
-plot(unmark(pp), main = 'Point Pattern Unmarked')
-#Plot the marks separately 
-plot(ppls, main = 'Point Pattern Marks Seperated')
+#Plot the marks separately for selected subpopulations
+# selected <- c("OD Mature", "Microglia", "Ependymal")
+plot(ppls, main = 'Subpopulations')
 ``` 
 
 
 ## Concepts and Definitions of Point Processes
 
-### Point Process
+<!-- ### Point Process -->
 
-```{r}
+<!-- ```{r} -->
 
-```
+<!-- ``` -->
 
 ### Complete Spatial Randomness
 
-Complete spatial randomness (CSR) is the null model of point patterns, being the result of a poisson process. A completely random process is characterised by two properties
+Complete spatial randomness (CSR) is the typical null model used for point patterns, being the result of a Poisson process. A completely random process is characterised by two properties, homoegeneity and independence.
 
 #### Homogeneity
 
@@ -59,16 +63,16 @@ $$
 
 #### Independence
 
-Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a poisson distribution:
+Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a Poisson distribution:
 
 $$
 \mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
-\label{eq:poisson_process}
+\label{eq:Poisson_process}
 $$
 
 ### Inhomogeneous Poisson Process
 
-A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is 
+A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is 
 
 $$
 \mu = \int_{B} \lambda(u)du 
@@ -431,7 +435,7 @@ $$
 t(u,r,X) = \sum_{j=1}^{n(X)} \mathbb{1} \{0<||u-x_j||\leq r\}
 $$
 
-This definition of the true $K$ function is only valid if the point process is stationary. For a homogeneous poisson process we obtain
+This definition of the true $K$ function is only valid if the point process is stationary. For a homogeneous Poisson process we obtain
 
 $$
 K_{pois}(r) = \pi r^2
@@ -637,11 +641,11 @@ p_g <- ggplot(g_list_inhom, aes(x=r, y=border, col= type))+
 p_K/p_L/p_g
 ```
 
-The inhomogeneous $K$-function tells us that the microglia cells follow a poisson process (dashed line) closely and can therefore be assumed to be randomly distributed and not clustered. Ependymal cells show a high degree of clustering at a low radius $r$. OD mature cells are in the middle, showing a lower degree of clustering at lower values of $r$.
+The inhomogeneous $K$-function tells us that the microglia cells follow a Poisson process (dashed line) closely and can therefore be assumed to be randomly distributed and not clustered. Ependymal cells show a high degree of clustering at a low radius $r$. OD mature cells are in the middle, showing a lower degree of clustering at lower values of $r$.
 
-The $L$-function is a variance stabilised (source spicyR) version of the $K$-function. Thus, the information is complementary to the above. Microglia cells are along the dashed poisson line, indicating no clustering of microglia cells. Ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering at lower values of $r$.
+The $L$-function is a variance stabilised (source spicyR) version of the $K$-function. Thus, the information is complementary to the above. Microglia cells are along the dashed Poisson line, indicating no clustering of microglia cells. Ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering at lower values of $r$.
 
-The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$. 
+The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$. 
 
 We have to note that inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another.
 
@@ -709,7 +713,7 @@ p_L <- ggplot(L_list_scaled, aes(x=r, y=iso, col= type))+
 p_K/p_L
 ```
 
-The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed poisson line, unlike in the inhomogeneous version. 
+The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random Poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed Poisson line, unlike in the inhomogeneous version. 
 
 Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation. 
 
@@ -757,7 +761,7 @@ plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 # plot(L_microglia_lisa, main = 'local L functions Microglia', legend=FALSE)
 ```
 
-In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight poisson line and others that are around/underneath the straight poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
+In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight Poisson line and others that are around/underneath the straight Poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
 
 There are inhomogeneous versions of these (e.g. `localLinhom`). These are not shown here for brevity.
 
@@ -769,7 +773,7 @@ We apply functional PCA to retrieve the main trends in these individual curves. 
 #adapted from the fdapace vignette
 functional.pca.pp <- function(df){
   df_fdob <- df %>% as.matrix()
-  #remove theo column - we want only the actual estimations in there without the poisson line theo
+  #remove theo column - we want only the actual estimations in there without the Poisson line theo
   df_fdob <- df_fdob[,-ncol(df_fdob)]
   #remove r column - this has to be provided independently to the FPCA - this is the yVec
   df_fdob <- df_fdob[,-ncol(df_fdob)]

@@ -33,8 +33,7 @@ If not otherwise indicated, all information was taken from Baddeley et al. - Spa
 plot(unmark(pp), main = 'Point Pattern Unmarked')
 #Plot the marks separately 
 plot(ppls, main = 'Point Pattern Marks Seperated')
-``` 
-
+```
 
 ## Concepts and Definitions of Point Processes
 
@@ -68,7 +67,7 @@ $$
 
 ### Inhomogeneous Poisson Process
 
-A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is 
+A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is
 
 $$
 \mu = \int_{B} \lambda(u)du 
@@ -85,7 +84,7 @@ A point process is called isotropic, if its statistical properties are invariant
 
 #### Correlation stationarity
 
-It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern. 
+It is important to note that the inhomogeneous K-function does not apply to every spatially inhomogeneous point process. It only applies to point processes which are correlation stationary. A point pattern is correlation stationary if the pair correlation function only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous K-function should be similar in different subquadrats of the point pattern.
 
 ### Local scaling
 
@@ -121,6 +120,13 @@ Alternatively, we can inspect deviations against the hypothesis that the points 
 
 ```{r}
 #Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
+# marked pattern
+marks(pp) <- factor(marks(pp))
+# select marks
+selection <- c('OD Mature', 'Ependymal', 'Microglia')
+pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+# call relative risk function
+rp <- relrisk(pp_sel,se=TRUE)
 
 f1 <- rp
 # Significant p-values assumming normality of the Poisson process
@@ -141,6 +147,7 @@ f1 <- rp
 plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
 ```
 
+````{=html}
 <!-- 
 ```{r}
 selection <- c('Ependymal')
@@ -163,6 +170,7 @@ studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
                lambda=odlambda, minpoints = 10)
 ``` 
 -->
+````
 
 ### Intensity
 
@@ -190,6 +198,7 @@ else we can look at each mark individually
 ```{r, cache=FALSE}
 intensityPointProcess(pp,mark=TRUE)
 ```
+
 #### Quadrat Counting
 
 In quadrat counting all the points falling into a given quadrat are counted. This gives an overview on the characeterstics of the point pattern, such as correlation stationarity.
@@ -200,6 +209,7 @@ plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
 ```
 
+````{=html}
 <!-- or for each type separately, treating each type as an unmarked process
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
@@ -208,6 +218,7 @@ plot(Q5sep, main = 'Separated Marks Quadrats')
 #plot(ppls, add=TRUE)
 ``` 
 -->
+````
 
 The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types. This tells us if the counts of the points are distributed evenly across the quadrats.
 
@@ -232,6 +243,7 @@ Dens <- density(pp)
 plot(Dens, main = 'Kernel Density')
 ```
 
+````{=html}
 <!-- 
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
@@ -257,6 +269,7 @@ estimatingIntensity <- function(
 }
 ```
 -->
+````
 
 ### Testing for CSR
 
@@ -354,6 +367,7 @@ testingCSR(ppls$Microglia, method='clark-evans')
 
 Correlation or more generally covariance is called a second order quantity and measures dependence between data points. This is a very useful concept, allowing for the assessment of correlation between points.
 
+````{=html}
 <!-- 
 ### Morisita Index
 
@@ -383,6 +397,7 @@ fryplot(ppls$`OD Mature`)
 fryplot(ppls$Microglia)
 ``` 
 -->
+````
 
 ### Ripley's $K$
 
@@ -412,8 +427,7 @@ $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}
 $$
 
-The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though tha the point process has homogeneous intensity. 
-
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though tha the point process has homogeneous intensity.
 
 #### True $K$-function
 
@@ -453,7 +467,7 @@ We can regard edge effect as a sampling bias. Larger distances (e.g. close to th
 
 ##### Translation correction
 
-A stationary point process $X$ is invariant to translations. So the entire point process can be shifted by a vector $s$ to be at the position $X+s$. 
+A stationary point process $X$ is invariant to translations. So the entire point process can be shifted by a vector $s$ to be at the position $X+s$.
 
 ### The $L$-function
 
@@ -465,7 +479,7 @@ $$
 
 ### Pair Correlation function
 
-We have seen above, that the $K$-function is cumulative in nature. Meaning that the contributions of all distances smaller equal to $r$ are counted. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$. 
+We have seen above, that the $K$-function is cumulative in nature. Meaning that the contributions of all distances smaller equal to $r$ are counted. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$.
 
 $$
 g(r) = \frac{K'(r)}{2\pi r}
@@ -475,7 +489,7 @@ $$
 
 #### Estimator of the pair correlation function
 
-The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods. 
+The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods.
 
 $$
 \hat{g}(r) = \frac{|W|}{2 \pi r n (n-1)} \sum_{i=1}^n\sum_{j=1 \\j \neq i}^n \kappa_h(r-d_{ij})e_{ij}(r)
@@ -487,7 +501,7 @@ $$
 \kappa_h(x) = \frac{1}{h}\kappa\left(\frac{x}{h}\right)
 $$
 
-In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$. 
+In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$.
 
 ```{r, cache=FALSE}
 K_ependymal <- lohboot(ppls$Ependymal, fun='Kest')
@@ -568,7 +582,7 @@ $$
 \hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r)
 $$
 
-where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D^p$ is the pth power of 
+where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D^p$ is the pth power of
 
 $$
 D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
@@ -641,7 +655,7 @@ The inhomogeneous $K$-function tells us that the microglia cells follow a poisso
 
 The $L$-function is a variance stabilised (source spicyR) version of the $K$-function. Thus, the information is complementary to the above. Microglia cells are along the dashed poisson line, indicating no clustering of microglia cells. Ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering at lower values of $r$.
 
-The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$. 
+The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
 
 We have to note that inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another.
 
@@ -649,7 +663,7 @@ We have to note that inhomogeneity correction assumes that the process is correl
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$ approach above we assume that the local scale of the point process is not changed. However, the intensity can vary spatially. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that 
+In the inhomogeneous $K$ approach above we assume that the local scale of the point process is not changed. However, the intensity can vary spatially. In a biological sample this assumption is easily violated, thinking e.g. of a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that
 
 $$
 g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
@@ -659,8 +673,7 @@ In this example, $g_1$ is the pair correlation function of the template process 
 
 #### Locally-scaled pair-correlation function
 
-would work by taking the derivative of the locally scaled $K$-function 
-
+would work by taking the derivative of the locally scaled $K$-function
 
 #### Locally-scaled $L$-function
 
@@ -704,19 +717,19 @@ p_L <- ggplot(L_list_scaled, aes(x=r, y=iso, col= type))+
   theme_light()
 ```
 
-
 ```{r, cache=FALSE, fig.height = 10, fig.width = 7}
 p_K/p_L
 ```
 
-The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed poisson line, unlike in the inhomogeneous version. 
+The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed poisson line, unlike in the inhomogeneous version.
 
-Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation. 
+Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation.
 
 #### Local Indicators of Spatial Association
 
 The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function.
 
+````{=html}
 <!-- ##### Local $K$ function
 
 ```{r}
@@ -743,6 +756,7 @@ g_microglia_lisa <- localpcf(ppls$Microglia)
 plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
 ``` 
 -->
+````
 
 ##### Local $L$ function
 
@@ -806,7 +820,7 @@ functional.pca.pp(L_odmature_lisa)
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-As such it is natural to display the eigenfunction as their contribution to the deviation around the mean as a confidence ribbon. The patterns in variation of the point process are captured in the mode of variation plot. The modes of variation capture the contribution of the first (in this case two) eigenfunctions around the mean. -> check the source from the Springer book "Functional Data Analysis with R and Matlab".
+As such it is natural to display the eigenfunction as their contribution to the deviation around the mean as a confidence ribbon. The patterns in variation of the point process are captured in the mode of variation plot. The modes of variation capture the contribution of the first (in this case two) eigenfunctions around the mean. -\> check the source from the Springer book "Functional Data Analysis with R and Matlab".
 
 ### Third-Order Summary Statistics
 
@@ -845,7 +859,7 @@ p
 
 #### DBSCAN
 
- Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise)
+Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise)
 
 ```{r, cache=FALSE}
 pp_df <- as.data.frame(ppls$`OD Mature`)
@@ -904,12 +918,13 @@ So far, most approaches considered intensity and correlation as measures to asse
 
 Baddeley et.al. summarises three basic distances to measure
 
-- pairwise distance: $d_{i,j} = ||x_i-x_j||$
-- nearest-neighbour distances: $d_i = \min_{j \neq i}d_{ij}$
-- empty-space distance: $d(u) = \min_j||u-x_j||$
+-   pairwise distance: $d_{i,j} = ||x_i-x_j||$
+-   nearest-neighbour distances: $d_i = \min_{j \neq i}d_{ij}$
+-   empty-space distance: $d(u) = \min_j||u-x_j||$
 
-There are test of CSR that are based on spacing -> Clark-Evans test and Hopkins-Skellam Index that are both implemented above in the CSR testing function
+There are test of CSR that are based on spacing -\> Clark-Evans test and Hopkins-Skellam Index that are both implemented above in the CSR testing function
 
+````{=html}
 <!-- ### Exploratory Graphics
 
 #### Stienen Diagram
@@ -938,6 +953,7 @@ plot(dirichlet(ppls$`OD Mature`))
 plot(dirichlet(ppls$Microglia))
 ``` 
 -->
+````
 
 ### Nearest Neighbour approaches
 
@@ -987,6 +1003,8 @@ lines(density(gamma_mm_comp2_odmature),col='blue')
 plot(hist_microglia, col = c3, add = TRUE, freq=FALSE)
 lines(density(gamma_mm_comp2_microglia),col='green')
 ```
+
+````{=html}
 <!-- 
 ```{r, cache=FALSE}
 create_ridge_plot <- function(nndistances, label){
@@ -1004,6 +1022,7 @@ create_ridge_plot(nndistances_k5_odmature, label='OD Mature')
 create_ridge_plot(nndistances_k5_microglia, label='Microglia')
 ``` 
 -->
+````
 
 In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglial cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
 
@@ -1051,14 +1070,13 @@ $$
 h(r) = \frac{f(r)}{1-F(r)}
 $$
 
-For a completely spatially random process the hazard rate is 
+For a completely spatially random process the hazard rate is
 
 $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
 
-Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$.
-<!-- 
+Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$. <!-- 
 ```{r}
 fhazard_ependymal <- envelope(ppls$Ependymal, Fhazard, nsim=39, fix.n=TRUE,
 transform=expression(./(2*pi*r)))
@@ -1088,15 +1106,15 @@ p
 
 ### $J$-Function
 
-The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above). 
+The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above).
 
-Another approach is the $J$ function. 
+Another approach is the $J$ function.
 
 $$
 J(r) = \frac{1-G(r)}{1-F(r)}
 $$
 
-"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and $J(r) < 1 is consistent with clustering." (Baddeley et. al.)
+"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and \$J(r) \< 1 is consistent with clustering." (Baddeley et. al.)
 
 ```{r, fig.height = 10, fig.width = 7}
 G_ependymal <- Gest(ppls$Ependymal)
@@ -1152,7 +1170,7 @@ p_J <- ggplot(J_list, aes(x=r, y=rs, col= type))+
   ggtitle('estimated J function')+
   geom_line(aes(x=r,y=theo),linetype = "dashed", col='black')+
   theme_light()
-``` 
+```
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 7}
 p_G/p_F/p_J
@@ -1160,7 +1178,7 @@ p_G/p_F/p_J
 
 ### Accounting for Inhomogeneity in Spacing Functions
 
-There are inhomogeneous variants of the spacing functions explained above 
+There are inhomogeneous variants of the spacing functions explained above
 
 ```{r}
 G_inhom_ependymal <- Ginhom(ppls$Ependymal)
@@ -1263,11 +1281,11 @@ The concept of spacing is not only usable in point pattern analysis but more bro
 
 ### Edge Corrections
 
-The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice. 
+The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice.
 
 # Appendix
 
-## Session info 
+## Session info
 
 ```{r, cache=FALSE}
 #| label: session-info

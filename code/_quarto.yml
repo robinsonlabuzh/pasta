@@ -5,6 +5,8 @@ project:
 
 execute: 
   cache: true
+  warning: false
+  message: false
 
 format:
   html:

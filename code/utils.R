@@ -1,6 +1,4 @@
 suppressPackageStartupMessages({
-  library(spatstat.core)
-  library(spatstat.geom)
   library(SpatialExperiment)
   library(spatstat)
   library(mixR)
@@ -12,6 +10,7 @@ suppressPackageStartupMessages({
   library(RANN)
   library(STexampleData)
   library(patchwork)
+  library(reshape2)
 })
 
 .ppp <- \(spe, marks = NULL) {

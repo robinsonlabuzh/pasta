@@ -632,7 +632,7 @@ plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
   p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
-    geom_line()+
+    geom_line(size=2)+
     ggtitle(paste0(fun, '-function'))+
     geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed")+
     ylab(edgecorr) +
@@ -658,7 +658,7 @@ Given that our biological samples are both inhomogeneous and locally scaled by e
 
 #### Local Indicators of Spatial Association
 
-The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function.
+The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddeley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function.
 
 ````{=html}
 <!-- ##### Local $K$ function
@@ -693,7 +693,34 @@ plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
 
 ```{r}
 L_odmature_lisa <- localL(ppls$`OD Mature`)
-plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
+# plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
+
+df <- as.data.frame(L_odmature_lisa)
+
+dfm <- reshape2::melt(df, "r")
+
+get_sel <- dfm %>% filter(r > 200.1358 & r < 200.1360, variable != "theo") %>%
+  mutate(sel = value) %>% select(variable, sel)
+
+dfm <- dfm %>% left_join(get_sel)
+
+p <- ggplot(dfm, aes(x=r, y=value, group=variable, colour=sel)) +
+  geom_line() + 
+  scale_color_continuous(type = "viridis") +
+  geom_vline(xintercept = 200) +
+  theme(legend.position = "none") +
+  theme_light()
+
+ppdf <- as.data.frame(pp) %>% filter(marks=="OD Mature")
+ppdf$sel <- get_sel$sel # assume they are in same order
+
+q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) + 
+  geom_point() +
+  scale_color_continuous(type = "viridis") +
+  theme(legend.position = "none") +
+  theme_light()
+
+p|q
 ```
 
 In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight poisson line and others that are around/underneath the straight poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
@@ -749,29 +776,9 @@ m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
 
 ```{r}
-p <- plotMetric(celltype_ls, ppls, 'Tstat', 'trans')
+p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'trans')
 p
 ```
-
-#### DBSCAN
-
-Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise)
-
-```{r, cache=FALSE}
-pp_df <- as.data.frame(ppls$`OD Mature`)
-#determine the correct epsilon neighbourhood
-dbscan::kNNdistplot(pp_df, k=5)
-```
-
-Given the kNN distance plot we visually detect the "knee" of the curve to be at an distance $\epsilon$ of $50$. This value is needed for the computation of DBScan.
-
-```{r}
-#perform DBScan
-pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
-plot(pp_df[-3], col = pp_dbscan$cluster)
-```
-
-another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}.
 
 ## Spacing
 
@@ -876,6 +883,26 @@ create_ridge_plot(nndistances_k5_microglia, label='Microglia')
 ````
 
 In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglial cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
+
+#### DBSCAN
+
+Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise)
+
+```{r, cache=FALSE}
+pp_df <- as.data.frame(ppls$`OD Mature`)
+#determine the correct epsilon neighbourhood
+dbscan::kNNdistplot(pp_df, k=5)
+```
+
+Given the kNN distance plot we visually detect the "knee" of the curve to be at an distance $\epsilon$ of $50$. This value is needed for the computation of DBScan.
+
+```{r}
+#perform DBScan
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+plot(pp_df[-3], col = pp_dbscan$cluster)
+```
+
+another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}.
 
 ### Nearest-neighbour function $G$ and empty-space function $F$
 
@@ -1025,9 +1052,9 @@ p
 The same can be portrayed as a rose diagram
 
 ```{r}
-rose(nnorient_ependymal)
-rose(nnorient_odmature)
-rose(nnorient_microglia)
+#rose(nnorient_ependymal)
+#rose(nnorient_odmature)
+#rose(nnorient_microglia)
 ```
 
 We see that the orientation of the Ependymal nearest-neighbours is along the vertical axis, OD mature cells don't show a clear pattern and microglial cells a horizontal orientation in their nearest neighbours.

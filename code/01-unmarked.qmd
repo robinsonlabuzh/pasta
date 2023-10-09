@@ -1034,15 +1034,8 @@ p <- plotSpacingMetric(celltype_ls, ppls, 'nnorient', 'phi', 'bordm')
 p
 ```
 
-The same can be portrayed as a rose diagram
-
-```{r}
-#rose(nnorient_ependymal)
-#rose(nnorient_odmature)
-#rose(nnorient_microglia)
-```
-
-We see that the orientation of the Ependymal nearest-neighbours is along the vertical axis, OD mature cells don't show a clear pattern and microglial cells a horizontal orientation in their nearest neighbours.
+The values of $\phi$ correspond to the orientation of the point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom).
+We can infer that the orientation of the Ependymal nearest-neighbours is along the vertical axis, OD mature cells don't show a clear pattern and microglial cells a horizontal orientation in their nearest neighbours with a small peak at $\sim 180$ (orientation to the top).
 
 The concept of spacing is not only usable in point pattern analysis but more broadly in any spatial context (e.g. spacing between shapes instead of points).
 

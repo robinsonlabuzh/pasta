@@ -632,9 +632,9 @@ plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
   p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
-    geom_line(size=2)+
+    geom_line(size=1)+
     ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed")+
+    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", size=1)+
     ylab(edgecorr) +
     scale_color_manual(name='Point Processes',
                      breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
@@ -691,7 +691,7 @@ plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
 
 ##### Local $L$ function
 
-```{r}
+```{r, fig.height=7, fig.width=10}
 L_odmature_lisa <- localL(ppls$`OD Mature`)
 # plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 
@@ -782,7 +782,7 @@ p
 
 ## Spacing
 
-So far, most approaches considered intensity and correlation as measures to assess a point pattern. In the following chapter we will look at measures of spacing and shortest-distances to assess spatial arrangements.
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. Below, we will look at measures of spacing and shortest-distances to assess spatial arrangements.
 
 Baddeley et.al. summarises three basic distances to measure
 
@@ -825,68 +825,51 @@ plot(dirichlet(ppls$Microglia))
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour methods center around the notion of a nearness. In this section, we introduce `findKNN` from `BiocNeighbours`, a method to calculate the distances until $k$ nearest neighbours are found. This information is summarised as a histogram. In order to distill more information from this nearest-neighbour distance histogram, we follow the approach from the function `nnclean` and fit a Gamma mixture model to the data. The number of mixture components can be set individually. We choose a value of $k=2$ to model close range interactions and long range interactions. This gives us parameteric models for our histogram of nearest-neighbour distances.
+Nearest neighbour methods center around the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns us then $k$ curves for the $k$ neighbour distances. We can for instance collapse this information of the $k$ curves in a mean curve per sample. This information of the mean nearest neighbour distance is summarised as a density.
 
 ```{r, cache=FALSE}
-nndistances_k5_ependymal<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Ependymal), k = 15)$distance)
-nndistances_k5_odmature<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$`OD Mature`), k = 15)$distance)
-nndistances_k5_microglia<-sqrt(BiocNeighbors::findKNN(as.data.frame(ppls$Microglia), k = 15)$distance)
-
-#calculate the row Median distance of k 1-115
-nndistances_ependymal_median <- rowMedians((nndistances_k5_ependymal))
-nndistances_odmature_median <- rowMedians((nndistances_k5_odmature))
-nndistances_microglia_median <- rowMedians((nndistances_k5_microglia))
-
-#create a histogram of the nearest-neighbour distances
-hist_ependymal <- hist(nndistances_ependymal_median, breaks = 25, plot = FALSE)
-hist_odmature <- hist(nndistances_odmature_median, breaks = 25, plot = FALSE)
-hist_microglia <- hist(nndistances_microglia_median, breaks = 25, plot = FALSE)
-
-#fit now a gamma mixture model to this nndist data
-gamma_mm_comp2_ependymal <- mixR::mixfit(nndistances_ependymal_median, ncomp=2,family = 'gamma')
-gamma_mm_comp2_odmature <- mixR::mixfit(nndistances_odmature_median, ncomp=2,family = 'gamma')
-gamma_mm_comp2_microglia <- mixR::mixfit(nndistances_microglia_median, ncomp=2,family = 'gamma')
-
-#plot this,
-c1 <- rgb(255,192,203,max = 255, alpha = 100, names = "lt.pink")
-c2 <- rgb(173,216,230, max = 255, alpha = 100, names = "lt.blue")
-c3 <- rgb(144,238,144, max = 255, alpha = 100, names = "lt.green")
-
-plot(hist_ependymal, col = c1, main = "Histogram of sqrt nn-distances with Gamma Mixtures fitted",ylim=c(0,1), freq=FALSE, xlab='Median Nearest neighbour distances sqrt transformed')
-legend(20,1, legend=c("Ependymal", "OD Mature", "Microglia"),col=c('red', 'blue', 'green'), lty=1, cex=0.8)
-#plot the probability density of the finite mixture model
-lines(density(gamma_mm_comp2_ependymal),col='red')
-plot(hist_odmature, col = c2, add = TRUE, freq=FALSE)
-lines(density(gamma_mm_comp2_odmature),col='blue')
-plot(hist_microglia, col = c3, add = TRUE, freq=FALSE)
-lines(density(gamma_mm_comp2_microglia),col='green')
-```
-
-````{=html}
-<!-- 
-```{r, cache=FALSE}
-create_ridge_plot <- function(nndistances, label){
-  nndistances_df <- as.data.frame(nndistances)
-  nndistances_df$index <- 1:nrow(nndistances_df)
-  #add the row median
-  nndistances_df$median <- rowMedians((nndistances))
-  nndistances_df_melted <- reshape2::melt(nndistances_df, id = 'index')
-  nndistances_df_melted <-dplyr::rename(nndistances_df_melted, K = variable)
-  return(ggplot(nndistances_df_melted, aes(x = value, y = K, fill=K)) + theme(legend.position="none") + ggtitle(label) + ggridges::geom_density_ridges())
+nndistance <- function(pp, nk){
+  xy <- cbind(pp$x, pp$y)
+  nndistances_k15 <- nndist(xy, k = nk) 
+  nndistances_mean <- rowMeans(nndistances_k15)
+  return(nndistances_mean)
 }
 
-create_ridge_plot(nndistances_k5_ependymal, label='Ependymal')
-create_ridge_plot(nndistances_k5_odmature, label='OD Mature')
-create_ridge_plot(nndistances_k5_microglia, label='Microglia')
-``` 
--->
-````
+#PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
+#POST: result of the metric
+metricRes_nndist <- function(ppls, celltype, fun){
+  metric.res <- list(res = do.call(fun, args = list(pp=ppls[[celltype]], nk = seq(1:15))))
+  metric.res$type = celltype
+  return(metric.res)
+}
 
-In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglial cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
+#go through all defined celltypes and calculate the nearest-neighbour distance
+res_ls <- lapply(celltype_ls, metricRes_nndist, fun = nndistance, ppls = ppls)
+#initialise a dataframe for the metric values and the type information
+res_df <- data.frame(metric = numeric(0), type = character(0))
+# Loop through the res_ls list and combine the metric values with their corresponding type - ChatGPT
+for (i in 1:length(res_ls)) {
+  metric_values <- res_ls[[i]]$res
+  metric_type <- rep(res_ls[[i]]$type, length(metric_values))
+  df <- data.frame(metric = metric_values, type = metric_type)
+  res_df <- rbind(res_df, df)
+}
+#plot the densities
+p <- ggplot(res_df, aes(x=metric, col= type))+
+    geom_density(size=1)+
+    scale_x_sqrt() +
+    theme_light() +
+    ggtitle('Sqrt of the Mean Nearest-Neighbour Distance')
+p
+```
 
-#### DBSCAN
+In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
 
-Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise)
+#### DBScan
+
+Often, we are interested which spatial structures build a spatial unit. One way to answer this question is to use spatially aware clustering. 
+Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise). DBScan is an algorithm which uses a parameter called minimal Features. If the number of points per cluster is smaller than the minimal number of features, it is either noise or it is merged with another cluster. Another parameter $\epsilon$ defines the distance at which a point has to lay in order to be part of a cluster. The value of this parameter $\epsilon$ can be determined by an elbow plot, similar to clustering resolution parameters in other algorithms.
+from https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-density-based-clustering-works.htm
 
 ```{r, cache=FALSE}
 pp_df <- as.data.frame(ppls$`OD Mature`)
@@ -894,13 +877,15 @@ pp_df <- as.data.frame(ppls$`OD Mature`)
 dbscan::kNNdistplot(pp_df, k=5)
 ```
 
-Given the kNN distance plot we visually detect the "knee" of the curve to be at an distance $\epsilon$ of $50$. This value is needed for the computation of DBScan.
+Given the kNN distance plot we visually detect the "knee" of the curve to be at an distance $\epsilon$ of $200$. This value is needed for the computation of DBScan.
 
 ```{r}
 #perform DBScan
-pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =50, minPts = 5)
+pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =200, minPts = 5)
 plot(pp_df[-3], col = pp_dbscan$cluster)
 ```
+
+We see that DBScan identifies four clusters. A top cluster in red and two main side clusters in black and green. There is another cluster in blue which is at the top right corner.
 
 another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}.
 
@@ -942,13 +927,13 @@ For a general point process the $F$ and $G$ functions are different
 
 ### Empty-space hazard
 
-The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For praticial reason in this case this is not the derivative of the $F$ function but rather a a hazard rate is considered
+The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons this is no longer the derivative of the $F$ function but rather a hazard rate.
 
 $$
 h(r) = \frac{f(r)}{1-F(r)}
 $$
 
-For a completely spatially random process the hazard rate is
+For a CSR process, the hazard rate is
 
 $$
 h_{pois}(r) = 2 \pi \lambda r
@@ -1042,7 +1027,7 @@ Again here, comparing the homogeneous versions of the functions with the inhomog
 
 ### Nearest-Neighbour Orientation
 
-Next to the distance to the nearest-neighbour we can estimate the orientation of the vector to the nearest-neighbour. This gives an indication of the orientation of the spacing.
+Next to the distance to the nearest-neighbours, we can estimate the orientation of the vector to the nearest-neighbour. This gives an indication of the orientation of the spacing.
 
 ```{r}
 p <- plotSpacingMetric(celltype_ls, ppls, 'nnorient', 'phi', 'bordm')

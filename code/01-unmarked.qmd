@@ -494,7 +494,7 @@ $$
 
 In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$.
 
-```{r, cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #| message: false
 #| warning: false
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
@@ -566,7 +566,7 @@ $$
 D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
 $$
 
-```{r, cache=FALSE, message=FALSE, message = FALSE}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 p_K <- plotMetric(celltype_ls, ppls, 'Kinhom', 'iso')
 
 p_L <- plotMetric(celltype_ls, ppls, 'Linhom', 'iso')
@@ -606,7 +606,7 @@ would work by taking the derivative of the locally scaled $K$-function
 
 As the $L$ is just a transformation of the $K$-function, the same local scaling can apply to the $L$-function
 
-```{r}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 ### need to redefine the metric function, because bootstrap is not available for locally scaled functions ###
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
 #POST: result of the metric
@@ -691,7 +691,7 @@ plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
 
 ##### Local $L$ function
 
-```{r, fig.height=7, fig.width=10}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 L_odmature_lisa <- localL(ppls$`OD Mature`)
 # plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 
@@ -719,7 +719,10 @@ q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) +
   scale_color_continuous(type = "viridis") +
   theme(legend.position = "none") +
   theme_light()
+```
 
+
+```{r, fig.height=7, fig.width=10}
 p|q
 ```
 
@@ -731,7 +734,7 @@ There are inhomogeneous versions of these (e.g. `localLinhom`). These are not sh
 
 We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data
 
-```{r}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
 functional.pca.pp <- function(df){
   df_fdob <- df %>% as.matrix()
@@ -1003,7 +1006,7 @@ p_F <- plotSpacingMetric(celltype_ls, ppls, 'Fest', 'r', 'rs')
 p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jest', 'r', 'rs')
 ```
 
-```{r, cache=FALSE, fig.height = 10, fig.width = 7}
+```{r, warning=FALSE, fig.height = 10, fig.width = 7}
 p_G/p_F/p_J
 ```
 

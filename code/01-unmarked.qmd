@@ -494,7 +494,7 @@ $$
 
 In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$.
 
-```{r, cache=FALSE}
+```{r, cache=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #| message: false
 #| warning: false
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate

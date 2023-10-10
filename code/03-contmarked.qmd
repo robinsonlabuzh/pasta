@@ -45,11 +45,98 @@ ppls = split(pp)
 plot(ppls)
 ```
 
+In `spatstat` a `mark` can be anything, we take the gene expression of some marker genes from Fig. 6 of the original publication.
+
+```{r}
+#  Genes from Fig. 6 of Moffitt et al. (2018)
+gex <- as.data.frame(t(as.matrix(assay(sub))))[, c('Slc18a2', 'Esr1', 'Pgr')]
+rownames(gex) <- NULL
+# gene expression to marks
+marks(pp) <- gex
+```
+
+> TODO: better plotting?
+
+```{r}
+plot(pp)
+```
+
+A pairs plot indicates spatial inhomogeneity, or spatial trend of the of the marks. This plot is only reasonable for a small number of marks however.
+
+```{r}
+pairs(as.data.frame(pp), panel = panel.smooth)
+```
+
+The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel.
+
+```{r}
+ppsmooth <- Smooth(pp, bw.smoothppp)
+plot(ppsmooth)
+```
+
+Nearest-neighbour interpolations uses the nearest mark to measure the intensity at each spatial location.
+
+```{r}
+plot(nnmark(pp))
+```
+
+We can plot the actual marks versus the fitted values to detect anomalies. E. g. `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This indicates structure in the gene expression.
+
+```{r}
+mfit <- Smooth(pp, bw.smoothppp, at="points")
+res <- marks(pp) - mfit
+
+plot(setmarks(pp, res))
+```
+
+## Summary functions
+
+### Mark correlation function
+
+```{r}
+plot(markcorr(pp))
+```
+
+We can calculate the cross correlation function between the different gene expression measurments, the diagonal is equivalent to `markcorr`
+
+```{r}
+mc <- markcrosscorr(pp)
+```
+
+
+```{r}
+par(mar = c(1, 1, 1, 1))
+plot(mc)
+```
+
+# Mark-weigthed K function
+
+This is a generalization of the K-function in which the 
+
+```{r}
+ppEsr1 <- subset(pp, select = 'Esr1')
+
+Esr1L <- Kmark(ppEsr1, returnL = TRUE)
+plot(Esr1L)
+```
+
+```{r}
+plot(envelope(ppEsr1, fun=Kmark, nsim=30))
+```
+```{r}
+plot(markvario(pp))
+plot(Emark(pp))
+```
+
+
+
+# OLD UNREFERENCED CODE
+
 # Local Indicators of Spatial Association–LISA
 
 ## Bivariate Global Moran's I
 
-**Global morans'I concept is equal to local but one can plot continuous variable on x axis and spatial lag on y axis and the slope is equal to morans I value. With 4 quadrants that allow us to understand the global picture of spatial correlation**
+Global morans'I concept is equal to local but one can plot continuous variable on x axis and spatial lag on y axis and the slope is equal to morans I value. With 4 quadrants that allow us to understand the global picture of spatial correlation**
 
 **While the local one gives us information about more local environments**
 

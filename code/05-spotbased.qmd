@@ -82,7 +82,7 @@ $$
 I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j - \hat{y})}{\sum_i (y_i - \hat{y})^2}
 $$
 
-Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative auto-correlation is not so easy to interpret [1]. The implementation below is a Monte Carlo simulation approach to define a null distribution to test against. 
+Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation, but this is not so easy to interpret [1]. The implementation below is a Monte Carlo simulation approach to define a null distribution to test against. 
 
 ```{r}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
@@ -97,7 +97,11 @@ sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"),
                                 colGraphName = "visium", nsim = 1000,
                                 type = "moran.mc")
 
-colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
+res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
+#value of the metric
+res$moran.mc_statistic_Vis5A
+#p-value
+res$moran.mc_p.value_Vis5A
 
 plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
 ```
@@ -112,6 +116,24 @@ Another measure of spatial auto-correlation is Geary's $C$. It is very closely r
 $$
 C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
 $$
+The interpretation is inveresely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation. (https://pachterlab.github.io/voyager/articles/visium_10x.html)
+
+The testing works similarly to Moran's $I$, just the objective function changes in the Monte Carlo estimation
+
+```{r}
+# taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
+sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
+                                colGraphName = "visium", nsim = 1000,
+                                type = "geary.mc")
+
+res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
+#value of the metric
+res$geary.mc_statistic_Vis5A
+#p-value
+res$geary.mc_p.value_Vis5A
+```
+
+The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation. 
 
 https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
 

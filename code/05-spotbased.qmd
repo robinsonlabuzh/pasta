@@ -8,22 +8,122 @@
 #| warning: false
 #| results: hide
 source("utils.R")
+theme_set(theme_light())
 ```
 
-## Setup
+## Setup and Preprocessing
 
 ```{r}
 #| label: load-data
-spe_vis <- readRDS("../data/spe_spot.rds")
+# taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
+#spe_vis <- readRDS("../data/spe_spot.rds")
+#spe_vis
+
+sfe <- SFEData::McKellarMuscleData(dataset = "full")
+
+sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
+sfe
+sfe_tissue <- sfe[,colData(sfe)$in_tissue]
+sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
+
+sfe_tissue <- scater::logNormCounts(sfe_tissue)
 ```
+## Regular Lattice Data
+
+Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [1].
+
+The lattice is composed of individual spatial units
+
+$$
+D = \{A_1, A_2,...,A_n\}
+$$
+where these units are not supposed to overlap
+
+$$
+A_i \cap A_j = \emptyset \forall i \neq j
+$$
+
+The data is then a random variable of the spatial unit along the lattice
+
+$$
+Y_i = Y(A_i)
+$$
+
+--> need to find the papers mentioned here!!
+
+A lot of lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship has to be modelled with e.g. a spatial weigth matrix $W$. There are a lot of ways to define a spatial weigth matrix $W$. An intuitive way is from Cliff and Ord (1981) and Upton and Fingleton (1985). Here, the units that are adjacent are specified with a one and the ones that are not adjacent with a zero (inary coniguity matrix) [1].
+
+$$
+w_{ij} = \begin{cases}
+1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\
+0 \text{ otw}
+\end{cases}
+$$
+
+other options to specify the weight matrix $W$ are mentioned in [1]. 
+
+## Gloabl Measures 
+
+Global measures are values across an entire field of view. This gives e.g. one number per field of view.
+
+A common analysis to do with lattice data (and point pattern data) is to check for spatial correlation. This is a second-order property of the form (Getis 1991)
+
+$$
+\sum_i \sum_j = w_{ij}U_{ij}
+$$
+
+where $w_{ij}$ is the weight matrix and $U_{ij}$ a dissimilarity measure. [1]
+
+### Global Moran's I coefficient
+
+A common dissimilarity measure is Morans $I$. It is defined by [1]
+
+$$
+I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j - \hat{y})}{\sum_i (y_i - \hat{y})^2}
+$$
+
+Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative auto-correlation is not so easy to interpret [1]. The implementation below is a Monte Carlo simulation approach to define a null distribution to test against. 
 
 ```{r}
-(pp <- .ppp(spe_vis, marks = "ground_truth"))
+# taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
+plotSpatialFeature(sfe_tissue, features = "nCounts", 
+                   colGeometryName = "spotPoly",
+                   annotGeometryName = "myofiber_simplified", 
+                   aes_use = "color", linewidth = 0.5, fill = NA,
+                   annot_aes = list(fill = "area"))
 
-plot(pp)
+colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
+sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
+                                colGraphName = "visium", nsim = 1000,
+                                type = "moran.mc")
+
+colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
+
+plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
 ```
 
+The number of genes per spot shows a Moran's $I$ of $\sim 0.38$ which indicates auto-correlation. The number of counts per spot shows a Moran's $I$ of $\sim 0.53$. 
+
+
+### Global Geary's C coefficient
+
+Another measure of spatial auto-correlation is Geary's $C$. It is very closely related to Moran's $I$. Geary's $C$ is defined by:
+
+$$
+C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
+$$
+
+https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
+
+## VOYAGER
+
+There is a very nice resource explaining in detail the available methods for lattice data (amongst others) (https://pachterlab.github.io/voyager/index.html). We will summarise complement these approaches in this chapter 
+
 # Appendix
+
+## Sources
+
+[1] Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
 
 ## Session info
 

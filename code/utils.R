@@ -11,6 +11,11 @@ suppressPackageStartupMessages({
   library(STexampleData)
   library(patchwork)
   library(reshape2)
+  library(Voyager)
+  library(SpatialFeatureExperiment)
+  library(SFEData)
+  library(scran)
+  library(scater)
 })
 
 .ppp <- \(spe, marks = NULL) {

@@ -17,20 +17,37 @@ format:
     embed-resources: true
     
 website:
+  page-navigation: true
   navbar:
-    search: false
+    search: true
     left:
       - text: "Home"
         file: 00-home.qmd
       - text: "Setup"
         file: 00-setup.qmd
-      - text: "Unmarked"
-        file: 01-unmarked.qmd
-      - text: "Discrete"
-        file: 02-discmarked.qmd
-      - text: "Continuous"
-        file: 03-contmarked.qmd
-      - text: "Both"
-        file: 04-bothmarked.qmd
-      - text: "Spot based data"
-        file: 05-spotbased.qmd
+      - sidebar:imaging
+      - sidebar:spots 
+  sidebar:
+    - id: imaging 
+      title: "Imaging-based Analysis"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents: 
+        - text: "Unmarked"
+          file: 01-unmarked.qmd
+        - text: "Discontinuous marked"
+          file: 02-discmarked.qmd
+        - text: "Continuous marked"
+          file: 03-contmarked.qmd
+        - text: "Both"
+          file: 04-bothmarked.qmd
+          
+    - id: spots
+      title: "Spot-based Analysis"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents: 
+        - text: "Spots"
+          file: 05-spotbased.qmd

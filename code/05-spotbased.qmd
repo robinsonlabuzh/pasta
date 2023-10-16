@@ -84,6 +84,8 @@ $$
 
 Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation, but this is not so easy to interpret [1]. The implementation below is a Monte Carlo simulation approach to define a null distribution to test against. 
 
+#### Implementation using `VOYAGER`
+
 ```{r}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
 plotSpatialFeature(sfe_tissue, features = "nCounts", 
@@ -106,6 +108,16 @@ res$moran.mc_p.value_Vis5A
 plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
 ```
 
+#### Implementation using `spdep`
+
+```{r}
+#create nearest neighbours weights 
+weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
+spdep::moran.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods, randomisation = FALSE)
+
+spdep::moran.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, randomisation = FALSE)
+```
+
 The number of genes per spot shows a Moran's $I$ of $\sim 0.38$ which indicates auto-correlation. The number of counts per spot shows a Moran's $I$ of $\sim 0.53$. 
 
 
@@ -120,6 +132,8 @@ The interpretation is inveresely to Moran's $I$. A value less than $1$ indicates
 
 The testing works similarly to Moran's $I$, just the objective function changes in the Monte Carlo estimation
 
+#### Implementation using `VOYAGER`
+
 ```{r}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
 sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
@@ -133,9 +147,45 @@ res$geary.mc_statistic_Vis5A
 res$geary.mc_p.value_Vis5A
 ```
 
+#### Implementation using `spdep`
+
+```{r}
+spdep::geary.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods, randomisation = TRUE)
+
+spdep::geary.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, randomisation = TRUE)
+```
+
 The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation. 
 
 https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
+
+## Local Measures
+
+Often a global measure is not enough. One number determining e.g. the spatial autocorrelation over an entire tissue slice might not be reflective of tissue heterogeneity. Therefore, local indicators of spatial associations have been developed [2]. For each sampling location we calculate as follows (https://onlinelibrary.wiley.com/doi/epdf/10.1111/j.1538-4632.1995.tb00338.x) (formula from ?localmoran)
+
+$$
+I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})
+$$
+
+Since we are calculating several local statistics potentially from the same observations, problems of multiple testing arise. We correct for this issue with standard adjustments, such as Benjamini Hochberg correction (https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1995.tb02031.x)
+
+```{r}
+#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction
+locM <- localmoran(x = sfe_tissue$nGenes, listw = weights_neighbourhoods) |> p.adjust("BH")
+
+colData(sfe_tissue) <- cbind(sfe_tissue, locM)
+
+tmap::tm_shape(sfe_tissue) + tm_fill()
+```
+#### Implementation wiht `Voyager` 
+
+```{r}
+sfe_tissue <- colDataUnivariate(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"))
+
+plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "spotPoly", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
 
 ## VOYAGER
 
@@ -146,6 +196,8 @@ There is a very nice resource explaining in detail the available methods for lat
 ## Sources
 
 [1] Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
+
+[2] Pebesma, E., & Bivand, R. (2023). Spatial data science: With applications in R. CRC Press.
 
 ## Session info
 

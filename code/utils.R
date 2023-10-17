@@ -16,6 +16,8 @@ suppressPackageStartupMessages({
   library(SFEData)
   library(scran)
   library(scater)
+  library(tmap)
+  library(spdep)
 })
 
 .ppp <- \(spe, marks = NULL) {

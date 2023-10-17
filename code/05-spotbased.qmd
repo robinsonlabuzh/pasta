@@ -167,17 +167,31 @@ $$
 I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})
 $$
 
-Since we are calculating several local statistics potentially from the same observations, problems of multiple testing arise. We correct for this issue with standard adjustments, such as Benjamini Hochberg correction (https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1995.tb02031.x)
+Since we are calculating several local statistics potentially from the same observations, problems of multiple testing arise. We correct for this issue with standard adjustments, such as Benjamini Hochberg correction (https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1995.tb02031.x). The problem of false positives due to multiple testing is discussed in great detail in [2].
+
+Implementation with `spdep` 
 
 ```{r}
-#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction
-locM <- localmoran(x = sfe_tissue$nGenes, listw = weights_neighbourhoods) |> p.adjust("BH")
-
-colData(sfe_tissue) <- cbind(sfe_tissue, locM)
-
-tmap::tm_shape(sfe_tissue) + tm_fill()
+#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
+localplot <- function(sfe, var, fun, plotvar){
+  loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
+  #extract the effect size
+  locEffect <- loc[,1]
+  #extract the p-value and adjust for multiple testing
+  p.val.adj <- loc[,5] |> p.adjust("BH")
+  #convert into a plain sf object for plotting
+  sf <- colGeometries(sfe)$spotPoly
+  
+  sf$locEffect <- locEffect
+  sf$p.val.adj <- p.val.adj
+  
+  return(tm_shape(sf) + tm_fill(col = plotvar))
+}
+localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect')
+localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect')
 ```
-#### Implementation wiht `Voyager` 
+
+#### Implementation with `Voyager` 
 
 ```{r}
 sfe_tissue <- colDataUnivariate(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"))
@@ -187,6 +201,25 @@ plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), nco
                 diverge_center = 0, image_id = "lowres", maxcell = 5e4)
 ```
 
+
+Geary's C can be calculated for local interactions as well. 
+
+--> add formula and explanaition etc.
+
+```{r}
+#localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
+#localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
+```
+
+#### Implementation with `Voyager` 
+
+```{r}
+sfe_tissue <- colDataUnivariate(sfe_tissue, "localG", features = c("nCounts", "nGenes"))
+
+plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "spotPoly", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
 ## VOYAGER
 
 There is a very nice resource explaining in detail the available methods for lattice data (amongst others) (https://pachterlab.github.io/voyager/index.html). We will summarise complement these approaches in this chapter 

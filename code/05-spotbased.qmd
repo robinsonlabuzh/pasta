@@ -62,7 +62,7 @@ $$
 
 other options to specify the weight matrix $W$ are mentioned in [1]. 
 
-## Gloabl Measures 
+## Global Measures for Univariate Data
 
 Global measures are values across an entire field of view. This gives e.g. one number per field of view.
 
@@ -159,7 +159,9 @@ The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $
 
 https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
 
-## Local Measures
+## Local Measures for Univariate Data
+
+### Local Moran's I coefficient
 
 Often a global measure is not enough. One number determining e.g. the spatial autocorrelation over an entire tissue slice might not be reflective of tissue heterogeneity. Therefore, local indicators of spatial associations have been developed [2]. For each sampling location we calculate as follows (https://onlinelibrary.wiley.com/doi/epdf/10.1111/j.1538-4632.1995.tb00338.x) (formula from ?localmoran)
 
@@ -175,10 +177,29 @@ Implementation with `spdep`
 #calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
 localplot <- function(sfe, var, fun, plotvar){
   loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
-  #extract the effect size
-  locEffect <- loc[,1]
-  #extract the p-value and adjust for multiple testing
-  p.val.adj <- loc[,5] |> p.adjust("BH")
+  #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
+  if(fun %in% c('localG')){
+    loc <- attr(loc, 'internals')
+    #extract the effect size
+    locEffect <- loc[,1]
+    #extract the p-value and adjust for multiple testing
+    p.val.adj <- loc[,5] |> p.adjust("BH")
+  }
+  else if(fun == 'localC_perm'){
+    p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
+    locEffect <- loc
+  else if(fun == 'lee'){
+    
+  }
+  }
+  else{
+    #extract the effect size
+    locEffect <- loc[,1]
+    #extract the p-value and adjust for multiple testing
+    p.val.adj <- loc[,5] |> p.adjust("BH")
+  }
+  
+  
   #convert into a plain sf object for plotting
   sf <- colGeometries(sfe)$spotPoly
   
@@ -201,14 +222,32 @@ plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), nco
                 diverge_center = 0, image_id = "lowres", maxcell = 5e4)
 ```
 
+### Local Geary's C coefficient
 
 Geary's C can be calculated for local interactions as well. 
 
 --> add formula and explanaition etc.
 
 ```{r}
-#localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
-#localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
+localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect')
+localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect')
+```
+
+#### Implementation with `Voyager` 
+
+```{r}
+sfe_tissue <- colDataUnivariate(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"))
+
+plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "spotPoly", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+
+### Local Getis-Ord $G_i$ coefficient
+
+```{r}
+localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
+localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
 ```
 
 #### Implementation with `Voyager` 
@@ -220,6 +259,28 @@ plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 
                 colGeometryName = "spotPoly", divergent = TRUE, 
                 diverge_center = 0, image_id = "lowres", maxcell = 5e4)
 ```
+
+## Measures for Bi- and Multivariate Data
+
+So far, we have considered methods for univariate data, so where we looked at the change of one variable in several contexts. Spatial methods for bi- and multivariate data exist as well and will be discussed in the following.
+
+### Bivariate Lee's $L$
+
+The implementation in the package `spdep` is as follows:
+
+$$
+L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}
+$$
+(https://r-spatial.github.io/spdep/reference/lee.htmlls)
+
+Lee's $L$ is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran's $I$ [3]. Instead of looking at the auto-correlation of one signle variable we can now assess the spatial dependence of two variables.
+
+```{r}
+lee(x = sfe_tissue$nCounts, y = sfe_tissue$nGenes, n = length(sfe_tissue$nCounts), listw = weights_neighbourhoods)
+
+
+```
+
 ## VOYAGER
 
 There is a very nice resource explaining in detail the available methods for lattice data (amongst others) (https://pachterlab.github.io/voyager/index.html). We will summarise complement these approaches in this chapter 
@@ -231,6 +292,8 @@ There is a very nice resource explaining in detail the available methods for lat
 [1] Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
 
 [2] Pebesma, E., & Bivand, R. (2023). Spatial data science: With applications in R. CRC Press.
+
+[3] Lee, S. I. (2001). Developing a bivariate spatial association measure: an integration of Pearson's r and Moran's I. Journal of geographical systems, 3, 369-385.
 
 ## Session info
 

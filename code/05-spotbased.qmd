@@ -188,9 +188,6 @@ localplot <- function(sfe, var, fun, plotvar){
   else if(fun == 'localC_perm'){
     p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
     locEffect <- loc
-  else if(fun == 'lee'){
-    
-  }
   }
   else{
     #extract the effect size
@@ -198,7 +195,6 @@ localplot <- function(sfe, var, fun, plotvar){
     #extract the p-value and adjust for multiple testing
     p.val.adj <- loc[,5] |> p.adjust("BH")
   }
-  
   
   #convert into a plain sf object for plotting
   sf <- colGeometries(sfe)$spotPoly
@@ -276,9 +272,25 @@ $$
 Lee's $L$ is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran's $I$ [3]. Instead of looking at the auto-correlation of one signle variable we can now assess the spatial dependence of two variables.
 
 ```{r}
-lee(x = sfe_tissue$nCounts, y = sfe_tissue$nGenes, n = length(sfe_tissue$nCounts), listw = weights_neighbourhoods)
+loc <- lee(x = sfe_tissue$nCounts, y = sfe_tissue$nGenes, n = length(sfe_tissue$nCounts), listw = weights_neighbourhoods)
 
+#convert into a plain sf object for plotting
+sf <- colGeometries(sfe_tissue)$spotPoly
 
+sf$locEffect <- loc$localL
+
+tm_shape(sf) + tm_fill(col = 'locEffect')  
+```
+
+#### Implementation with `Voyager` 
+
+```{r, eval=FALSE}
+sfe_tissue <- runBivariate(sfe_tissue, "locallee", swap_rownames = "symbol",
+                           feature1 = c('nGenes', 'nCounts'))
+
+plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "spotPoly", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
 ```
 
 ## VOYAGER

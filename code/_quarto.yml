@@ -4,7 +4,7 @@ project:
   output-dir: ../docs
 
 execute: 
-  cache: true
+  cache: false
   warning: false
   message: false
 

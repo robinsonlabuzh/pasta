@@ -27,7 +27,10 @@ sfe_tissue <- sfe[,colData(sfe)$in_tissue]
 sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
 
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
+
+colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
 ```
+
 ## Regular Lattice Data
 
 Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [1].
@@ -86,7 +89,7 @@ Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is clos
 
 #### Implementation using `VOYAGER`
 
-```{r}
+```{r, eval = FALSE}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
 plotSpatialFeature(sfe_tissue, features = "nCounts", 
                    colGeometryName = "spotPoly",
@@ -94,7 +97,6 @@ plotSpatialFeature(sfe_tissue, features = "nCounts",
                    aes_use = "color", linewidth = 0.5, fill = NA,
                    annot_aes = list(fill = "area"))
 
-colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
 sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
                                 colGraphName = "visium", nsim = 1000,
                                 type = "moran.mc")
@@ -189,6 +191,10 @@ localplot <- function(sfe, var, fun, plotvar){
     p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
     locEffect <- loc
   }
+  else if (fun == 'LOSH'){
+    locEffect <- loc[,1]
+    p.val.adj <- c()
+  }
   else{
     #extract the effect size
     locEffect <- loc[,1]
@@ -210,7 +216,7 @@ localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect')
 
 #### Implementation with `Voyager` 
 
-```{r}
+```{r, eval = FALSE}
 sfe_tissue <- colDataUnivariate(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), ncol = 2,
@@ -231,7 +237,7 @@ localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect'
 
 #### Implementation with `Voyager` 
 
-```{r}
+```{r, eval = FALSE}
 sfe_tissue <- colDataUnivariate(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), ncol = 2,
@@ -248,12 +254,33 @@ localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
 
 #### Implementation with `Voyager` 
 
-```{r}
+```{r, eval = FALSE}
 sfe_tissue <- colDataUnivariate(sfe_tissue, "localG", features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
                 colGeometryName = "spotPoly", divergent = TRUE, 
                 diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+
+### Local Spatial Heteroscedasticity (LOSH)
+
+The univariate methods described above assume homoscedastic variance so that the variance is uniform over the sampling area [4]. In the context of tumour-immune infiltration we could have regions where the mean infiltration is the same but the variability depends on the specific pathology. Therefore, a new statistic was introduced, local spatial heteroscedasticity (LOSH). The aim of LOSH is similar to the local $G$ statistic, where we compared means, to now compare variances. The aim is to compare homogeienity and heterogeneity of groups in space. This statistic is especially interesting in combination with the local $G$ statistic, giving an overview on the mean-variance relationship of the sample [4].
+
+LOSH is defined formally as follows:
+
+$$
+H_i(d) = \frac{\sum_j w_{ij}(d)|e_j(d)|^a}{\sum_j w_{ij}(d)}
+$$
+
+where $e_j(d) = x_j - \bar{x}_j(d), j\in N(i,d)$ are the local residuals [4].
+
+Ord and Getis provide a very nice table for the interpretation of the mean and variance relationship provided by $G_i$ and $H_i$. 
+
+--> insert table
+
+```{r}
+localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect')
+localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect')
 ```
 
 ## Measures for Bi- and Multivariate Data
@@ -307,6 +334,7 @@ There is a very nice resource explaining in detail the available methods for lat
 
 [3] Lee, S. I. (2001). Developing a bivariate spatial association measure: an integration of Pearson's r and Moran's I. Journal of geographical systems, 3, 369-385.
 
+[4] Ord, J. K., & Getis, A. (2012). Local spatial heteroscedasticity (LOSH). The Annals of Regional Science, 48, 529-539.
 ## Session info
 
 ```{r}

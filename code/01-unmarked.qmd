@@ -754,7 +754,7 @@ functional.pca.pp <- function(df){
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
   fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
-  fdapace::CreateModeOfVarPlot(fpca_obj, title = 'Modes of Variation OD Mature cells')
+  fdapace::CreateModeOfVarPlot(fpca_obj)
 }
 
 functional.pca.pp(L_odmature_lisa)
@@ -942,7 +942,8 @@ $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
 
-Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$. <!-- 
+Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$.
+ <!-- 
 ```{r}
 fhazard_ependymal <- envelope(ppls$Ependymal, Fhazard, nsim=39, fix.n=TRUE,
 transform=expression(./(2*pi*r)))
@@ -965,7 +966,7 @@ p <- ggplot(fhazard_list, aes(x=r, y=obs, col= type))+
   geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)+
   ggtitle('Empty-space hazard')+
   geom_line(aes(x=r,y=theo),linetype = "dashed", show.legend = FALSE)+
-  theme_light() + theme(legend.key.size = unit(0.5, "lines"))
+  theme_light() #+ theme(legend.key.size = unit(0.5, "lines"))
 p
 ```
  -->

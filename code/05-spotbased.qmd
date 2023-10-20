@@ -130,6 +130,7 @@ Another measure of spatial auto-correlation is Geary's $C$. It is very closely r
 $$
 C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
 $$
+
 The interpretation is inveresely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation. (https://pachterlab.github.io/voyager/articles/visium_10x.html)
 
 The testing works similarly to Moran's $I$, just the objective function changes in the Monte Carlo estimation
@@ -160,6 +161,25 @@ spdep::geary.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, random
 The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation. 
 
 https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
+
+### Global Getis-Ord $G$ statistic
+
+The global $G$ statistic is a generalisation of the local version (see below) and summarises the contributions of all pairs of values $(x_i, x_j)$ in teh dataset. Formally that is,
+
+$$
+G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_{j=1}^n x_i x_j}, \text{s.t } j \neq i
+$$
+
+The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the datapoints whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather considering both approaches. 
+
+--> weights should be binarised for this test - how to do this?
+
+```{r}
+spdep::globalG.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods)
+spdep::globalG.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods)
+```
+
+[5]
 
 ## Local Measures for Univariate Data
 
@@ -210,8 +230,11 @@ localplot <- function(sfe, var, fun, plotvar){
   
   return(tm_shape(sf) + tm_fill(col = plotvar))
 }
-localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect')
-localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect')
+
+p <- localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect')
+q <- localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect')
+
+tmap_arrange(p,q)
 ```
 
 #### Implementation with `Voyager` 
@@ -228,11 +251,17 @@ plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), nco
 
 Geary's C can be calculated for local interactions as well. 
 
---> add formula and explanaition etc.
+$$
+C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2
+$$
+
+The interpretation is the same as for local Moran's $I$ [6].
 
 ```{r}
-localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect')
-localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect')
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect')
+
+tmap_arrange(p,q)
 ```
 
 #### Implementation with `Voyager` 
@@ -247,9 +276,19 @@ plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), nc
 
 ### Local Getis-Ord $G_i$ coefficient
 
+The local Getis-Ord $G_i$ statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$. 
+
+$$
+G_i(d) = \frac{\sum_{j=1}^n w_{ij}(d)x_j}{\sum_{j=1}^n x_j}, \text{s.t } j \neq i 
+$$
+
+There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. Importantly, $G_i(d)$ is scale-invariant but not location-invariant. That means, the subdivision into the $n$ subregions matterns for the computation of the local statistic [5].
+ 
 ```{r}
-localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
-localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
+
+tmap_arrange(p,q)
 ```
 
 #### Implementation with `Voyager` 
@@ -279,8 +318,10 @@ Ord and Getis provide a very nice table for the interpretation of the mean and v
 --> insert table
 
 ```{r}
-localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect')
-localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect')
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect')
+
+tmap_arrange(p,q)
 ```
 
 ## Measures for Bi- and Multivariate Data
@@ -335,6 +376,10 @@ There is a very nice resource explaining in detail the available methods for lat
 [3] Lee, S. I. (2001). Developing a bivariate spatial association measure: an integration of Pearson's r and Moran's I. Journal of geographical systems, 3, 369-385.
 
 [4] Ord, J. K., & Getis, A. (2012). Local spatial heteroscedasticity (LOSH). The Annals of Regional Science, 48, 529-539.
+
+[5] Getis, A., & Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. Geographical analysis, 24(3), 189-206.
+
+[6] Anselin, L. (1995). Local indicators of spatial association—LISA. Geographical analysis, 27(2), 93-115.
 ## Session info
 
 ```{r}

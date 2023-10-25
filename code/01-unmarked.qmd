@@ -754,7 +754,7 @@ functional.pca.pp <- function(df){
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
   fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
-  fdapace::CreateModeOfVarPlot(fpca_obj)
+  fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
 }
 
 functional.pca.pp(L_odmature_lisa)
@@ -762,7 +762,7 @@ functional.pca.pp(L_odmature_lisa)
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-As such it is natural to display the eigenfunction as their contribution to the deviation around the mean as a confidence ribbon. The patterns in variation of the point process are captured in the mode of variation plot. The modes of variation capture the contribution of the first (in this case two) eigenfunctions around the mean. -\> check the source from the Springer book "Functional Data Analysis with R and Matlab".
+Looking at the second plot we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve. When we look at the example that is clearly visible. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line -\> check the source from the Springer book "Functional Data Analysis with R and Matlab".
 
 ### Third-Order Summary Statistics
 

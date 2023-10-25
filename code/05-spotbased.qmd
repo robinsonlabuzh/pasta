@@ -26,9 +26,17 @@ sfe
 sfe_tissue <- sfe[,colData(sfe)$in_tissue]
 sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
 
+#perform normalisation 
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 
 colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
+
+#calculate the highly variable genes
+dec <- scran::modelGeneVar(sfe_tissue, lowess = FALSE)
+hvgs <- scran::getTopHVGs(dec, n = 200)
+
+#calcualte the principal components of 
+sfe_tissue <- scater::runPCA(sfe_tissue, ncomponents = 20, subset_row = hvgs) 
 ```
 
 ## Regular Lattice Data

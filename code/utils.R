@@ -18,6 +18,7 @@ suppressPackageStartupMessages({
   library(scater)
   library(tmap)
   library(spdep)
+  library(dixon)
 })
 
 .ppp <- \(spe, marks = NULL) {

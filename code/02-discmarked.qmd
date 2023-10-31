@@ -387,10 +387,6 @@ $$
 
 where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$.
 
-```{r}
-Kall <- alltypes(pp_sel, Kcross)
-```
-
 First we plot an overview over the cross K function for the different types.
 
 ```{r}

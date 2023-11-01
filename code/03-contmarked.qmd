@@ -175,6 +175,7 @@ rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)
 ```
+
 ```{r}
 plotSpatialFeature(sfe, c("nGenes", "nCounts"),
                    colGeometryName = "centroids", ncol = 2, scattermore = TRUE)

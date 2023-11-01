@@ -22,7 +22,7 @@ suppressPackageStartupMessages({
   library(tmap)
   library(spdep)
   library(dixon)
-  library(stingr)
+  library(stringr)
 })
 
 .ppp <- \(spe, marks = NULL) {

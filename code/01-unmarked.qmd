@@ -739,9 +739,12 @@ We apply functional PCA to retrieve the main trends in these individual curves. 
 functional.pca.pp <- function(df){
   df_fdob <- df %>% as.matrix()
   #remove theo column - we want only the actual estimations in there without the poisson line theo
-  df_fdob <- df_fdob[,-ncol(df_fdob)]
-  #remove r column - this has to be provided independently to the FPCA - this is the yVec
-  df_fdob <- df_fdob[,-ncol(df_fdob)]
+  if('theo' %in% colnames(df)){
+     df_fdob <- df_fdob[,-ncol(df_fdob)]
+  }
+  if('r' %in% colnames(df)){
+     df_fdob <- df_fdob[,-ncol(df_fdob)]
+  }
   #number of columns
   N <- ncol(df_fdob)
   #number of rows
@@ -859,11 +862,17 @@ for (i in 1:length(res_ls)) {
 }
 #plot the densities
 p <- ggplot(res_df, aes(x=metric, col= type))+
-    geom_density(size=1)+
+    geom_density(linewidth=1)+
     scale_x_sqrt() +
     theme_light() +
     ggtitle('Sqrt of the Mean Nearest-Neighbour Distance')
 p
+```
+
+```{r, eval = FALSE}
+res_df_wider <- res_df %>% group_by(type) %>% mutate(row = row_number()) %>% tidyr::pivot_wider(names_from = type, values_from = metric) %>% select(-row) 
+#we have the problem that the number of points is not the same for all celltypes
+functional.pca.pp(res_df_wider) 
 ```
 
 In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.

@@ -2,3 +2,4 @@
 data/*rds
 outs/*rds
 code/*_cache
+.Rproj.user

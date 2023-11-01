@@ -1,0 +1,133 @@
+# Irregular Lattices
+
+## Dependencies
+
+```{r}
+#| label: load-libs
+#| message: false
+#| warning: false
+#| results: hide
+source("utils.R")
+```
+
+Until now we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of indvidual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (the representation of spot based spatial tanscriptomics data) the sample areas in an irregular lattice can have different sizes and are not reugularly distributed over the sample space.
+
+For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.
+
+```{r}
+(sfe <- HeNSCLCData())
+
+# Empty cells
+colData(sfe)$is_empty <- colData(sfe)$nCounts < 1
+# Select negative control probes
+neg_inds <- str_detect(rownames(sfe), "^NegPrb")
+# Number of negative control probes
+sum(neg_inds)
+colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
+# Remove low quality cells
+(sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1])
+# Calculate count stats
+rowData(sfe)$means <- rowMeans(counts(sfe))
+rowData(sfe)$vars <- rowVars(counts(sfe))
+rowData(sfe)$is_neg <- neg_inds
+# log Counts
+sfe <- logNormCounts(sfe)
+```
+
+```{r}
+plotSpatialFeature(sfe, c("nGenes", "nCounts"),
+                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE)
+```
+
+## Irregular lattice and neighbourhood matrix
+
+Most analysis techniques rely on the a neighborhood matrix, which is a matrix that indicates which cells are neighbors. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice it can be more complicated as the reconstruction of the cells is often not perfect.
+
+## Neighbourhood matrix
+
+```{r}
+colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
+                                                  dist_type = "idw", k = 5, 
+                                                  style = "W")
+```
+
+# Global Moran's I coefficient
+
+The global Moran's I coefficient is a measure of spatial autocorrelation. It is defined as
+
+$$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j - \hat{y})}{\sum_i (y_i - \hat{y})^2}$$
+
+where $y_i$ is the value of the variable of interest for location $i$, $\hat{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation.
+
+## Implementation using `voyager`
+
+```{r}
+features_use <- c("nGenes")
+sfe <- colDataMoransI(sfe, features_use, colGraphName = "knn5")
+
+colFeatureData(sfe)[features_use,]
+
+sfe <- colDataUnivariate(sfe, features = c("nCounts", "nGenes"), 
+                                colGraphName = "knn5", nsim = 200,
+                                type = "moran.mc")
+res <- colFeatureData(sfe)[c("nCounts", "nGenes"),]
+#value of the metric
+res$moran.mc_statistic_sample01
+#p-value
+res$moran.mc_p.value_sample01
+```
+
+## Implementation using `spdep`
+
+```{r}
+#create nearest neighbours weights 
+weights_neighbourhoods <- colGraph(sfe, "knn5")
+spdep::moran.test(x = sfe$nGenes, listw = weights_neighbourhoods, randomisation = FALSE)
+spdep::moran.test(x = sfe$nCounts, listw = weights_neighbourhoods, randomisation = FALSE)
+```
+
+# Global's Geary's coefficient
+
+Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Geary's $C$ is defined by
+
+$$
+C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
+$$
+where $n$ is the number of locations, $i,j$ are different locations, $y_i$ is the value of the variable of interest for location $i$, $\bar{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$.  The interpretation is inversely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
+
+
+## Implementation using `voyager`
+
+```{r}
+features_use <- c("nGenes")
+sfe <- colDataMoransI(sfe, features_use, colGraphName = "knn5")
+
+colFeatureData(sfe)[features_use,]
+
+sfe <- colDataUnivariate(sfe, features = c("nCounts", "nGenes"), 
+                                colGraphName = "knn5", nsim = 200,
+                                type = "geary.mc")
+res <- colFeatureData(sfe)[c("nCounts", "nGenes"),]
+#value of the metric
+res$geary.mc_statistic_sample01
+#p-value
+res$geary.mc_p.value_sample01
+```
+## Implementation using `spdep`
+
+```{r}
+#create nearest neighbours weights 
+weights_neighbourhoods <- colGraph(sfe, "knn5")
+spdep::geary.test(x = sfe$nGenes, listw = weights_neighbourhoods, randomisation = TRUE)
+spdep::geary.test(x = sfe$nCounts, listw = weights_neighbourhoods, randomisation = TRUE)
+```
+
+
+# Appendix
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```

@@ -12,7 +12,7 @@ format:
   html:
     theme: lux
     toc: true
-    toc-depth: 2
+    toc-depth: 3
     standalone: true
     embed-resources: true
     
@@ -32,16 +32,21 @@ website:
       title: "Imaging-based Analysis"
       style: "docked"
       background: light
-      collapse-level: 2
+      collapse-level: 3
       contents: 
-        - text: "Unmarked"
-          file: 01-unmarked.qmd
-        - text: "Discontinuous marked"
-          file: 02-discmarked.qmd
-        - text: "Continuous marked"
-          file: 03-contmarked.qmd
-        - text: "Both"
-          file: 04-bothmarked.qmd
+        - text: "---"
+        - text: "Univariate Methods"
+        - text: "---"
+        - text: "Univariate Point Pattern Methods"
+          file: 01-within-marks.qmd
+        - text: "Univariate Lattice Methods"
+          file: 03-irregular-lattices.qmd
+        - text: "---"
+        - text: "Multivariate Methods"
+        - text: "---"
+        - text: "Multivariate Point Pattern Methods"
+          file: 02-between-marks.qmd
+        - text: "Multivariate Lattice Methods"
           
     - id: spots
       title: "Spot-based Analysis"
@@ -50,4 +55,4 @@ website:
       collapse-level: 2
       contents: 
         - text: "Spots"
-          file: 05-spotbased.qmd
+          file: 04-spotbased.qmd

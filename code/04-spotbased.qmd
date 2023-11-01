@@ -39,7 +39,7 @@ hvgs <- scran::getTopHVGs(dec, n = 200)
 sfe_tissue <- scater::runPCA(sfe_tissue, ncomponents = 20, subset_row = hvgs) 
 ```
 
-## Regular Lattice Data
+# Regular Lattice Data
 
 Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [1].
 
@@ -72,6 +72,8 @@ w_{ij} = \begin{cases}
 $$
 
 other options to specify the weight matrix $W$ are mentioned in [1]. 
+
+# Univariate Data
 
 ## Global Measures for Univariate Data
 
@@ -332,9 +334,11 @@ q <- localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect')
 tmap_arrange(p,q)
 ```
 
-## Measures for Bi- and Multivariate Data
+# Bi- and Multivariate Data
 
 So far, we have considered methods for univariate data, so where we looked at the change of one variable in several contexts. Spatial methods for bi- and multivariate data exist as well and will be discussed in the following.
+
+## Local Measures for Multivariate Data
 
 ### Bivariate Lee's $L$
 

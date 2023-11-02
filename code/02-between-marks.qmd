@@ -1,4 +1,4 @@
-# Preamble
+# Discrete Marks
 
 ## Dependencies
 
@@ -13,7 +13,7 @@ source("utils.R")
 ## Setup
 
 ```{r}
-#| label: load-data
+#| label: load-data 1
 spe <- readRDS("../data/spe.rds")
 ```
 
@@ -709,6 +709,11 @@ We have indication that the indepence of components assumption should not be rej
 <!-- ## Multitype Cox processes -->
 
 <!-- ### Multitype Cluster processes -->
+
+# Continuous Marks
+
+--> add bivariate Lee's L and multivariate Geary's $C$
+
 
 # Appendix
 

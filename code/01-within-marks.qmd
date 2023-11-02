@@ -1,4 +1,4 @@
-# Preamble
+# Discrete Marks
 
 ## Dependencies
 
@@ -1055,6 +1055,147 @@ The concept of spacing is not only usable in point pattern analysis but more bro
 ### Edge Corrections
 
 The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice.
+
+# Continuous Marks
+
+## Setup
+
+```{r, message=FALSE}
+#| label: load-data 2
+
+#subset the data to only look at sample ID 0.01
+sub = spe[, spe$sample_id == 0.01]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp = .ppp(sub, marks = "cluster_id"))
+
+
+#subset the data to only look at sample ID 0.01
+sub_2CT = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
+#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+(pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
+
+#split the multitype point process into several single type processes
+#fist, set the marks of the point process to be factors
+marks(pp) = factor(marks(pp))
+ppls = split(pp)
+```
+
+```{r, fig.height=15, fig.width=15}
+plot(ppls)
+```
+
+In `spatstat` a `mark` can basically take any value. It can be discrete as we have seen in the discrete mark chapter or it can take a continuos value, such as gene expression. In our example we take the gene expression of some marker genes from Fig. 6 of the original publication.
+
+```{r}
+#  Genes from Fig. 6 of Moffitt et al. (2018)
+gex <- as.data.frame(t(as.matrix(assay(sub))))[, c('Slc18a2', 'Esr1', 'Pgr')]
+rownames(gex) <- NULL
+# gene expression to marks
+marks(pp) <- gex
+```
+
+> TODO: better plotting?
+
+```{r}
+plot(pp)
+```
+
+A pairs plot indicates spatial inhomogeneity, i.e. a spatial trend of the of the marks. This plot is only reasonable for a small number of marks however.
+
+```{r}
+pairs(as.data.frame(pp), panel = panel.smooth)
+```
+
+The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel. This estimated kernel can be used for visual inspection of the dataset.
+
+```{r}
+ppsmooth <- Smooth(pp, bw.smoothppp)
+plot(ppsmooth)
+```
+From the estimated intesity plot we can see that the expression of the marker genes is clearly inhomogeneous.
+
+Nearest-neighbour interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwith for the Gaussian kernel.
+
+```{r}
+plot(nnmark(pp))
+```
+We can use the average value of neighbouring point to predict the expression of a gene at each point. We can then plot the actual marks versus the fitted values to detect anomalies. E. g. `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This gives further indication of structure in the gene expression.
+
+```{r}
+mfit <- Smooth(pp, bw.smoothppp, at="points")
+res <- marks(pp) - mfit
+
+plot(setmarks(pp, res))
+```
+
+## Summary functions
+
+As in the discrete case the summary functions assume that the point process is stationary.
+
+### Mark correlation function
+
+The mark correlation function measures the dependence between the marks at two points at distance $r$. It is not a correlation in the classical sense, since it can take any nonegative value. The value of 1 indicates no correlation between the marks. The generalized mark correlation function is given by
+
+$$ k_f(r) = \frac{\mathbb{E}[f(m(u)m(v))]}{\mathbb{E}[f(M,M')]}$$
+where $f(m_1,m_2)$ is a test function with two arguments that represent the marks and returns a non-negative value. For continuous non-negative marks the choice of $f$ is by default $f(m_1,m_2)= m_1 m_2$. $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1.
+
+```{r}
+plot(markcorr(pp))
+```
+We can compare the mark correlation function to a pointwise simulation envelope in which we generate 5 simulations of random labeling.  
+```{r}
+ppEsr1 <- subset(pp, select = 'Esr1')
+markcorr.Esr1 <- envelope(ppEsr1, markcorr, nsim=10)
+
+plot(markcorr.Esr1)
+```
+
+The plot indicates that the mark correlation function is significantly different from the random case. The positive association of expression of the Esr1 gene declines with distance. This is consistent with clustering we saw in the residual plot above. 
+
+<!-- We can calculate the cross correlation function between the different gene expression measurments, the diagonal is equivalent to `markcorr` -->
+
+<!-- ```{r} -->
+<!-- mc <- markcrosscorr(pp) -->
+<!-- ``` -->
+
+
+<!-- ```{r} -->
+<!-- par(mar = c(1, 1, 1, 1)) -->
+<!-- plot(mc) -->
+<!-- ``` -->
+
+### Mark-weigthed K function
+
+Mark-weigthed K function is a generalization of the K-function in which the contribution of each from each pair of points is weighted by a function of their respective marks. The mark-weighted K-function is given by
+
+$$K_f(r) = \frac 1  \lambda \frac{C_f(r)}{E[ f(M_1, M_2) ]}$$
+with the function $C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1{0 < ||u - x|| \le r} \;  \big| \; u \in X \right]$ which is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$ we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point.
+
+In the scenario of random labeling, the mark-weighted $K$-function corresponds to Ripley's $K$-function.    
+
+The default function is $f(m_1, m_2) = m_1 m_2$. 
+
+```{r}
+ppEsr1 <- subset(pp, select = 'Esr1')
+
+K.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2})
+plot(K.Esr1L)
+```
+It is important to note that theoretical value is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. 
+
+Here we will compare the $L$-functions, which are the variance stabilized $K$-functions.
+
+```{r}
+L.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2}, returnL = TRUE)
+Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
+plot(eval.fv(L.Esr1L - Lest.ppEsr1))
+```
+Like for other functions we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals.
+
+```{r}
+plot(envelope(ppEsr1, fun=Kmark, returnL=TRUE, nsim=50))
+```
+
 
 # Appendix
 

@@ -390,7 +390,7 @@ where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number 
 First we plot an overview over the cross K function for the different types.
 
 ```{r}
-#| echo: false
+#| echo: true
 #| message: false
 #| results: hide
 plotCrossAll <- function(ppp, fun, edgecorr){
@@ -425,7 +425,7 @@ In this overview we can see that there is indication that Microglia and OD Matur
 However, it is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is confounding between clustering and inhomogeneity. We have already seen that our dataset most likely does not follow the assumption of stationarity. For this reason we will calculate the inhomogneous cross K-function.
 
 ```{r}
-#| echo: false
+#| echo: true
 #| message: false
 #| results: hide
 plotCrossMetric <- function(ppp, fun, from, to, edgecorr){
@@ -637,7 +637,7 @@ The i to j functions are useful to test the independence of different subprocess
 $K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is a need to handle edge effects appearing from random shifts when splitting.
 
 ```{r}
-#| echo: false
+#| echo: true
 #| message: false
 #| results: hide
 
@@ -712,7 +712,7 @@ We have indication that the indepence of components assumption should not be rej
 
 # Continuous Marks
 
---> add bivariate Lee's L and multivariate Geary's $C$
+--> do we know any methods for this?
 
 
 # Appendix

@@ -1,0 +1,22 @@
+# Irregular Lattices
+
+## Dependencies
+
+```{r}
+#| label: load-libs
+#| message: false
+#| warning: false
+#| results: hide
+source("utils.R")
+```
+
+--> add bivariate Lee's L and multivariate Geary's $C$
+
+# Appendix
+
+## Session info
+
+```{r}
+#| label: session-info
+sessionInfo()
+```

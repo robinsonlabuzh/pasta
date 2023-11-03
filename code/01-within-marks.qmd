@@ -758,14 +758,25 @@ functional.pca.pp <- function(df){
   #run the computation of the FPCA - would work with sparse data.
   fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
   fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
+  return(fpca_obj)
 }
 
-functional.pca.pp(L_odmature_lisa)
+fpca_obj <- functional.pca.pp(L_odmature_lisa)
+fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% rename(PC1 = V1, PC2 = V2, PC3 = V3)
+fpca_pc_df$sel <- get_sel$sel # assume they are in same order
+
+ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) + 
+  scale_color_continuous(type = "viridis") +
+  geom_point() +
+  theme_light() +
+  ggtitle("Biplot of the LISA L curves of the OD mature cells")
 ```
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
 Looking at the second plot we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve. When we look at the example that is clearly visible. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line -\> check the source from the Springer book "Functional Data Analysis with R and Matlab".
+
+The last plot shows the biplot of the functional PCA. Each point is a cell from the OD mature cells. The first two principal components are plotted. The first principal component is the x-axis and the second principal component is the y-axis. The points are coloured as in the plots of the LISA $L$-curves. We note that the first principal component separates the two populations. The curves with the high values (yellow) are plotted on the right and the ones with low values (blue) on the left. This corresponds to the two populations we saw in the LISA $L$-curve plot. 
 
 ### Third-Order Summary Statistics
 

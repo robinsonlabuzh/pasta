@@ -3,6 +3,26 @@
     "Version": "4.3.1",
     "Repositories": [
       {
+        "Name": "BioCsoft",
+        "URL": "https://bioconductor.org/packages/3.17/bioc"
+      },
+      {
+        "Name": "BioCann",
+        "URL": "https://bioconductor.org/packages/3.17/data/annotation"
+      },
+      {
+        "Name": "BioCexp",
+        "URL": "https://bioconductor.org/packages/3.17/data/experiment"
+      },
+      {
+        "Name": "BioCworkflows",
+        "URL": "https://bioconductor.org/packages/3.17/workflows"
+      },
+      {
+        "Name": "BioCbooks",
+        "URL": "https://bioconductor.org/packages/3.17/books"
+      },
+      {
         "Name": "CRAN",
         "URL": "https://cloud.r-project.org"
       }
@@ -2816,7 +2836,7 @@
     },
     "scuttle": {
       "Package": "scuttle",
-      "Version": "1.9.4",
+      "Version": "1.10.3",
       "Source": "Bioconductor",
       "Requirements": [
         "BiocGenerics",
@@ -2834,7 +2854,7 @@
         "stats",
         "utils"
       ],
-      "Hash": "112f783539c6e98ab03aaaba7df547eb"
+      "Hash": "5cd19f69bdeb9bae05ab947354ef599a"
     },
     "seg": {
       "Package": "seg",

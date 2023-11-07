@@ -8,6 +8,7 @@
 #| warning: false
 #| results: hide
 source("utils.R")
+theme_set(theme_minimal())
 ```
 
 Until now we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of indvidual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (the representation of spot based spatial tanscriptomics data) the sample areas in an irregular lattice can have different sizes and are not reugularly distributed over the sample space.
@@ -34,9 +35,19 @@ rowData(sfe)$is_neg <- neg_inds
 sfe <- logNormCounts(sfe)
 ```
 
+<!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
+
+In this vignette we will show the metrics related to two marker genes, KRT17 which is a marker of basal cells and TAGLN which is a marker of smooth muscle cells. 
+
+
 ```{r}
-plotSpatialFeature(sfe, c("nGenes", "nCounts"),
-                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE)
+plotSpatialFeature(sfe, c("KRT17"),
+                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+  theme_void()
+
+plotSpatialFeature(sfe, c("TAGLN"),
+                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+  theme_void()
 ```
 
 ## Irregular lattice and neighbourhood matrix
@@ -45,13 +56,19 @@ Most analysis techniques rely on the a neighborhood matrix, which is a matrix th
 
 ## Neighbourhood matrix
 
+> TODO: refer to voayager about discussion of the constructuion of the neighbourhood matrix
+
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
                                                   dist_type = "idw", k = 5, 
                                                   style = "W")
 ```
 
-# Global Moran's I coefficient
+# Global Methods
+
+Global methods give us an overview over the entire study are. The gobal measures summarize the spatial distribution of the cells in a single value. The most common global measures are the Moran's I and Geary's C coefficients. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
+
+## Global Moran's I coefficient
 
 The global Moran's I coefficient is a measure of spatial autocorrelation. It is defined as
 
@@ -59,34 +76,43 @@ $$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j
 
 where $y_i$ is the value of the variable of interest for location $i$, $\hat{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation.
 
-## Implementation using `voyager`
+### Implementation using `voyager`
 
 ```{r}
-features_use <- c("nGenes")
-sfe <- colDataMoransI(sfe, features_use, colGraphName = "knn5")
+calculateMoransI(sfe,
+    features = c("KRT17", "TAGLN"),
+    colGraphName = "knn5",
+    exprs_values = "logcounts"
+)
 
-colFeatureData(sfe)[features_use,]
+sfe <- runUnivariate(sfe,
+                     features = c("KRT17", "TAGLN"),
+                     colGraphName = "knn5",
+                     exprs_values = "logcounts",
+                     type = "moran.mc",
+                     nsim = 200)
 
-sfe <- colDataUnivariate(sfe, features = c("nCounts", "nGenes"), 
-                                colGraphName = "knn5", nsim = 200,
-                                type = "moran.mc")
-res <- colFeatureData(sfe)[c("nCounts", "nGenes"),]
+res <- rowData(sfe)[c("KRT17", "TAGLN"),]
 #value of the metric
 res$moran.mc_statistic_sample01
 #p-value
 res$moran.mc_p.value_sample01
 ```
 
-## Implementation using `spdep`
+### Implementation using `spdep`
 
 ```{r}
 #create nearest neighbours weights 
 weights_neighbourhoods <- colGraph(sfe, "knn5")
-spdep::moran.test(x = sfe$nGenes, listw = weights_neighbourhoods, randomisation = FALSE)
-spdep::moran.test(x = sfe$nCounts, listw = weights_neighbourhoods, randomisation = FALSE)
+spdep::moran.test(x = logcounts(sfe)["KRT17",],
+                  listw = weights_neighbourhoods,
+                  randomisation = FALSE)
+spdep::moran.test(x = logcounts(sfe)["TAGLN",],
+                  listw = weights_neighbourhoods,
+                  randomisation = FALSE)
 ```
 
-# Global's Geary's coefficient
+## Global's Geary's coefficient
 
 Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Geary's $C$ is defined by
 
@@ -96,32 +122,194 @@ $$
 where $n$ is the number of locations, $i,j$ are different locations, $y_i$ is the value of the variable of interest for location $i$, $\bar{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$.  The interpretation is inversely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
 
 
-## Implementation using `voyager`
+### Implementation using `voyager`
 
 ```{r}
-features_use <- c("nGenes")
-sfe <- colDataMoransI(sfe, features_use, colGraphName = "knn5")
+sfe <- runUnivariate(sfe,
+                     features = c("KRT17", "TAGLN"),
+                     colGraphName = "knn5", nsim = 200,
+                     type = "geary.mc")
 
-colFeatureData(sfe)[features_use,]
-
-sfe <- colDataUnivariate(sfe, features = c("nCounts", "nGenes"), 
-                                colGraphName = "knn5", nsim = 200,
-                                type = "geary.mc")
-res <- colFeatureData(sfe)[c("nCounts", "nGenes"),]
+res <- rowData(sfe)[c("KRT17", "TAGLN"),]
 #value of the metric
 res$geary.mc_statistic_sample01
 #p-value
 res$geary.mc_p.value_sample01
 ```
-## Implementation using `spdep`
+
+### Implementation using `spdep`
 
 ```{r}
 #create nearest neighbours weights 
 weights_neighbourhoods <- colGraph(sfe, "knn5")
-spdep::geary.test(x = sfe$nGenes, listw = weights_neighbourhoods, randomisation = TRUE)
-spdep::geary.test(x = sfe$nCounts, listw = weights_neighbourhoods, randomisation = TRUE)
+spdep::geary.test(x = logcounts(sfe)["KRT17",],
+                  listw = weights_neighbourhoods,
+                  randomisation = TRUE)
+spdep::geary.test(x = logcounts(sfe)["TAGLN",],
+                  listw = weights_neighbourhoods,
+                  randomisation = TRUE)
 ```
 
+# Local measures
+
+Unlike global measures, that give as an overview over the entire study are local measures give us information about the spatial distribution of the cells in a local area. The exist local analogs of Moran's I and Geary's C and other methods. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
+
+## Local Moran's I coefficient
+
+The local Moran's I coefficient is a measure of spatial autocorrelation on each location of interest. It is defined as
+
+$$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
+where the idex $i$ refers to the location for which the measure is calculated. The interpratation is analog to the gobal Moran's I. The value of $I_i$ is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation. Since we measure a great number of locations at the same time, we need to correct for multiple testing. We use the Benjamini-Hochberg procedure to correct for multiple testing.
+
+### Implementation using `voyager`
+
+```{r}
+sfe <- runUnivariate(sfe,
+                     features = c("KRT17", "TAGLN"),
+                     type = "localmoran")
+
+plotLocalResult(sfe, "localmoran",
+                features = c("KRT17", "TAGLN"), ncol = 2,
+                colGeometryName = "centroids", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+
+### Implementation using `spdep`
+
+> TODO: change this impelemntation to work with gene instead of cell counts
+
+```{r}
+# TODO: add weights matrix, add which sf feature to extract for plotting
+
+#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
+localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods){
+  loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
+  #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
+  if(fun %in% c('localG')){
+    loc <- attr(loc, 'internals')
+    #extract the effect size
+    locEffect <- loc[,1]
+    #extract the p-value and adjust for multiple testing
+    p.val.adj <- loc[,5] |> p.adjust("BH")
+  }
+  else if(fun == 'localC_perm'){
+    p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
+    locEffect <- loc
+  }
+  else if (fun == 'LOSH'){
+    locEffect <- loc[,1]
+    p.val.adj <- c()
+  }
+  else{
+    #extract the effect size
+    locEffect <- loc[,1]
+    #extract the p-value and adjust for multiple testing
+    p.val.adj <- loc[,5] |> p.adjust("BH")
+  }
+  
+  #convert into a plain sf object for plotting
+  sf <- colGeometries(sfe)$cellSeg
+  
+  sf$locEffect <- locEffect
+  sf$p.val.adj <- p.val.adj
+  
+  return(tm_shape(sf) + tm_fill(col = plotvar))
+  
+  # p <- ggplot() + 
+  #   geom_sf(data = sf, aes(fill = plotvar)) +
+  #   scale_y_continuous(breaks = 34:36)
+  # return(p)
+  
+}
+
+p <- localplotCell(sfe, 'nCounts', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplotCell(sfe, 'nGenes', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+
+p
+```
+
+
+## Local Geary's C coefficient
+
+Similar to local Moran's I there is a local Geary's C coefficient. It is defined as
+
+$$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2$$
+
+The interpretation is analog to the global Geary's C. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
+
+### Implementation using `voyager`
+
+```{r}
+sfe <- colDataUnivariate(sfe, "localC", features = c("nCounts", "nGenes"))
+
+plotLocalResult(sfe, "localC", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "centroids", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+### Implementation using `spdep`
+
+```{r}
+p <- localplotCell(sfe, var = 'nCounts', fun = 'localG',
+                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplotCell(sfe, var = 'nGenes', fun = 'localG',
+                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+
+tmap_arrange(p,q)
+```
+
+## Local Getis-Ord statistic
+
+The local Getis-Ord $G_i$ statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$. 
+
+$$
+G_i(d) = \frac{\sum_{j=1}^n w_{ij}(d)x_j}{\sum_{j=1}^n x_j}, \text{s.t } j \neq i 
+$$
+
+There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. Importantly, $G_i(d)$ is scale-invariant but not location-invariant. That means, the subdivision into the $n$ subregions matters for the computation of the local statistic.
+ 
+### Implementation using `voyager`
+
+```{r}
+sfe <- colDataUnivariate(sfe, "localG", features = c("nCounts", "nGenes"))
+plotLocalResult(sfe, "localG", features = c("nCounts", "nGenes"), ncol = 2,
+                colGeometryName = "centroids", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+ 
+### Implementation using `spdep`
+
+```{r}
+p <- localplotCell(sfe, var = 'nCounts', fun = 'localG', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods)
+q <- localplotCell(sfe, var = 'nGenes', fun = 'localG', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods)
+tmap_arrange(p,q)
+```
+
+## Local spatial heterosceadiscity (LOSH)
+
+The local spatial heteroscedasticity (LOSH) is a measure of spatial autocorrelation that is based on the variance of the local neighbourhood. Unlike the other measures, this method does not assume homosceadistic variance over the whole tissue region. LOSH is defined as
+
+$$H_i(d) = \frac{\sum_j w_{ij}(d)|e_j(d)|^a}{\sum_j w_{ij}(d)}$$
+
+where $e_j(d) = x_j - \bar{x}_i(d), j \in N(i,d)$ are the local residuals that are substracted from the local mean. The variable $a$ handles the interpretation of the residuals. If $a=1$, the residuals are interpreted as absolute deviations from the local mean. If $a=2$, the residuals are interpreted as deviations from the local variance.
+
+The LOSH should be interpreted in the combination with local Getis-Ord $G_i^*$ statistic. The $G_i^*$ quantifies the local mean of the variable of interest, while $H_i$ quantifies the local variance. This table provided by Ord and Getis (2012) summarizes the interpretation of the combination of $G_i^*$ and $H_i$.
+
+|                     | high $H_i$                                                                    | low $H_i$                                                                                                                      |
+|---------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
+| small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                                                                           |
+
+### Implementation using `spded`
+
+```{r}
+p <- localplotCell(sfe, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods)
+q <- localplotCell(sfe, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods)
+tmap_arrange(p,q)
+```
 
 # Appendix
 

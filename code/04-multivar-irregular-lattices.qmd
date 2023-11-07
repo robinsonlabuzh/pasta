@@ -8,9 +8,106 @@
 #| warning: false
 #| results: hide
 source("utils.R")
+theme_set(theme_minimal())
 ```
 
---> add bivariate Lee's L and multivariate Geary's $C$
+For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.
+
+```{r}
+(sfe <- HeNSCLCData())
+
+# Empty cells
+colData(sfe)$is_empty <- colData(sfe)$nCounts < 1
+# Select negative control probes
+neg_inds <- str_detect(rownames(sfe), "^NegPrb")
+# Number of negative control probes
+sum(neg_inds)
+colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
+# Remove low quality cells
+(sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1])
+# Calculate count stats
+rowData(sfe)$means <- rowMeans(counts(sfe))
+rowData(sfe)$vars <- rowVars(counts(sfe))
+rowData(sfe)$is_neg <- neg_inds
+# log Counts
+sfe <- logNormCounts(sfe)
+```
+
+<!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
+
+In this vignette we will show the metrics related to two marker genes, KRT17 which is a marker of basal cells and TAGLN which is a marker of smooth muscle cells. 
+
+```{r}
+plotSpatialFeature(sfe, c("KRT17"),
+                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+  theme_void()
+
+plotSpatialFeature(sfe, c("TAGLN"),
+                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+  theme_void()
+```
+```{r}
+colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
+                                                  dist_type = "idw", k = 5, 
+                                                  style = "W")
+weights_neighbourhoods <- colGraph(sfe, "knn5")
+```
+
+
+
+# Local Measures for Multivariate Data
+
+## Bivariate Lee's L
+
+Lee’s is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran’s I. This enables us to asses the spatial dependence of two variables in a single measure. The measure is defined as:
+
+$$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}$$
+with $w_{ij}$ the spatial weights matrix, $x$ and $y$ the two variables and $\bar{x}$ and $\bar{y}$ their means.
+
+### Implementation using `voyager`
+
+```{r}
+sfe <- runBivariate(sfe, type = "locallee",
+                    feature1 = "KRT17", feature2 = "TAGLN")
+
+plotLocalResult(sfe, "locallee", features = c("KRT17_TAGLN"), ncol = 2,
+                colGeometryName = "cellSeg", divergent = TRUE, 
+                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+```
+
+### Implementation using `spdep`
+
+```{r}
+loc <- lee(x = logcounts(sfe)["KRT17",],
+           y = logcounts(sfe)["TAGLN",],
+           n = length(logcounts(sfe)["TAGLN",]),
+           listw = weights_neighbourhoods)
+
+#convert into a plain sf object for plotting
+sf <- colGeometries(sfe)$cellSeg
+
+sf$locEffect <- loc$localL
+
+tm_shape(sf) + tm_fill(col = 'locEffect')  
+```
+
+## Multivariate local Geary's C
+
+Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. It is defined as
+
+$$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2$$
+
+and can be generalized to $k$ parameters by expanding 
+
+$$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
+
+where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. Compared to bivariates Lee it means that we use more than two variables.
+
+```{r}
+sfe <- runMultivariate(sfe, type = "localC_multi",
+                    subset_row = c("KRT17", "TAGLN"))
+```
+
 
 # Appendix
 

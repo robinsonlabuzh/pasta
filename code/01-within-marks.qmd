@@ -632,24 +632,66 @@ plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
   p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
-    geom_line(size=1)+
+    geom_line(linewidth=1)+
     ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", size=1)+
+    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", linewidth=1)+
     ylab(edgecorr) +
     scale_color_manual(name='Point Processes',
                      breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
                      values=c('Ependymal'='red', 'Microglia'='dark green', 'OD Mature'='blue', 'Poisson'='black'))+
     theme_light()
-  return(p)
+  return(list(p = p, res_df = res_df))
 }
 
-p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')
-
-p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')
+p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')$p
+p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
 ```
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 7}
 p_K/p_L
+```
+
+```{r, eval=TRUE}
+plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
+  res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
+  #plot the curve
+  p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
+    geom_line(linewidth=1)+
+    ggtitle(paste0(fun, '-function'))+
+    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", linewidth=1)+
+    ylab(edgecorr) +
+    # scale_color_manual(name='Point Processes',
+    #                  breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
+    #                  values=c('Ependymal'='red', 'Microglia'='dark green', 'OD Mature'='blue', 'Poisson'='black'))+
+    theme_light()
+  return(list(p = p, res_df = res_df))
+}
+
+functional.pca.pp <- function(res_df){
+  df <- res_df
+  fd_obj <- fdapace::MakeFPCAInputs(IDs = res_df$type, tVec=res_df$r, yVec=res_df$border)
+  #check that the FPCA object is valid
+  fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
+  #run the computation of the FPCA - would work with sparse data.
+  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
+  #fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
+  return(fpca_obj)
+}
+celltype_ls_new <- c("Ependymal", "OD Mature", "Microglia", "Ambiguous", "Astrocyte", "Endothelial", "Excitatory", "Inhibitory", "OD Immature", "Pericytes")
+print(plotScaledMetric(celltype_ls_new, ppls, 'Lscaled', 'iso')$p)
+res_df <- plotScaledMetric(celltype_ls_new, ppls, 'Lscaled', 'iso')$res_df
+
+fpca_obj <- functional.pca.pp(res_df) 
+
+fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% rename(PC1 = V1, PC2 = V2)
+fpca_pc_df$type <- celltype_ls_new
+# assume they are in same order
+
+ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = type)) +
+  #scale_color_continuous(type = "viridis") +
+  geom_point() +
+  theme_light() +
+  ggtitle("Biplot of the L curves of all Celltypes")
 ```
 
 The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed poisson line, unlike in the inhomogeneous version.
@@ -737,13 +779,14 @@ We apply functional PCA to retrieve the main trends in these individual curves. 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
 functional.pca.pp <- function(df){
+  #df <- res_df_wider
   df_fdob <- df %>% as.matrix()
   #remove theo column - we want only the actual estimations in there without the poisson line theo
-  if('theo' %in% colnames(df)){
-     df_fdob <- df_fdob[,-ncol(df_fdob)]
+  if('r' %in% colnames(df) || 'theo' %in% colnames(df)){
+     df_fdob <- df_fdob[,!colnames(df_fdob) %in% c("r", "theo")]
   }
-  if('r' %in% colnames(df)){
-     df_fdob <- df_fdob[,-ncol(df_fdob)]
+  if('Ependymal' %in% colnames(df)){
+    df_fdob <- df_fdob[,!colnames(df_fdob) %in% c("trans",'iso')]
   }
   #number of columns
   N <- ncol(df_fdob)
@@ -753,6 +796,7 @@ functional.pca.pp <- function(df){
   s <- df$r
   #create the FPCA object
   fd_obj <- fdapace::MakeFPCAInputs(IDs = rep(1:N, each=M),tVec=rep(s,N), yVec=df_fdob)
+  print(which( unlist( lapply(fd_obj$Lt, function(x) length(x) != length(unique(x))))))
   #check that the FPCA object is valid
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
@@ -878,12 +922,6 @@ p <- ggplot(res_df, aes(x=metric, col= type))+
     theme_light() +
     ggtitle('Sqrt of the Mean Nearest-Neighbour Distance')
 p
-```
-
-```{r, eval = FALSE}
-res_df_wider <- res_df %>% group_by(type) %>% mutate(row = row_number()) %>% tidyr::pivot_wider(names_from = type, values_from = metric) %>% select(-row) 
-#we have the problem that the number of points is not the same for all celltypes
-functional.pca.pp(res_df_wider) 
 ```
 
 In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.

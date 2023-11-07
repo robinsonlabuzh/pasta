@@ -30,14 +30,9 @@ sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 
 colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
-
-#calculate the highly variable genes
-dec <- scran::modelGeneVar(sfe_tissue, lowess = FALSE)
-hvgs <- scran::getTopHVGs(dec, n = 200)
-
-#calcualte the principal components of 
-sfe_tissue <- scater::runPCA(sfe_tissue, ncomponents = 20, subset_row = hvgs) 
 ```
+
+Given this data from McKellar et al. we choose two genes to analyse henceforth, namels `Mdk`and `Ncl`[7]. 
 
 # Regular Lattice Data
 
@@ -101,11 +96,11 @@ Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is clos
 
 ```{r, eval = FALSE}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
-plotSpatialFeature(sfe_tissue, features = "nCounts", 
-                   colGeometryName = "spotPoly",
-                   annotGeometryName = "myofiber_simplified", 
-                   aes_use = "color", linewidth = 0.5, fill = NA,
-                   annot_aes = list(fill = "area"))
+# plotSpatialFeature(sfe_tissue, features = "nCounts", 
+#                    colGeometryName = "spotPoly",
+#                    annotGeometryName = "myofiber_simplified", 
+#                    aes_use = "color", linewidth = 0.5, fill = NA,
+#                    annot_aes = list(fill = "area"))
 
 sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
                                 colGraphName = "visium", nsim = 1000,
@@ -125,6 +120,9 @@ plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
 ```{r}
 #create nearest neighbours weights 
 weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
+
+sfe_tissue[rowData(sfe_tissue)[,'symbol'] == 'Myh2',]
+
 spdep::moran.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods, randomisation = FALSE)
 
 spdep::moran.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, randomisation = FALSE)
@@ -392,6 +390,8 @@ There is a very nice resource explaining in detail the available methods for lat
 [5] Getis, A., & Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. Geographical analysis, 24(3), 189-206.
 
 [6] Anselin, L. (1995). Local indicators of spatial association—LISA. Geographical analysis, 27(2), 93-115.
+
+[7] McKellar, D. W., Walter, L. D., Song, L. T., Mantri, M., Wang, M. F., De Vlaminck, I., & Cosgrove, B. D. (2021). Large-scale integration of single-cell transcriptomic data captures transitional progenitor states in mouse skeletal muscle regeneration. Communications biology, 4(1), 1280.
 ## Session info
 
 ```{r}

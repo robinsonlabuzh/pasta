@@ -55,5 +55,7 @@ website:
       background: light
       collapse-level: 2
       contents: 
-        - text: "Spots"
-          file: 05-spotbased.qmd
+        - text: "Univariate Lattice Methods for Spots"
+          file: 05-univar-spotbased.qmd
+        - text: "Multivariate Lattice Methods for Spots"
+          file: 06-multivar-spotbased.qmd

@@ -205,7 +205,7 @@ Implementation with `spdep`
 
 ```{r}
 #calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
-localplot <- function(sfe, var, fun, plotvar){
+localplot <- function(sfe, var, fun, plotvar, weights_neighbourhoods){
   loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
   #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
   if(fun %in% c('localG')){
@@ -239,8 +239,8 @@ localplot <- function(sfe, var, fun, plotvar){
   return(tm_shape(sf) + tm_fill(col = plotvar))
 }
 
-p <- localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect')
-q <- localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
 
 tmap_arrange(p,q)
 ```
@@ -266,8 +266,8 @@ $$
 The interpretation is the same as for local Moran's $I$ [6].
 
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect')
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
 
 tmap_arrange(p,q)
 ```
@@ -293,8 +293,8 @@ $$
 There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. Importantly, $G_i(d)$ is scale-invariant but not location-invariant. That means, the subdivision into the $n$ subregions matterns for the computation of the local statistic [5].
  
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect')
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
 
 tmap_arrange(p,q)
 ```
@@ -323,52 +323,18 @@ where $e_j(d) = x_j - \bar{x}_j(d), j\in N(i,d)$ are the local residuals [4].
 
 Ord and Getis provide a very nice table for the interpretation of the mean and variance relationship provided by $G_i$ and $H_i$. 
 
---> insert table
+The LOSH should be interpreted in the combination with local Getis-Ord $G_i^*$ statistic. The $G_i^*$ quantifies the local mean of the variable of interest, while $H_i$ quantifies the local variance. This table provided by Ord and Getis (2012) summarizes the interpretation of the combination of $G_i^*$ and $H_i$.
+
+|                     | high $H_i$                                                                    | low $H_i$                                                                                                                      |
+|---------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
+| large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
+| small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                     
 
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect')
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect')
+p <- localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+q <- localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
 
 tmap_arrange(p,q)
-```
-
-# Bi- and Multivariate Data
-
-So far, we have considered methods for univariate data, so where we looked at the change of one variable in several contexts. Spatial methods for bi- and multivariate data exist as well and will be discussed in the following.
-
-## Local Measures for Multivariate Data
-
-### Bivariate Lee's $L$
-
-The implementation in the package `spdep` is as follows:
-
-$$
-L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}
-$$
-(https://r-spatial.github.io/spdep/reference/lee.htmlls)
-
-Lee's $L$ is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran's $I$ [3]. Instead of looking at the auto-correlation of one signle variable we can now assess the spatial dependence of two variables.
-
-```{r}
-loc <- lee(x = sfe_tissue$nCounts, y = sfe_tissue$nGenes, n = length(sfe_tissue$nCounts), listw = weights_neighbourhoods)
-
-#convert into a plain sf object for plotting
-sf <- colGeometries(sfe_tissue)$spotPoly
-
-sf$locEffect <- loc$localL
-
-tm_shape(sf) + tm_fill(col = 'locEffect')  
-```
-
-#### Implementation with `Voyager` 
-
-```{r, eval=FALSE}
-sfe_tissue <- runBivariate(sfe_tissue, "locallee", swap_rownames = "symbol",
-                           feature1 = c('nGenes', 'nCounts'))
-
-plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
 ```
 
 ## VOYAGER

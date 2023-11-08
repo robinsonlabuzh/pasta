@@ -94,11 +94,11 @@ Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is clos
 
 #### Implementation using `VOYAGER`
 
-```{r, eval = FALSE}
+```{r, eval = TRUE}
 # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
-# plotSpatialFeature(sfe_tissue, features = "nCounts", 
+# plotSpatialFeature(sfe_tissue, features = "nCounts",
 #                    colGeometryName = "spotPoly",
-#                    annotGeometryName = "myofiber_simplified", 
+#                    annotGeometryName = "myofiber_simplified",
 #                    aes_use = "color", linewidth = 0.5, fill = NA,
 #                    annot_aes = list(fill = "area"))
 

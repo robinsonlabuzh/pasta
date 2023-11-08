@@ -121,9 +121,14 @@ $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
 where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. Compared to bivariates Lee it means that we use more than two variables.
 
-```{r, eval=FALSE}
-sfe <- runMultivariate(sfe, type = "localC_multi",
-                    subset_row = c("KRT17", "TAGLN"))
+```{r, eval=TRUE}
+hvgs <- getTopHVGs(sfe_tissue, fdr.threshold = 0.01)
+
+sfe_tissue <- runMultivariate(sfe_tissue, type = "localC_multi",
+                    subset_row = hvgs,
+                    dest = "colData")
+
+#plotSpatialFeature(sfe_tissue,"localC_multi", colGeometryName = "spotPoly", image_id = NULL)
 ```
 
 ## VOYAGER

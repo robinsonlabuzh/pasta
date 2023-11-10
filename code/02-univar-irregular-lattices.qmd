@@ -56,7 +56,16 @@ Most analysis techniques rely on the a neighborhood matrix, which is a matrix th
 
 ## Neighbourhood matrix
 
-> TODO: refer to voayager about discussion of the constructuion of the neighbourhood matrix
+One of the challenges when working with irregular lattice data is the construction of a neighbourhood graph. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours. The segmentation of individual cells in notoriously difficult and often the segmentation is not perfect. Therefore we cannot simply rely on neighbours based on the segementation results and the construction of contiguitiy based neighbours is therefore not ideal and also requires more of computing time.
+
+References for the construction of the neighbourhood matrix:
+- https://r-spatial.github.io/spdep/articles/nb.html
+- https://r-spatial.org/book/14-Areal.html
+- https://pachterlab.github.io/voyager/articles/vig4_cosmx.html#data-normalization
+- Getis, Arthur. 2009. “Spatial Weights Matrices.” Geogr. Anal. 41 (4): 404–10.
+- Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
+
+In the following we will use the k-nearest neighbours approach from `voyager` which relies on `spdep`. The approach and the number $k$ is somewhat arbritary.
 
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
@@ -112,6 +121,15 @@ spdep::moran.test(x = logcounts(sfe)["TAGLN",],
                   randomisation = FALSE)
 ```
 
+We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the p-value. The function is part of the `spdep` package.
+
+```{r}
+spdep::moran.mc(x = logcounts(sfe)["KRT17",],
+                listw = weights_neighbourhoods,
+                nsim = 200)
+```
+We can see both genes have a positive Moran's I coefficient and a highly significant p-value. This indicates that these genes are spatially auto-correlated.
+
 ## Global's Geary's coefficient
 
 Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Geary's $C$ is defined by
@@ -149,6 +167,7 @@ spdep::geary.test(x = logcounts(sfe)["TAGLN",],
                   listw = weights_neighbourhoods,
                   randomisation = TRUE)
 ```
+Again the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
 
 # Local measures
 
@@ -164,14 +183,15 @@ where the idex $i$ refers to the location for which the measure is calculated. T
 ### Implementation using `voyager`
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
 sfe <- runUnivariate(sfe,
                      features = c("KRT17", "TAGLN"),
                      type = "localmoran")
 
 plotLocalResult(sfe, "localmoran",
                 features = c("KRT17", "TAGLN"), ncol = 2,
-                colGeometryName = "centroids", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+                colGeometryName = "centroids")
 ```
 
 ### Implementation using `spdep`
@@ -182,8 +202,22 @@ plotLocalResult(sfe, "localmoran",
 # TODO: add weights matrix, add which sf feature to extract for plotting
 
 #calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
-localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods){
-  loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
+localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods,
+                          type){
+  
+  if (type == 'expression'){
+    #extract the gene counts
+    x <- logcounts(sfe)[var,]
+  }
+  else if (type == 'feature'){
+    #extract the cell counts
+    x <- sfe[[var]]
+  }
+  else{
+    stop('type must be either "gene" or "cell"')
+  }
+  
+  loc <- do.call(fun, args = list(x= x, listw = weights_neighbourhoods))
   #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
   if(fun %in% c('localG')){
     loc <- attr(loc, 'internals')
@@ -222,10 +256,15 @@ localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods){
   
 }
 
-p <- localplotCell(sfe, 'nCounts', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplotCell(sfe, 'nGenes', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+```
 
-p
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+p <- localplotCell(sfe, 'KRT17', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression')
+q <- localplotCell(sfe, 'TAGLN', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression')
+
+tmap_arrange(p,q)
 ```
 
 
@@ -237,22 +276,36 @@ $$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2$$
 
 The interpretation is analog to the global Geary's C. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
 
+In this example we will not plot the local Gear's C coefficient for gene expression but for features that are associated with the individual cells, e.g. the number oc counts or the number of genes expressed. We will use the `colDataUnivariate` function to calculate the local Geary's C coefficient for these features.
+
 ### Implementation using `voyager`
 
 ```{r}
-sfe <- colDataUnivariate(sfe, "localC", features = c("nCounts", "nGenes"))
+#| fig-width: 15
+#| fig-height: 10
+sfe <- runUnivariate(sfe,
+                     features = c("KRT17", "TAGLN"),
+                     type = "localmoran")
 
-plotLocalResult(sfe, "localC", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "centroids", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+plotLocalResult(sfe, "localmoran",
+                features = c("KRT17", "TAGLN"), ncol = 2,
+                colGeometryName = "centroids")
 ```
+
 ### Implementation using `spdep`
 
+The same is possible using  `spdep`
+
 ```{r}
-p <- localplotCell(sfe, var = 'nCounts', fun = 'localG',
-                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplotCell(sfe, var = 'nGenes', fun = 'localG',
-                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+#| fig-width: 15
+#| fig-height: 10
+
+p <- localplotCell(sfe, var = 'KRT17', fun = 'localmoran',
+                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'expression')
+q <- localplotCell(sfe, var = 'TAGLN', fun = 'localmoran',
+                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'expression')
 
 tmap_arrange(p,q)
 ```
@@ -270,19 +323,30 @@ There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ e
 ### Implementation using `voyager`
 
 ```{r}
-sfe <- colDataUnivariate(sfe, "localG", features = c("nCounts", "nGenes"))
-plotLocalResult(sfe, "localG", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "centroids", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+#| fig-width: 15
+#| fig-height: 10
+
+sfe <- runUnivariate(sfe,
+                     features = c("KRT17", "TAGLN"),
+                     type = "localG")
+
+plotLocalResult(sfe, "localG",
+                features = c("KRT17", "TAGLN"), ncol = 2,
+                colGeometryName = "centroids")
 ```
  
 ### Implementation using `spdep`
 
 ```{r}
-p <- localplotCell(sfe, var = 'nCounts', fun = 'localG', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods)
-q <- localplotCell(sfe, var = 'nGenes', fun = 'localG', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods)
+#| fig-width: 15
+#| fig-height: 10
+
+p <- localplotCell(sfe, var = 'KRT17', fun = 'localG', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'expression')
+q <- localplotCell(sfe, var = 'TAGLN', fun = 'localG', plotvar = 'locEffect',
+                   weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'expression')
 tmap_arrange(p,q)
 ```
 
@@ -304,10 +368,15 @@ The LOSH should be interpreted in the combination with local Getis-Ord $G_i^*$ s
 ### Implementation using `spded`
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 p <- localplotCell(sfe, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods)
+                   weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'feature')
 q <- localplotCell(sfe, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods)
+                   weights_neighbourhoods = weights_neighbourhoods,
+                   type = 'feature')
 tmap_arrange(p,q)
 ```
 

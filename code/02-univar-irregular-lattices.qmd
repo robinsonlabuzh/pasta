@@ -39,7 +39,6 @@ sfe <- logNormCounts(sfe)
 
 In this vignette we will show the metrics related to two marker genes, KRT17 which is a marker of basal cells and TAGLN which is a marker of smooth muscle cells. 
 
-
 ```{r}
 plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
@@ -52,11 +51,13 @@ plotSpatialFeature(sfe, c("TAGLN"),
 
 ## Irregular lattice and neighbourhood matrix
 
-Most analysis techniques rely on the a neighborhood matrix, which is a matrix that indicates which cells are neighbors. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice it can be more complicated as the reconstruction of the cells is often not perfect.
+In general a spatial autocorrelation measure has the follwing elements a function $f(x_i, x_j)$ of the values at locations $x_i$ and $x_j$ and a weights matrix $w_{ij}$. The function $f$ relates the values $x_i$ and $x_j$ and the weights matrix $w_{ij}$ relates the locations of $x_i$ and $x_j$. If $x_i$ and $x_j$ are not neighbours the element of the weights matrix is 0. The general the spatial autocorrelation has the of a double sum over all locations $\sum_i \sum_j f(x_i,x_j) w_{ij}$.
+
+The analysis techniques rely on the a neighborhood matrix, which is a matrix that indicates which cells are neighbors. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice it can be more complicated as the reconstruction of the cells is often not perfect.
 
 ## Neighbourhood matrix
 
-One of the challenges when working with irregular lattice data is the construction of a neighbourhood graph. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours. The segmentation of individual cells in notoriously difficult and often the segmentation is not perfect. Therefore we cannot simply rely on neighbours based on the segementation results and the construction of contiguitiy based neighbours is therefore not ideal and also requires more of computing time.
+One of the challenges when working with irregular lattice data is the construction of a neighbourhood graph. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours. The segmentation of individual cells in notoriously difficult and often the segmentation is not perfect. Therefore we cannot simply rely on neighbours based on the segementation results and the construction of contiguitiy based neighbours is therefore not ideal, also as it would neglect the influence of more distant neighbours.s
 
 References for the construction of the neighbourhood matrix:
 - https://r-spatial.github.io/spdep/articles/nb.html
@@ -66,6 +67,12 @@ References for the construction of the neighbourhood matrix:
 - Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
 
 In the following we will use the k-nearest neighbours approach from `voyager` which relies on `spdep`. The approach and the number $k$ is somewhat arbritary.
+
+> Thought: if we assume non perfect segmentation we could basically calculate the same statistics also on point pattern derived datasets. We would also use a k-nearest neighbours approach in a "point pattern" dataset. The centroids of the cells as a proxy for the spatial location.
+
+> Is there a good methods to dermine a good neighbourhood matrix?
+
+> Difference in thought: point pattern as a event based dataset, lattice data as where we observe data.
 
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
@@ -115,10 +122,10 @@ res$moran.mc_p.value_sample01
 weights_neighbourhoods <- colGraph(sfe, "knn5")
 spdep::moran.test(x = logcounts(sfe)["KRT17",],
                   listw = weights_neighbourhoods,
-                  randomisation = FALSE)
+                  randomisation = TRUE)
 spdep::moran.test(x = logcounts(sfe)["TAGLN",],
                   listw = weights_neighbourhoods,
-                  randomisation = FALSE)
+                  randomisation = TRUE)
 ```
 
 We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the p-value. The function is part of the `spdep` package.
@@ -128,16 +135,18 @@ spdep::moran.mc(x = logcounts(sfe)["KRT17",],
                 listw = weights_neighbourhoods,
                 nsim = 200)
 ```
-We can see both genes have a positive Moran's I coefficient and a highly significant p-value. This indicates that these genes are spatially auto-correlated.
+
+We can see both genes have a positive Moran's I coefficient and a highly significant p-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate clustering of similar like values. It is important to note that this could be both at the high or low end of the values. Negative values indicate clustering of alternating values, i.e. gives a measure of spatial heterogeneity. It is also important to note that the result is dependent on the neighbourhood matrix. Different neighbourhood matrices will give different results. To compare Moran's I coefficients between different values we need to use the same neighbourhood matrix. Otherwise, we would have to rely on standardized $z$-scores.
 
 ## Global's Geary's coefficient
 
-Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Geary's $C$ is defined by
+Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Howver, it focuses on spatial dissimilarity. Geary's $C$ is defined by
 
 $$
 C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
 $$
-where $n$ is the number of locations, $i,j$ are different locations, $y_i$ is the value of the variable of interest for location $i$, $\bar{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$.  The interpretation is inversely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
+
+ where $n$ is the number of locations, $i,j$ are different locations, $y_i$ is the value of the variable of interest for location $i$, $\bar{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$.  The interpretation is inversely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
 
 
 ### Implementation using `voyager`
@@ -167,18 +176,19 @@ spdep::geary.test(x = logcounts(sfe)["TAGLN",],
                   listw = weights_neighbourhoods,
                   randomisation = TRUE)
 ```
+
 Again the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
 
 # Local measures
 
-Unlike global measures, that give as an overview over the entire study are local measures give us information about the spatial distribution of the cells in a local area. The exist local analogs of Moran's I and Geary's C and other methods. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
+Unlike global measures, that give as an overview over the entire study are local measures give us information about the statistic at each location, i.e. cell. There exist local analogs of Moran's I and Geary's C for which  the gobal statistc counterpart can be seen as weighted sum of its respective local statistic. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
 
 ## Local Moran's I coefficient
 
 The local Moran's I coefficient is a measure of spatial autocorrelation on each location of interest. It is defined as
 
 $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
-where the idex $i$ refers to the location for which the measure is calculated. The interpratation is analog to the gobal Moran's I. The value of $I_i$ is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation. Since we measure a great number of locations at the same time, we need to correct for multiple testing. We use the Benjamini-Hochberg procedure to correct for multiple testing.
+where the idex $i$ refers to the location for which the measure is calculated. The interpratation is analog to the gobal Moran's I. The value of $I_i$ is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Smaller values indicate negative auto-correlation. It is important to note that, like for the global counterpart, the value of local Moran's I could be a result from both the high or low end of the values. Since we measure a great number of locations at the same time, we need to correct for multiple testing. We use the Benjamini-Hochberg procedure to correct for multiple testing.
 
 ### Implementation using `voyager`
 
@@ -350,6 +360,8 @@ q <- localplotCell(sfe, var = 'TAGLN', fun = 'localG', plotvar = 'locEffect',
 tmap_arrange(p,q)
 ```
 
+It is important to only consider sifnificant results. Postive values indicate clustering of high values, i.e. hot spots, negative values indicate clustering of low values, i.e. cold spots. The method does not detect outlier values because unlike in local Moran's I there is no cross-product between $i$ and $j$. But unlike local Moran'I we know the type of interaction (high-high or low-low) between $i$ and $j$.
+
 ## Local spatial heterosceadiscity (LOSH)
 
 The local spatial heteroscedasticity (LOSH) is a measure of spatial autocorrelation that is based on the variance of the local neighbourhood. Unlike the other measures, this method does not assume homosceadistic variance over the whole tissue region. LOSH is defined as
@@ -379,6 +391,10 @@ q <- localplotCell(sfe, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect',
                    type = 'feature')
 tmap_arrange(p,q)
 ```
+
+## A note of caution
+
+The locals methods presented above should be interpreted with care as we face the problem of multiple testing when calculating the local measure for each cell. Also the p-values calculated are pseudo p-value sand are calculated for each neighbor separately. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. There can be true contagion where clustering is the result of spatial interaction and apparent contagion where clustering is the cause of spatial heterogeneity, e.g. local similarity is created by different spatial structures.
 
 # Appendix
 

@@ -54,8 +54,7 @@ weights_neighbourhoods <- colGraph(sfe, "knn5")
 ```
 
 
-
-# Local Measures for Multivariate Data
+# Local Measures for Bivariate Data
 
 ## Bivariate Lee's L
 
@@ -70,9 +69,8 @@ with $w_{ij}$ the spatial weights matrix, $x$ and $y$ the two variables and $\ba
 sfe <- runBivariate(sfe, type = "locallee",
                     feature1 = "KRT17", feature2 = "TAGLN")
 
-plotLocalResult(sfe, "locallee", features = c("KRT17_TAGLN"), ncol = 2,
-                colGeometryName = "cellSeg", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+plotLocalResult(sfe, "locallee", features = localResultFeatures(sfe, "locallee"),
+                ncol = 2, colGeometryName = "centroids")
 ```
 
 ### Implementation using `spdep`
@@ -91,6 +89,8 @@ sf$locEffect <- loc$localL
 tm_shape(sf) + tm_fill(col = 'locEffect')  
 ```
 
+# Local Measures for Multivariate Data
+
 ## Multivariate local Geary's C
 
 Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. It is defined as
@@ -103,11 +103,76 @@ $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
 where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. Compared to bivariates Lee it means that we use more than two variables.
 
+We will use highly two marker genes of the dataset to calculate the multi-variate Geary's C. 
+
 ```{r}
+hvgs <- getTopHVGs(sfe, fdr.threshold = 0.01)
+
 sfe <- runMultivariate(sfe, type = "localC_multi",
-                    subset_row = c("KRT17", "TAGLN"))
+                    subset_row = c("KRT17", "TAGLN"),
+                    dest = "colData")
+
+# plotLocalResult(sfe, "localC_multi", features = c("KRT17"), ncol = 2,
+#                 colGeometryName = "centroids")
+
+# Local C mutli is stored in colData so this is a workaround to plot it
+plotSpatialFeature(sfe,"localC_multi", colGeometryName = "centroids")
 ```
 
+The plot indicates regions where the gene expression is more similar homogeneous (low Geary's C) and regions where the gene expression is more dissimilar heterogeneous (large Geary's C value). Importantly, strong similarity in one or some variables may compensate for disimilarity in other variables. The local Geary’s C value is not scaled.
+
+Note that the computation is very cost intensive.
+
+```{r}
+sfe <- runMultivariate(sfe, type = "localC_perm_multi",
+                    subset_row = c("KRT17", "TAGLN"),
+                    dest = "colData")
+
+# Local C mutli is stored in colData so this is a workaround to plot it
+plotSpatialFeature(sfe,"localC_perm_multi", colGeometryName = "centroids")
+```
+
+We can further plot the results of the permutation test. This can indicate interesting regions, but should not interpreted with care for different reasons. As we are looking for similarity in a combination of multiple values and the exact combination is not known. For further details see Anselin (2019).
+
+```{r}
+loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])),
+       listw = weights_neighbourhoods, nsim = 1)
+
+#convert into a plain sf object for plotting
+sf <- colGeometries(sfe)$cellSeg
+
+sf$locEffect <- loc
+
+tm_shape(sf) + tm_fill(col = 'locEffect')  
+```
+
+It would be interesting to do this not on the cell level but on the domain level.
+
+## Local Neighbor Match Test
+
+This test is useful to assess the overlap of the k-nearest neighbour in the tissue space with the k-nearest neighbours in the attribute space. 
+
+```{r}
+sf <- colGeometries(sfe)$cellSeg
+sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[c(hvgs),])))
+
+nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
+
+sf$Probability <- nbr_test$Probability
+sf$Cardinality <- nbr_test$Cardinality
+
+tm_shape(sf) + tm_fill(col = 'Probability')  
+tm_shape(sf) + tm_fill(col = 'Cardinality')  
+```
+Cardinality is a measure of how many neighbours of each cell are in common. Some regions show high crardinality with low probability. On the cellular level, this might no be very informative and lead to regions with high similarity. We only see very few cells with a cardinality greater than 0. The problem might come from the imperfect segmentation of the cells, which results in a poor reconstruction of the "geographical" tissue neighbourhood graph. In addition, as the number of dimensions increase, the empty space between observations also increases. This is known as the empty space problem. 
+
+Again this analysis should probably be performed on a structure level instead of a single cell level.  
+
+
+# References
+
+Anselin, Luc. 1995. “Local Indicators of Spatial Association—LISA.” Geogr. Anal. 27 (2): 93–115.
+———. 2019. “A Local Indicator of Multivariate Spatial Association: Extending Geary’s c.” Geogr. Anal. 51 (2): 133–50.
 
 # Appendix
 

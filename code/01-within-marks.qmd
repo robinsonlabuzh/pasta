@@ -651,7 +651,7 @@ p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
 p_K/p_L
 ```
 
-```{r, eval=TRUE}
+```{r, eval=FALSE, include=FALSE}
 plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
@@ -673,7 +673,7 @@ functional.pca.pp <- function(res_df){
   #check that the FPCA object is valid
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
-  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
+  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, kernel='rect'))
   #fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
   return(fpca_obj)
 }
@@ -687,8 +687,8 @@ fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% rename(PC1 = V1, PC2 = V2)
 fpca_pc_df$type <- celltype_ls_new
 # assume they are in same order
 
-ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = type)) +
-  #scale_color_continuous(type = "viridis") +
+ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = type, label = type)) +
+  geom_text(hjust=0, vjust=0) +
   geom_point() +
   theme_light() +
   ggtitle("Biplot of the L curves of all Celltypes")

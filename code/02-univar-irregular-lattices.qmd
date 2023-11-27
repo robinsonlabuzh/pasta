@@ -60,11 +60,11 @@ The analysis techniques rely on the a neighborhood matrix, which is a matrix tha
 One of the challenges when working with irregular lattice data is the construction of a neighbourhood graph. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours. The segmentation of individual cells in notoriously difficult and often the segmentation is not perfect. Therefore we cannot simply rely on neighbours based on the segementation results and the construction of contiguitiy based neighbours is therefore not ideal, also as it would neglect the influence of more distant neighbours.s
 
 References for the construction of the neighbourhood matrix:
-- https://r-spatial.github.io/spdep/articles/nb.html
-- https://r-spatial.org/book/14-Areal.html
-- https://pachterlab.github.io/voyager/articles/vig4_cosmx.html#data-normalization
-- Getis, Arthur. 2009. “Spatial Weights Matrices.” Geogr. Anal. 41 (4): 404–10.
-- Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
+* https://r-spatial.github.io/spdep/articles/nb.html
+* https://r-spatial.org/book/14-Areal.html
+* https://pachterlab.github.io/voyager/articles/vig4_cosmx.html#data-normalization
+* Getis, Arthur. 2009. “Spatial Weights Matrices.” Geogr. Anal. 41 (4): 404–10.
+* Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
 
 In the following we will use the k-nearest neighbours approach from `voyager` which relies on `spdep`. The approach and the number $k$ is somewhat arbritary.
 
@@ -72,7 +72,7 @@ In the following we will use the k-nearest neighbours approach from `voyager` wh
 
 > Is there a good methods to dermine a good neighbourhood matrix?
 
-> Difference in thought: point pattern as a event based dataset, lattice data as where we observe data.
+> Point pattern as a "event based" dataset, lattice data an "observation" based dataset.
 
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",

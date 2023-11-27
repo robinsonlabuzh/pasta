@@ -41,11 +41,11 @@ plot(ppls, main = 'Point Pattern Marks Separated')
 
 ### Complete Spatial Randomness
 
-Complete spatial randomness (CSR) is the null model of point patterns, being the result of a poisson process. A completely random process is characterised by two properties
+Complete spatial randomness (CSR) is the null model of point patterns, being the result of a poisson process. A completely random process is characterised by two properties [1].
 
 #### Homogeneity
 
-Homogeneity means that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ is the intensity of the process, so the average number of points in a unit area.
+Homogeneity means that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ is the intensity of the process, so the average number of points in a unit area [1].
 
 $$
 \mathbb{E}[X\cap B] = \lambda |B|
@@ -54,7 +54,7 @@ $$
 
 #### Independence
 
-Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a poisson distribution:
+Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a poisson distribution [1]:
 
 $$
 \mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
@@ -63,7 +63,7 @@ $$
 
 ### Inhomogeneous Poisson Process
 
-A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is
+A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is [1]
 
 $$
 \mu = \int_{B} \lambda(u)du 
@@ -72,21 +72,21 @@ $$
 
 ### Isotropy
 
-A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic.
+A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic [1].
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space."
+"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space." [1]
 
 #### Correlation stationarity
 
-It is important to note that the inhomogeneous metrics do not apply to every spatially inhomogeneous point process. They only apply to point processes which are correlation stationary. A point pattern is correlation stationary if the metric only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern.
+It is important to note that the inhomogeneous metrics do not apply to every spatially inhomogeneous point process. They only apply to point processes which are correlation stationary. A point pattern is correlation stationary if the metric only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [1].
 
 ### Local scaling
 
-The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable.
+The inhomogeneous K-function further assumes that while the intensity is spatially varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally scaled version of the K-function is applicable [1].
 
-We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the arbitrarydefinition of the quadrats.
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It has to be noted that this test highly depends on the arbitrary definition of the quadrats (source? - is it [1]?).
 
 ```{r}
 selection <- c('OD Mature')
@@ -165,11 +165,11 @@ studpermu.test(od42, pts~ inten, summaryfunction=Kinhom,
 
 ### Intensity
 
-Intensity is the expected density of points per unit area, as seen above. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity itself is called a first moment property - being related to the expected number of points.
+Intensity is the expected density of points per unit area, as seen above. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity itself is called a first moment property - being related to the expected number of points [1].
 
 #### Estimating Intensity
 
-The intensity can be estimated regardless of the type of the point pattern. In order to do so, we sum the individual intensities of the marks
+The intensity can be estimated regardless of the type of the point pattern. In order to do so, we sum the individual intensities of the marks [1].
 
 ```{r, cache=FALSE}
 intensityPointProcess<- function(pp,mark){
@@ -192,7 +192,7 @@ intensityPointProcess(pp,mark=TRUE)
 
 #### Quadrat Counting
 
-In quadrat counting all the points falling into a given quadrat are counted. This gives an overview on the characterstics of the point pattern, such as correlation stationarity.
+In quadrat counting all the points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [1].
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
 Q5 <- quadratcount(pp, nx=5, ny=5)
@@ -211,7 +211,7 @@ plot(Q5sep, main = 'Separated Marks Quadrats')
 -->
 ````
 
-The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types. This tells us if the counts of the points are distributed evenly across the quadrats.
+The quadrat counts can be tested against regularity. This can happen again in the unmarked pattern or in the separated types. This tells us if the counts of the points are distributed evenly across the quadrats [1].
 
 ```{r, cache=FALSE}
 quadratTestPointProcess <- function(pp, mark){
@@ -227,7 +227,7 @@ quadratTestPointProcess(pp, mark=FALSE)
 
 #### Kernel Estimation
 
-In kernel estimation we try to estimate the intensity function $\lambda(u)$ of the point process. There are different types of kernel estimators (see Baddeley). A popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth.
+In kernel estimation we try to estimate the intensity function $\lambda(u)$ of the point process. There are different types of kernel estimators (see [1]). A popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [1].
 
 ```{r, fig.width=8, fig.height=8}
 Dens <- density(pp)
@@ -264,7 +264,7 @@ estimatingIntensity <- function(
 
 ### Testing for CSR
 
-Whether or not a point process is completely spatially random depends on two characeteristics. The points have to be distributed homogeneously and they have to be independent of each other (see definitions above). There are different ways to test for CSR which are summarised in the wrapper below.
+Whether or not a point process is completely spatially random depends on two characeteristics. The points have to be distributed homogeneously and they have to be independent of each other (see definitions above). There are different ways to test for CSR which are summarised in the wrapper below [1].
 
 ```{r, cache=FALSE}
 #PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
@@ -356,7 +356,7 @@ testingCSR(ppls$Microglia, method='clark-evans')
 
 ## Correlation
 
-Correlation or more generally covariance is called a second order quantity and measures dependence between data points. This is a very useful concept, allowing for the assessment of correlation between points.
+Correlation or more generally covariance is called a second order quantity and measures dependence between data points. This is a very useful concept, allowing for the assessment of correlation between points [1].
 
 ````{=html}
 <!-- 
@@ -394,7 +394,7 @@ fryplot(ppls$Microglia)
 
 #### Empirical Ripley's $K$
 
-In the framework of correlation analysis we often look at distances $d_{ij} = ||x_i-x_j||$ of all ordered points. It is a natural idea to look at the summary of these distances $d_{ij}$, e.g. a histogram. The histogram of this point process is a difficult statistic, as it depends on the observation window $W$, thus the histogram can change significantly with a changing window $W$. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$
+In the framework of correlation analysis we often look at distances $d_{ij} = ||x_i-x_j||$ of all ordered points. It is a natural idea to look at the summary of these distances $d_{ij}$, e.g. a histogram. The histogram of this point process is a difficult statistic, as it depends on the observation window $W$, thus the histogram can change significantly with a changing window $W$. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$ [1]
 
 $$
 \hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n \sum_{j=1\\j\neq i}^n \{d_{ij}\leq r\}
@@ -406,23 +406,23 @@ $$
 t_i(r) = \sum_{j \neq i} \mathbb{1} \{d_{ij}\leq r\}
 $$
 
-this number $t_i(r)$ is the number of points that fall within a radius $r$ centered at $x_i$. It follows then:
+this number $t_i(r)$ is the number of points that fall within a radius $r$ centered at $x_i$. It follows then [1]:
 
 $$
 \hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n t_i(r) = \frac{1}{n-1} \bar{t}(r)
 $$
 
-Here, we see what we actually want to measure is "the average number of r-neighbours of a typical random point". This number is still dependent on the size of the observation window so we want to standardise is by the number of points and $|W|$ the window size. Then we obtain the empirical Ripley's $K$ function
+Here, we see what we actually want to measure is "the average number of r-neighbours of a typical random point". This number is still dependent on the size of the observation window so we want to standardise is by the number of points and $|W|$ the window size. Then we obtain the empirical Ripley's $K$ function [1]
 
 $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}
 $$
 
-The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though tha the point process has homogeneous intensity.
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though that the point process has homogeneous intensity [1].
 
 #### True $K$-function
 
-instead of the summary of pairwise distances, we are interested in the point process. In order to do so, we have to think about the expected number of $r$-neighbours given a point $X$ at a location $u$ divided by its intensity $\lambda$
+instead of the summary of pairwise distances, we are interested in the point process. In order to do so, we have to think about the expected number of $r$-neighbours given a point $X$ at a location $u$ divided by its intensity $\lambda$ [1].
 
 This means
 
@@ -435,16 +435,18 @@ where
 $$
 t(u,r,X) = \sum_{j=1}^{n(X)} \mathbb{1} \{0<||u-x_j||\leq r\}
 $$
-
+<!--
 This definition of the true $K$ function is only valid if the point process is stationary. For a homogeneous poisson process we obtain
 
 $$
 K_{pois}(r) = \pi r^2
 $$
 
+-->
+
 #### Edge effects and their corrections for spatial metrics
 
-Edge effects describe the phenomenon that we never observe the entire point process but only a part of it within a window $W$. This means that parts of the point process at the border might not be observed and the value of the statistic biased along the edges.
+Edge effects describe the phenomenon that we never observe the entire point process but only a part of it within a window $W$. This means that parts of the point process at the border might not be observed and the value of the statistic biased along the edges [1].
 
 There are many corrections for edge effects. They are briefly listed here
 
@@ -470,17 +472,17 @@ $$
 
 ### Pair Correlation function
 
-We have seen above, that the $K$-function is cumulative in nature. Meaning that the contributions of all distances smaller equal to $r$ are counted. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$.
+We have seen above, that the $K$-function is cumulative in nature. Meaning that the contributions of all distances smaller equal to $r$ are counted. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [1].
 
 $$
 g(r) = \frac{K'(r)}{2\pi r}
 $$
 
-"$g(r)$ is the probability of observing a pair of point of the process separated by a distance $r$, divided by the corresponding probability for a Poisson process."
+"$g(r)$ is the probability of observing a pair of point of the process separated by a distance $r$, divided by the corresponding probability for a Poisson process." [1]
 
 #### Estimator of the pair correlation function
 
-The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods.
+The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods [1].
 
 $$
 \hat{g}(r) = \frac{|W|}{2 \pi r n (n-1)} \sum_{i=1}^n\sum_{j=1 \\j \neq i}^n \kappa_h(r-d_{ij})e_{ij}(r)
@@ -492,7 +494,7 @@ $$
 \kappa_h(x) = \frac{1}{h}\kappa\left(\frac{x}{h}\right)
 $$
 
-In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$.
+In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$ [1].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #| message: false
@@ -560,7 +562,7 @@ $$
 \hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r)
 $$
 
-where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D^p$ is the pth power of
+where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D^p$ is the pth power of the following term [1]: 
 
 $$
 D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
@@ -596,7 +598,7 @@ $$
 g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
 $$
 
-In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor.
+In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor [1].
 
 #### Locally-scaled pair-correlation function
 
@@ -700,7 +702,7 @@ Given that our biological samples are both inhomogeneous and locally scaled by e
 
 #### Local Indicators of Spatial Association
 
-The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddeley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function.
+The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddeley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function [1].
 
 ````{=html}
 <!-- ##### Local $K$ function
@@ -774,7 +776,7 @@ There are inhomogeneous versions of these (e.g. `localLinhom`). These are not sh
 
 ##### Functional PCA for the $n$ Curves
 
-We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data
+We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data . 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
@@ -818,13 +820,13 @@ ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) +
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-Looking at the second plot we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve. When we look at the example that is clearly visible. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line -\> check the source from the Springer book "Functional Data Analysis with R and Matlab".
+Looking at the second plot we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve. When we look at the example that is clearly visible. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [2].
 
 The last plot shows the biplot of the functional PCA. Each point is a cell from the OD mature cells. The first two principal components are plotted. The first principal component is the x-axis and the second principal component is the y-axis. The points are coloured as in the plots of the LISA $L$-curves. We note that the first principal component separates the two populations. The curves with the high values (yellow) are plotted on the right and the ones with low values (blue) on the left. This corresponds to the two populations we saw in the LISA $L$-curve plot. 
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r
+So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [1].
 
 $$
 T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
@@ -843,7 +845,7 @@ p
 
 ## Spacing
 
-So far, most approaches considered intensity and correlation as measures to assess a point pattern. Below, we will look at measures of spacing and shortest-distances to assess spatial arrangements.
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. Below, we will look at measures of spacing and shortest-distances to assess spatial arrangements [1].
 
 Baddeley et.al. summarises three basic distances to measure
 
@@ -886,7 +888,7 @@ plot(dirichlet(ppls$Microglia))
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour methods center around the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns us then $k$ curves for the $k$ neighbour distances. We can for instance collapse this information of the $k$ curves in a mean curve per sample. This information of the mean nearest neighbour distance is summarised as a density.
+Nearest neighbour methods center around the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns us then $k$ curves for the $k$ neighbour distances. We can for instance collapse this information of the $k$ curves in a mean curve per sample. This information of the mean nearest neighbour distance is summarised as a density [1].
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -930,7 +932,7 @@ In the probability-density function of the nearest neighbours the ependymal cell
 
 Often, we are interested which spatial structures build a spatial unit. One way to answer this question is to use spatially aware clustering. 
 Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise). DBScan is an algorithm which uses a parameter called minimal Features. If the number of points per cluster is smaller than the minimal number of features, it is either noise or it is merged with another cluster. Another parameter $\epsilon$ defines the distance at which a point has to lay in order to be part of a cluster. The value of this parameter $\epsilon$ can be determined by an elbow plot, similar to clustering resolution parameters in other algorithms.
-from https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-density-based-clustering-works.htm
+[Source](https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-density-based-clustering-works.htm)
 
 ```{r, cache=FALSE}
 pp_df <- as.data.frame(ppls$`OD Mature`)
@@ -984,11 +986,11 @@ $$
 G_{pois} \equiv F_{pois}
 $$
 
-For a general point process the $F$ and $G$ functions are different
+For a general point process the $F$ and $G$ functions are different [1].
 
 ### Empty-space hazard
 
-The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons this is no longer the derivative of the $F$ function but rather a hazard rate.
+The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons this is no longer the derivative of the $F$ function but rather a hazard rate [1].
 
 $$
 h(r) = \frac{f(r)}{1-F(r)}
@@ -1000,7 +1002,7 @@ $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
 
-Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$.
+Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$ [1].
  <!-- 
 ```{r}
 fhazard_ependymal <- envelope(ppls$Ependymal, Fhazard, nsim=39, fix.n=TRUE,
@@ -1031,7 +1033,7 @@ p
 
 ### $J$-Function
 
-The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above).
+The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above) [1].
 
 Another approach is the $J$ function.
 
@@ -1039,7 +1041,7 @@ $$
 J(r) = \frac{1-G(r)}{1-F(r)}
 $$
 
-"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and \$J(r) \< 1 is consistent with clustering." (Baddeley et. al.)
+"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and \$J(r) \< 1 is consistent with clustering." [1]
 
 ```{r, fig.height = 10, fig.width = 7}
 ### need to redefine the plotting function, because bootstrap is not available for spacing functions ###
@@ -1103,7 +1105,7 @@ The concept of spacing is not only usable in point pattern analysis but more bro
 
 ### Edge Corrections
 
-The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice.
+The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice [1].
 
 # Continuous Marks
 
@@ -1186,7 +1188,7 @@ As in the discrete case the summary functions assume that the point process is s
 The mark correlation function measures the dependence between the marks at two points at distance $r$. It is not a correlation in the classical sense, since it can take any nonegative value. The value of 1 indicates no correlation between the marks. The generalized mark correlation function is given by
 
 $$ k_f(r) = \frac{\mathbb{E}[f(m(u)m(v))]}{\mathbb{E}[f(M,M')]}$$
-where $f(m_1,m_2)$ is a test function with two arguments that represent the marks and returns a non-negative value. For continuous non-negative marks the choice of $f$ is by default $f(m_1,m_2)= m_1 m_2$. $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1.
+where $f(m_1,m_2)$ is a test function with two arguments that represent the marks and returns a non-negative value. For continuous non-negative marks the choice of $f$ is by default $f(m_1,m_2)= m_1 m_2$. $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [1].
 
 ```{r}
 plot(markcorr(pp))
@@ -1218,7 +1220,7 @@ The plot indicates that the mark correlation function is significantly different
 Mark-weigthed K function is a generalization of the K-function in which the contribution of each from each pair of points is weighted by a function of their respective marks. The mark-weighted K-function is given by
 
 $$K_f(r) = \frac 1  \lambda \frac{C_f(r)}{E[ f(M_1, M_2) ]}$$
-with the function $C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1{0 < ||u - x|| \le r} \;  \big| \; u \in X \right]$ which is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$ we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point.
+with the function $C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1{0 < ||u - x|| \le r} \;  \big| \; u \in X \right]$ which is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$ we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point [1].
 
 In the scenario of random labeling, the mark-weighted $K$-function corresponds to Ripley's $K$-function.    
 
@@ -1239,7 +1241,7 @@ L.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2}, returnL = TRUE)
 Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
 plot(eval.fv(L.Esr1L - Lest.ppEsr1))
 ```
-Like for other functions we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals.
+Like for other functions we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals [1].
 
 ```{r}
 plot(envelope(ppEsr1, fun=Kmark, returnL=TRUE, nsim=50))
@@ -1247,6 +1249,13 @@ plot(envelope(ppEsr1, fun=Kmark, returnL=TRUE, nsim=50))
 
 
 # Appendix
+
+## Sources
+
+[1] Baddeley, A., Rubak, E., & Turner, R. (2015). Spatial point patterns: methodology and applications with R. CRC press.
+
+[2] Ramsay JO, Silverman BW (2005). Functional Data Analysis. 2nd edition. Springer-Verlag,
+New York.
 
 ## Session info
 

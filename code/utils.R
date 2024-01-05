@@ -23,6 +23,7 @@ suppressPackageStartupMessages({
   library(spdep)
   library(dixon)
   library(stringr)
+  library(magrittr)
 })
 
 .ppp <- \(spe, marks = NULL) {

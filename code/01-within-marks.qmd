@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Discrete Marks
 
 ## Dependencies
@@ -13,7 +18,7 @@ source("utils.R")
 spe <- readRDS("../data/spe.rds")
 
 #subset the data to only look at sample ID 0.01
-sub <- spe[, spe$sample_id == 0.01]
+sub <- spe[, spe$sample_id == "0.01"]
 (pp <- .ppp(sub, marks = "cluster_id"))
 
 #split the multitype point process into several single type processes
@@ -22,13 +27,11 @@ marks(pp) <- factor(marks(pp))
 ppls <- split(pp)
 ```
 
-If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns.
+<!-- If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns. -->
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
-#Plot the entire point process where the marks are overlayed
-plot(unmark(pp), main = 'Point Pattern Unmarked')
 #Plot the marks separately 
-plot(ppls, main = 'Point Pattern Marks Separated')
+plot(ppls, main = 'Point Pattern Marks Separated', nrows = 2)
 ```
 
 ## Concepts and Definitions of Point Processes
@@ -41,46 +44,47 @@ plot(ppls, main = 'Point Pattern Marks Separated')
 
 ### Complete Spatial Randomness
 
-Complete spatial randomness (CSR) is the null model of point patterns, being the result of a poisson process. A completely random process is characterised by two properties [1].
+Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely random process is characterised by two properties, homogeneity and independence, as discussed below.
 
 #### Homogeneity
 
-Homogeneity means that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ is the intensity of the process, so the average number of points in a unit area [1].
+Homogeneity implies that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [1]:
 
 $$
-\mathbb{E}[X\cap B] = \lambda |B|
+\mathbb{E}[X\cap B] = \lambda |B|.
 \label{eq:expected_number_points}
 $$
 
 #### Independence
 
-Independence means that in two regions $A$ and $B$ the number of points $n(X\cap A)$ and $n(X\cap B)$ are two independent random variables. That means the number of points in region $A$ does not affect the number of points in region $B$. The number of points follow a poisson distribution [1]:
+Independence implies that in two (non-overlapping) regions $A$ and $B$, the number of points $n(X\cap A)$ and $n(X\cap B)$ are independent random variables. In other words, the number of points in region $A$ does not affect the number of points in region $B$. In addition, the number of points, $N = n(X\cap B)$, follows a poisson distribution:
 
 $$
 \mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
 \label{eq:poisson_process}
 $$
+where $k = \lambda |B|$ [1].
 
 ### Inhomogeneous Poisson Process
 
-A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. The expected number of points falling into a region $B$ is [1]
+A poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density $\lambda(u)$ is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over the region [1]:
 
 $$
-\mu = \int_{B} \lambda(u)du 
+\mu = \int_{B} \lambda(u) du.
 \label{eq:expected_number_inhomogeneous}
 $$
 
 ### Isotropy
 
-A point process is called isotropic, if its statistical properties are invariant to rotations. A CSR process is both stationary and isotropic [1].
+A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [1].
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window $W$, its statistical properties do not depend on the location of the window in two-dimensional space." [1]
+A point process is called stationary if, when viewed through a window $W$, its statistical properties do not depend on the location of the window [1].
 
 #### Correlation stationarity
 
-It is important to note that the inhomogeneous metrics do not apply to every spatially inhomogeneous point process. They only apply to point processes which are correlation stationary. A point pattern is correlation stationary if the metric only depends on the relative position in subpatterns of the point process, which means that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [1].
+It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are ``correlation stationary'', which specifies the metric only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [1].
 
 ### Local scaling
 

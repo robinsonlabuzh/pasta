@@ -196,12 +196,13 @@ quadratTestPointProcess <- function(pp, mark){
 }
 quadratTestPointProcess(pp, mark=FALSE)
 ```
+
 [MR: given that we only call this function once now, does it still make sense to have a wrapper function. Maybe just call quadrat.test directly?]
 [MR: should we also interpret this P-value=1 with a sentence?]
 
 #### Kernel Estimation
 
-In kernel estimation we try to estimate the intensity function $\lambda(u)$ of the point process. There are different types of kernel estimators (see [1]). A popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [1].
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [1]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [1].
 
 ```{r, fig.width=8, fig.height=8}
 pp_sel <-  subset(pp, marks %in% "Inhibitory", drop = TRUE)
@@ -209,39 +210,11 @@ Dens <- density(pp_sel, sigma = 100)
 plot(Dens, main = 'Kernel Density (Inhibitory cells)')
 ```
 
-````{=html}
-<!-- 
-
-```{r, fig.width=12, fig.height=12, cache=FALSE}
-Denssep <- density(ppls)
-plot(Denssep, main = 'Kernel Density Separated Marks  ')
-``` 
-
-
-### Summarising Functionality for Estimating Intensity - unfinished
-
-```{r, eval=FALSE, cache=FALSE}
-#PRE:
-#POST:
-estimatingIntensity <- function(
-  pp
-  method = c('expectation', 'quadrat', 'kernel', 'density', 'adaptive-density'),
-  homogeneous = FALSE,
-  nx = NULL,
-  ny = NULL,
-  correction = c(),
-){
-
-}
-```
--->
-````
-
 ### Testing for CSR
 
 Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR that are summarised in the wrapper below [1].
 
-[MR: this wrapper below is not very compact (I have some thoughts ..), but I also wonder .. we only highlight clark-evans, so as above we could just call that one and mention there are other variants]
+[MR: this wrapper below is not very compact (I have some thoughts ..), but I also wonder .. we only ever use clark-evans, so as above we could just call that one and mention there are other variants?]
 
 ```{r, cache=FALSE}
 #PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
@@ -333,7 +306,7 @@ testingCSR(ppls$Microglia, method='clark-evans')
 
 ## Correlation
 
-Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points. This is a very useful concept [MR: why is it a useful concept?], allowing for the assessment of correlation between points [1].
+Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points.
 
 ````{=html}
 <!-- 
@@ -371,46 +344,45 @@ fryplot(ppls$Microglia)
 
 #### Empirical Ripley's $K$
 
-In the framework of correlation analysis we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. a histogram. The histogram of this point process is a difficult statistic, as it depends on the observation window $W$, thus the histogram can change significantly with a changing window $W$. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$ [1]
+In the framework of correlation analysis, we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. as a histogram. The histogram of this point process is a difficult statistic [MR: what does it mean to be a 'difficult statistic'? Maybe we can phrase this better.], as it depends on the observation window $W$, thus the histogram can change significantly with a different window. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$ [1]
 
 $$
-\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n \sum_{j=1\\j\neq i}^n I\{d_{ij}\leq r\},
+\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n \sum_{j=1, j \neq i}^n I\{d_{ij}\leq r\},
 $$
 
-where $I(.)$ is the indicator function (1 if the condition is true, 0 if not). The contribution of each point $x_i$ to the sum above is
+where $I(.)$ is the indicator function (1 if the condition is true, 0 if not). The contribution of each point $x_i$ to the sum above is:
 
 $$
-t_i(r) = \sum_{j \neq i} I \{d_{ij}\leq r\}
+t_i(r) = \sum_{j \neq i} I \{d_{ij}\leq r\},
 $$
 
-this number $t_i(r)$ is the number of points that fall within a radius $r$ centered at $x_i$. It follows then [1]:
+where $t_i(r)$ is the number of points that fall within a radius $r$ centered at $x_i$. It follows then that [1]:
 
 $$
-\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n t_i(r) = \frac{1}{n-1} \bar{t}(r)
+\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n t_i(r) = \frac{1}{n-1} \bar{t}(r).
 $$
 
-Here, we see what we actually want to measure is "the average number of r-neighbours of a typical random point". This number is still dependent on the size of the observation window so we want to standardise is by the number of points and $|W|$ the window size. Then we obtain the empirical Ripley's $K$ function [1]
+What we actually measure here is "the average number of r-neighbours of a typical random point". This number is still dependent on the size of the observation window so we can standardise it by the number of points and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [1]:
 
 $$
-\hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}
+\hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}.
 $$
 
-The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. Using the empirical $K$ function assumes though that the point process has homogeneous intensity [1].
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. However, using the empirical $K$ function assumes though that the point process has homogeneous intensity [1], which is often not the case for biological tissue. We will return to this issue below in the ``Correcting for Inhomogeneity'' [MR: add link to section below?]
 
 #### True $K$-function
 
-instead of the summary of pairwise distances, we are interested in the point process. In order to do so, we have to think about the expected number of $r$-neighbours given a point $X$ at a location $u$ divided by its intensity $\lambda$ [1].
-
-This means
+Instead of the summary of pairwise distances, we are interested in the point process. In order to do so, we have to think about the expected number of $r$-neighbours given a point $X$ at a location $u$ divided by its intensity $\lambda$ [1]. This corresponds to:
 
 $$
-K(r) = \frac{1}{\lambda} \mathbb{E} [t(u,r,X)|u \in X]
+K(r) = \frac{1}{\lambda} \mathbb{E} [t(u,r,X)|u \in X],
 $$
 
 where
 
 $$
-t(u,r,X) = \sum_{j=1}^{n(X)} \mathbb{1} \{0<||u-x_j||\leq r\}
+t(u,r,X) = \sum_{j=1}^{n(X)} \mathbb{1} \{0<||u-x_j||\leq r\}.
+
 $$
 <!--
 This definition of the true $K$ function is only valid if the point process is stationary. For a homogeneous Poisson process we obtain
@@ -421,11 +393,13 @@ $$
 
 -->
 
+[MR: just thinking .. how much of this math do we really need?]
+
 #### Edge effects and their corrections for spatial metrics
 
-Edge effects describe the phenomenon that we never observe the entire point process but only a part of it within a window $W$. This means that parts of the point process at the border might not be observed and the value of the statistic biased along the edges [1].
+Edge effects describe the phenomenon that entire point process is not observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [1].
 
-There are many corrections for edge effects. They are briefly listed here
+There are many corrections for edge effects that are briefly listed here:
 
 ##### Border correction
 
@@ -439,30 +413,34 @@ We can regard edge effect as a sampling bias. Larger distances (e.g. close to th
 
 A stationary point process $X$ is invariant to translations. So the entire point process can be shifted by a vector $s$ to be at the position $X+s$.
 
+[MR: do we need sub-sub-subsections above? Since there is only 1-2 sentences in each sub-heading, could we compress this all to a paragraph?]
+
 ### The $L$-function
 
-The $K$-function can be centered which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function (see spicyR for reference).
+The $K$-function can be ``centered'', which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function (see spicyR for reference) [MR: do proper citation here?]:
 
 $$
-L(r) = \sqrt{\frac{K(r)}{\pi}}
+L(r) = \sqrt{\frac{K(r)}{\pi}}.
 $$
 
 ### Pair Correlation function
 
-We have seen above, that the $K$-function is cumulative in nature. Meaning that the contributions of all distances smaller equal to $r$ are counted. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [1].
+We have seen above that the $K$-function is cumulative in nature. That is, the contributions of all distances smaller equal to $r$ are considered. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [1], according to:
 
 $$
-g(r) = \frac{K'(r)}{2\pi r}
+g(r) = \frac{K'(r)}{2\pi r},
 $$
 
-"$g(r)$ is the probability of observing a pair of point of the process separated by a distance $r$, divided by the corresponding probability for a Poisson process." [1]
+where $g(r)$ is the probability of observing a pair of points of the process separated by a distance $r$ divided by the corresponding probability for a Poisson process [1]. [MR: I removed the quotes here because it got to be too many quotes overall. We may need to rephrase a little bit.]
 
 #### Estimator of the pair correlation function
 
-The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods [1].
+[MR: just wondering .. is the section important?]
+
+The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods [1] according to:
 
 $$
-\hat{g}(r) = \frac{|W|}{2 \pi r n (n-1)} \sum_{i=1}^n\sum_{j=1 \\j \neq i}^n \kappa_h(r-d_{ij})e_{ij}(r)
+\hat{g}(r) = \frac{|W|}{2 \pi r n (n-1)} \sum_{i=1}^n\sum_{j=1, j \neq i}^n \kappa_h(r-d_{ij})e_{ij}(r),
 $$
 
 where $\kappa$ is the smoothing kernel. $\kappa_h(x)$ is a rescaled version of the template kernel $\kappa$
@@ -481,41 +459,43 @@ In the above, $\kappa$ can be any probability density "over the real line with m
 metricResBoot <- function(ppls, celltype, fun){
   metric.res <- lohboot(ppls[[celltype]], fun = fun)
   metric.res$type <- celltype
-  return(metric.res)
+  metric.res
 }
+
 #PRE: celltypes, function to calculation and edge correction method
 #POST: dataframe of 
 metricResBootToDF <- function(celltype_ls, ppls, fun, edgecorr){
-  res_ls <- lapply(celltype_ls, metricResBoot, fun = fun, ppls = ppls)
-  #stick all values into a dataframe
-  res_df <- c()
-  for(i in 1:length(celltype_ls))res_df <- rbind(res_df, res_ls[[i]])
-  return(res_df)
+  lapply(celltype_ls, function(u) {
+    metricResBoot(u, fun = fun, ppls = ppls) %>%
+      as.data.frame
+  }) %>% bind_rows
 }
+
+# [MR: try to write the above a litte more compactly]
 
 #PRE: Celltypes of interest, function to analyse, edge correction to perform
 #POST: plot of the metric
 plotMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResBootToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
-  p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
+  ggplot(res_df, aes(x=r, y=.data[[edgecorr]], col= type))+
     geom_line()+
     geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
     ggtitle(paste0(fun, '-function'))+
     geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed")+
     ylab(edgecorr) +
     scale_color_manual(name='Point Processes',
-                     breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
-                     values=c('Ependymal'='red', 'Microglia'='dark green', 'OD Mature'='blue', 'Poisson'='black'))+
+                     breaks=c('Ependymal', 'Microglia', 
+                              'OD Mature', 'Poisson'),
+                     values=c('Ependymal'='red', 
+                              'Microglia'='dark green', 
+                              'OD Mature'='blue', 'Poisson'='black'))+
     theme_light()
-  return(p)
 }
 
 celltype_ls <- c("Ependymal", "OD Mature", "Microglia")
 p_K <- plotMetric(celltype_ls, ppls, 'Kest', 'iso')
-
 p_L <- plotMetric(celltype_ls, ppls, 'Lest', 'iso')
-
 p_g <- plotMetric(celltype_ls, ppls, 'pcf', 'border')
 ```
 
@@ -523,27 +503,33 @@ p_g <- plotMetric(celltype_ls, ppls, 'pcf', 'border')
 p_K/p_L/p_g
 ```
 
+[MR: should we write some sentences to interpret these plots? Or do we even skip it here because it's likely an inhomogeneous process and not valid?]
+
+[MR: could we make a more compact representation like 1 row x 3 columns and have a common legend?]
+
 ### Correcting for Inhomogeneity
 
 #### Inhomogeneous $K$-function
 
-In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account for our analysis. Biological samples display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives. Inhomogeneous alternatives can be calculated via:
+In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account in the analysis. Biological point patterns display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives [MR: this suggest almost that we should skip the homogeneous statistics above, no?]. Inhomogeneous alternatives can be calculated via:
 
 $$
-K_{inhom}(r) = \mathbb{E} \left[\sum_{x_j \in X} \frac{1}{\lambda(x_j)}\mathbb{1}\{0<||u-x_j||\leq r\}|u \in X\right]
+K_{inhom}(r) = \mathbb{E} \left[\sum_{x_j \in X} \frac{1}{\lambda(x_j)}\mathbb{1}\{0<||u-x_j||\leq r\}|u \in X\right].
 $$
 
-This theoretical quantity can be approximated with estimators such as
+This theoretical quantity can be approximated with estimators such as:
 
 $$
-\hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r)
+\hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r),
 $$
 
-where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D^p$ is the pth power of the following term [1]: 
+where $e(u,v;r)$ is an edge correction weight, $\hat{\lambda}(u)$ is an estimator of the intensity of $u$ and $D$ is the following [1]: 
 
 $$
 D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
 $$
+
+[MR: just wondering how important all these formulas are? Do we want a full mathematical description, or does the mathematical description still help us to unpack what is needed for the common situation of inhomogeneous point patterns?]
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 p_K <- plotMetric(celltype_ls, ppls, 'Kinhom', 'iso')
@@ -557,13 +543,15 @@ p_g <- plotMetric(celltype_ls, ppls, 'pcfinhom', 'border')
 p_K/p_L/p_g
 ```
 
-The inhomogeneous $K$-function tells us that the microglia cells follow a Poisson process (dashed line) closely and can therefore be assumed to be randomly distributed and not clustered. Ependymal cells show a high degree of clustering at a low radius $r$. OD mature cells are in the middle, showing a lower degree of clustering at lower values of $r$.
+[MR: what if we plotted 1x3 w/ common legend?]
 
-The $L$-function is a variance stabilised (source spicyR) version of the $K$-function. Thus, the information is complementary to the above. Microglia cells are along the dashed Poisson line, indicating no clustering of microglia cells. Ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering at lower values of $r$.
+The inhomogeneous $K$-function tells us that the microglia cells follow close to a Poisson process (dashed line) closely and can therefore be assumed to be randomly distributed and not clustered. Ependymal cells show a high degree of clustering at a low radius $r$. OD mature cells exhibit a medium level of clustering.
 
-The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: Microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
+The $L$-function is a variance stabilised (source spicyR) [MR: proper citation] version of the $K$-function [MR: also, we've already described the L-function above, so we probably don't need to repeat it here]. Thus, the information is complementary to the above. As with the $K$-function, the microglia cells are along the dashed Poisson line, indicating no clustering; ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering.
 
-We have to note that inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another.
+The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
+
+We should further note that the inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells [MR: how do we know this is violated? Can we test somehow also for this departure?]. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another. Nonetheless, these measures do give some quantitative summaries of clustering .. [MR: should we add a sentence like this? Otherwise, it does question whether it is valid to do any of this.]
 
 ### Local Scaling
 

@@ -161,7 +161,7 @@ intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(inten
 
 intensityPointProcess(pp, mark = FALSE) %>% round(6)
 ```
-[MR: proposal for more compact code]
+[MR: proposal above for more compact code]
 
 Otherwise, we can compute the intensity for each mark individually.
 

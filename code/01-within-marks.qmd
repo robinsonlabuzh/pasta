@@ -557,21 +557,21 @@ We should further note that the inhomogeneity correction assumes that the proces
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$ approach above, we assume that the local scale of the point process is not changed. However, the intensity can vary spatially. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions the point process is a scaled version of a template process. This template process has to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that
+In the inhomogeneous $K$-function approach above, we assume that the local scale of the point process is not changed. However, the intensity can vary spatially [MR: Here, I'm struggling to know the difference b/w scale and intensity .. did we clearly specify this]. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that:
 
 $$
-g(u,v) = g_1 \left(\frac{||u-v||}{s}\right)
+g(u,v) = g_1 \left(\frac{||u-v||}{s}\right).
 $$
 
 In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor [1].
 
 #### Locally-scaled pair-correlation function
 
-would work by taking the derivative of the locally scaled $K$-function
+would work by taking the derivative of the locally scaled $K$-function [MR: this is not written as a proper sentence. And as it's super short, do we need a subsection for it?]
 
 #### Locally-scaled $L$-function
 
-As the $L$ is just a transformation of the $K$-function, the same local scaling can apply to the $L$-function
+Since the $L$-function is simply a transformation of the $K$-function, the same local scaling can apply to the $L$-function.
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 ### need to redefine the metric function, because bootstrap is not available for locally scaled functions ###
@@ -582,6 +582,7 @@ metricRes <- function(ppls, celltype, fun){
   metric.res$type <- celltype
   return(metric.res)
 }
+# [MR: can we write this such that it works for all functions? Like have a super wrapper?]
 
 #PRE: celltypes, function to calculation and edge correction method
 #POST: dataframe of 
@@ -592,6 +593,8 @@ metricResToDF <- function(celltype_ls, ppls, fun, edgecorr){
   for(i in 1:length(celltype_ls))res_df <- rbind(res_df, res_ls[[i]])
   return(res_df)
 }
+# [MR: this also doesn't look to different to the one above, which makes me think we should write it also as a super wrapper?]
+
 ### need to redefine the plotting function, because bootstrap is not available for locally scaled functions ###
 #PRE: Celltypes of interest, function to analyse, edge correction to perform
 #POST: plot of the metric
@@ -610,6 +613,9 @@ plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   return(list(p = p, res_df = res_df))
 }
 
+# [MR: again, stark similarity to those above. Should rewrite.]
+
+
 p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')$p
 p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
 ```
@@ -618,11 +624,14 @@ p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
 p_K/p_L
 ```
 
+[MR: as above, should we plot these in 1 plot (1 row, 2 columns, 1 legend)]
+
+
 ```{r, eval=FALSE, include=FALSE}
 plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
-  p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
+  p <- ggplot(res_df, aes(x=r, y=.data[[edgecorr]], col= type))+
     geom_line(linewidth=1)+
     ggtitle(paste0(fun, '-function'))+
     geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", linewidth=1)+
@@ -661,51 +670,23 @@ ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = type, label = type)) +
   ggtitle("Biplot of the L curves of all Celltypes")
 ```
 
-The interpretation of the locally scaled $L$-function is similar to the interpreation of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the random Poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed Poisson line, unlike in the inhomogeneous version.
+The interpretation of the locally-scaled $L$-function is similar to that of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the CSR Poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed Poisson line, unlike in the inhomogeneous version.
 
 Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation.
 
+[MR: this last paragraph is a very important point; I wonder if we should say more. The problem is that there is a lot of build-up to this point .. and we should make it clear what to use in the general situation.]
+
 #### Local Indicators of Spatial Association
 
-The $K$ and $L$-functions above are summary statistics over the entire pattern. However, if we know that there are different regions in our point pattern, we might want to know the individual contributions of these patterns. This gives then e.g. $n$ (for all points) local $K$,$L$ or pair correlation-functions. Baddeley et. al. propose to compare these $n$ functions with e.g. functional principal component analysis. We will show here the example of the LISA version of the $L$ function [1].
+It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [1].
 
-````{=html}
-<!-- ##### Local $K$ function
-
-```{r}
-K_ependymal_lisa <- localK(ppls$Ependymal)
-plot(K_ependymal_lisa, main = 'local K functions Ependymal', legend=FALSE)
-
-K_odmature_lisa <- localK(ppls$`OD Mature`)
-plot(K_odmature_lisa, main = 'local K functions OD Mature', legend=FALSE)
-
-K_microglia_lisa <- localK(ppls$Microglia)
-plot(K_microglia_lisa, main = 'local K functions Microglia', legend=FALSE)
-```
-
-##### Local pair correlation function
-
-```{r}
-g_ependymal_lisa <- localpcf(ppls$Ependymal)
-plot(g_ependymal_lisa, main = 'local pcf functions Ependymal', legend=FALSE)
-
-g_odmature_lisa <- localpcf(ppls$`OD Mature`)
-plot(g_odmature_lisa, main = 'local pcf functions OD Mature', legend=FALSE)
-
-g_microglia_lisa <- localpcf(ppls$Microglia)
-plot(g_microglia_lisa, main = 'local pcf functions Microglia', legend=FALSE)
-``` 
--->
-````
 
 ##### Local $L$ function
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 L_odmature_lisa <- localL(ppls$`OD Mature`)
-# plot(L_odmature_lisa, main = 'local L functions OD Mature', legend=FALSE)
 
 df <- as.data.frame(L_odmature_lisa)
-
 dfm <- reshape2::melt(df, "r")
 
 get_sel <- dfm %>% filter(r > 200.1358 & r < 200.1360, variable != "theo") %>%
@@ -731,30 +712,29 @@ q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) +
 ```
 
 
-```{r, fig.height=7, fig.width=10}
+```{r, fig.height=5, fig.width=10}
 p|q
 ```
 
-In the case of the OD mature cells we obtain further information with this plot. We note that there are two distinct populations of curves, those that are clearly above the straight Poisson line and others that are around/underneath the straight Poisson line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
+In the case of the OD mature cells, we obtain further information with this plot. We note that there are two distinct populations of curves: those that are clearly above the CSR Poisson line [MR: do we know that the lower population is around CSR? Should we plot Poisson directly?] and others that are around/underneath the CSR line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
 
-There are inhomogeneous versions of these (e.g. `localLinhom`). These are not shown here for brevity.
+There are inhomogeneous versions of these (e.g. `localLinhom`) that are not shown here for brevity.
 
 ##### Functional PCA for the $n$ Curves
 
-We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA just applied to the concept of functions. For the $n$ functions above functional PCA will recover the main trends in the data . 
+We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function instead of a point). For the $n$ functions above, functional PCA will recover the main trends in the data. 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
 functional.pca.pp <- function(df){
-  #df <- res_df_wider
-  df_fdob <- df %>% as.matrix()
+  # df_fdob <- asinh(df %>% as.matrix / 50)  # [MR: should we transform? if so, how?]
+  df_fdob <- df %>% as.matrix # [MR: should we transform? if so, how?]
   #remove theo column - we want only the actual estimations in there without the Poisson line theo
-  if('r' %in% colnames(df) || 'theo' %in% colnames(df)){
+  if('r' %in% colnames(df) || 'theo' %in% colnames(df))
      df_fdob <- df_fdob[,!colnames(df_fdob) %in% c("r", "theo")]
-  }
-  if('Ependymal' %in% colnames(df)){
+  if('Ependymal' %in% colnames(df))
     df_fdob <- df_fdob[,!colnames(df_fdob) %in% c("trans",'iso')]
-  }
+
   #number of columns
   N <- ncol(df_fdob)
   #number of rows
@@ -762,18 +742,23 @@ functional.pca.pp <- function(df){
   #the x values at which all the curves were evaluated, here called tVec
   s <- df$r
   #create the FPCA object
-  fd_obj <- fdapace::MakeFPCAInputs(IDs = rep(1:N, each=M),tVec=rep(s,N), yVec=df_fdob)
-  print(which( unlist( lapply(fd_obj$Lt, function(x) length(x) != length(unique(x))))))
+  fd_obj <- fdapace::MakeFPCAInputs(IDs = rep(1:N, each=M),
+                                    tVec=rep(s,N), yVec=df_fdob)
+  print(which( unlist( lapply(fd_obj$Lt, 
+                              function(x) length(x) != length(unique(x))))))
   #check that the FPCA object is valid
   fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
   #run the computation of the FPCA - would work with sparse data.
-  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, dataType='Dense', kernel='rect'))
-  fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
+  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, 
+                            list(plot = TRUE, dataType='Dense', kernel='rect'))
+  fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,
+                          showObs = FALSE, showMean = TRUE)
   return(fpca_obj)
 }
 
 fpca_obj <- functional.pca.pp(L_odmature_lisa)
-fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% rename(PC1 = V1, PC2 = V2, PC3 = V3)
+fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% 
+  rename(PC1 = V1, PC2 = V2, PC3 = V3)
 fpca_pc_df$sel <- get_sel$sel # assume they are in same order
 
 ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) + 
@@ -781,17 +766,28 @@ ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) +
   geom_point() +
   theme_light() +
   ggtitle("Biplot of the LISA L curves of the OD mature cells")
+
+ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC1)) + 
+  scale_color_continuous(type = "viridis") +
+  geom_point()
+
+ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) + 
+  scale_color_continuous(type = "viridis") +
+  geom_point()
+
 ```
 
-Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support. The mean curve displays the mean trend over all $n$ LISA $L$-curves (note that this result is similar to the locally scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
+[MR: made a note in the code above. Should we transform before PCA?]
 
-Looking at the second plot we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve. When we look at the example that is clearly visible. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [2].
+Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-The last plot shows the biplot of the functional PCA. Each point is a cell from the OD mature cells. The first two principal components are plotted. The first principal component is the x-axis and the second principal component is the y-axis. The points are coloured as in the plots of the LISA $L$-curves. We note that the first principal component separates the two populations. The curves with the high values (yellow) are plotted on the right and the ones with low values (blue) on the left. This corresponds to the two populations we saw in the LISA $L$-curve plot. 
+Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [2].
+
+The last plot shows the biplot of the functional PCA [MR: should we mention "loadings"?]. Each point is a cell from the OD mature cells with the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. [MR: here I also wonder whether plotting the points by their spatial location and colouring by their loadings of PC1-PC3 would be interesting to look at. I added an example in the code; to me, it looks interesting]
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local adaptations of these. In the following, we will continue a high-order statistics. In second-order statistics one considers pairs and counts these in the case of the $K$ function. In a third-order setting we would now count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [1].
+So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the following, we will continue towards even higher-order statistics. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [1].
 
 $$
 T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
@@ -808,17 +804,19 @@ p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'trans')
 p
 ```
 
+[MR: should we skip the plot in this section?]
+
 ## Spacing
 
-So far, most approaches considered intensity and correlation as measures to assess a point pattern. Below, we will look at measures of spacing and shortest-distances to assess spatial arrangements [1].
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. Next, we will look at measures of spacing and shortest-distances to assess spatial arrangements [1].
 
-Baddeley et.al. summarises three basic distances to measure
+Baddeley et.al. summarises three basic distances to measure:
 
 -   pairwise distance: $d_{i,j} = ||x_i-x_j||$
 -   nearest-neighbour distances: $d_i = \min_{j \neq i}d_{ij}$
 -   empty-space distance: $d(u) = \min_j||u-x_j||$
 
-There are test of CSR that are based on spacing -\> Clark-Evans test and Hopkins-Skellam Index that are both implemented above in the CSR testing function
+Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above. [MR: maybe add ref to that section?]
 
 ````{=html}
 <!-- ### Exploratory Graphics
@@ -853,7 +851,7 @@ plot(dirichlet(ppls$Microglia))
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour methods center around the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns us then $k$ curves for the $k$ neighbour distances. We can for instance collapse this information of the $k$ curves in a mean curve per sample. This information of the mean nearest neighbour distance is summarised as a density [1].
+Nearest neighbour methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns a curve for each specified $k$ [MR: do we need to say that a curve here is a density of a distribution?] for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [1].
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -870,6 +868,7 @@ metricRes_nndist <- function(ppls, celltype, fun){
   metric.res$type = celltype
   return(metric.res)
 }
+# [MR: again, this function looks again like those before and maybe could be done as an all-in-one wrapper.]
 
 #go through all defined celltypes and calculate the nearest-neighbour distance
 res_ls <- lapply(celltype_ls, metricRes_nndist, fun = nndistance, ppls = ppls)
@@ -891,7 +890,7 @@ p <- ggplot(res_df, aes(x=metric, col= type))+
 p
 ```
 
-In the probability-density function of the nearest neighbours the ependymal cells show the shortest nearest-neighbour distances. The OD mature cells have larger nearest neighbour distances and the bimodal distribution indicates a mix of longer and wider distances (which was as well visible in the LISA $L$ function). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
+In the MNND empirical distribution, the ependymal cells show the shortest nearest-neighbour distances, a reflection of their clustering. The OD mature cells have larger nearest neighbour distances as well as a bimodal distribution, indicating a mix of longer and wider distances (as visible in the LISA $L$-functions). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
 
 #### DBScan
 

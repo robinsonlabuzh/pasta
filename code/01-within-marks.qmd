@@ -895,7 +895,7 @@ In the MNND empirical distribution, the ependymal cells show the shortest neares
 #### DBScan
 
 Often, we are interested which spatial structures build a spatial unit. One way to answer this question is to use spatially aware clustering. 
-Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise). DBScan is an algorithm which uses a parameter called minimal Features. If the number of points per cluster is smaller than the minimal number of features, it is either noise or it is merged with another cluster. Another parameter $\epsilon$ defines the distance at which a point has to lay in order to be part of a cluster. The value of this parameter $\epsilon$ can be determined by an elbow plot, similar to clustering resolution parameters in other algorithms.
+Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise). DBScan is an algorithm that uses a parameter called minimal Features. If the number of points per cluster is smaller than the minimal number of features, it is either noise or it is merged with another cluster. Another parameter $\epsilon$ defines the distance at which a point has to lay in order to be part of a cluster. The value of this parameter $\epsilon$ can be determined by an elbow plot, similar to clustering resolution parameters in other algorithms.
 [MR: can we make this reference below a proper reference?]
 [Source](https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-density-based-clustering-works.htm)
 
@@ -913,7 +913,7 @@ pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =200, minPts = 5)
 plot(pp_df[-3], col = pp_dbscan$cluster)
 ```
 
-We see that DBScan identifies four clusters. A top cluster in red and two main side clusters in black and green. There is another cluster in blue which is at the top right corner.
+We see that DBScan identifies four clusters. A top cluster in red and two main side clusters in black and green. There is another cluster in blue that is at the top right corner.
 
 another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}.
 

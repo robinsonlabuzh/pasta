@@ -1,5 +1,9 @@
 ---
 output: html_document
+format:
+  html:
+    code-fold: true
+    code-summary: "Show the code"
 editor_options: 
   chunk_output_type: console
 ---
@@ -449,7 +453,7 @@ $$
 \kappa_h(x) = \frac{1}{h}\kappa\left(\frac{x}{h}\right)
 $$
 
-In the above, $\kappa$ can be any probability density "over the real line with mean 0". Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$ [1].
+In the above, $\kappa$ can be any probability density over the real line with mean 0. Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$ [1].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #| message: false
@@ -813,7 +817,7 @@ So far, most approaches considered intensity and correlation as measures to asse
 Baddeley et.al. summarises three basic distances to measure:
 
 -   pairwise distance: $d_{i,j} = ||x_i-x_j||$
--   nearest-neighbour distances: $d_i = \min_{j \neq i}d_{ij}$
+-   NN distances: $d_i = \min_{j \neq i}d_{ij}$
 -   empty-space distance: $d(u) = \min_j||u-x_j||$
 
 Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above. [MR: maybe add ref to that section?]
@@ -823,7 +827,7 @@ Note also that there are tests of CSR that are based on spacing, including the C
 
 #### Stienen Diagram
 
-The stienen diagram is obtained by drawing circles around each point in the process of the size of its nearest neighbour distance
+The stienen diagram is obtained by drawing circles around each point in the process of the size of its NN distance
 
 ```{r}
 stienen(ppls$Ependymal)
@@ -851,7 +855,7 @@ plot(dirichlet(ppls$Microglia))
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ nearest neighbours are found. This function returns a curve for each specified $k$ [MR: do we need to say that a curve here is a density of a distribution?] for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [1].
+Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a curve for each specified $k$ [MR: do we need to say that a curve here is a density of a distribution?] for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [1].
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -890,7 +894,7 @@ p <- ggplot(res_df, aes(x=metric, col= type))+
 p
 ```
 
-In the MNND empirical distribution, the ependymal cells show the shortest nearest-neighbour distances, a reflection of their clustering. The OD mature cells have larger nearest neighbour distances as well as a bimodal distribution, indicating a mix of longer and wider distances (as visible in the LISA $L$-functions). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
+In the MNND empirical distribution, the ependymal cells show the shortest NN distances, a reflection of their clustering. The OD mature cells have larger NN distances as well as a bimodal distribution, indicating a mix of longer and wider distances (as visible in the LISA $L$-functions). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
 
 #### DBScan
 
@@ -915,57 +919,64 @@ plot(pp_df[-3], col = pp_dbscan$cluster)
 
 We see that DBScan identifies four clusters. A top cluster in red and two main side clusters in black and green. There is another cluster in blue that is at the top right corner.
 
-another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}.
+another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}. [MR: unfinished?]
+
+[MR: personally, I don't see a lot of value in the DBScan analysis, but you can try and convince me.]
 
 ### Nearest-neighbour function $G$ and empty-space function $F$
 
 #### Definitions of $F$ and $G$ function
 
-Under a stationary spatial point process, the empty-space distance is defined as
+Under a stationary spatial point process, the empty-space distance is defined as:
 
 $$
 d(u,X) = \min\{||u-x_i||: x_i \in X\}
 $$
 
-The empty space function is then the cumulative distribution function of the empty-space distances defined above
+[MR: what does one do for a non-stationary process?]
+
+The empty space function is then the cumulative distribution function of the empty-space distances defined above:
 
 $$
-F(r) = \mathbb{P}\{d(u,X)\leq r\}
+F(r) = \mathbb{P}\{d(u,X)\leq r\}.
 $$
 
-The nearest-neighbour distance is defined as
+The NN distance is defined as:
 
 $$
-d_i = \min_{j\neq i}||x_j-x_i||
+d_i = \min_{j\neq i}||x_j-x_i||.
 $$
 
-The nearest-neighbour distance distribution function $G(r)$ is then defined as
+The NN distance distribution function $G(r)$ is then defined as:
 
 $$
-G(r) = \mathbb{P}\{d(x,X\backslash u \leq r |X\ has\ a\ point\ at\ u\}
+G(r) = \mathbb{P}\{d(x,X\backslash u \leq r |X\ has\ a\ point\ at\ u\}.
 $$
 
-For a homogeneous Poisson process, the nearest-neighbour distance distribution is identical to the empty-space function of the same process
+For a homogeneous Poisson process, the NN distance distribution is identical to the empty-space function of the same process:
 
 $$
-G_{pois} \equiv F_{pois}
+G_{pois} \equiv F_{pois}.
 $$
 
-For a general point process the $F$ and $G$ functions are different [1].
+For a general point process, the $F$ and $G$ functions are different [1].
+
+[MR: so actually, from the notation, I don't see why F and G would be different for a general point process .. they are simply two ways to express the distance to the nearest point. What am I missing?]
 
 ### Empty-space hazard
 
-The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons this is no longer the derivative of the $F$ function but rather a hazard rate [1].
+The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too [MR: what disadvantages? maybe say them explicitly here]. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons, this is no longer the derivative of the $F$ function but rather a hazard rate [1]:
 
 $$
-h(r) = \frac{f(r)}{1-F(r)}
+h(r) = \frac{f(r)}{1-F(r)}.
 $$
 
-For a CSR process, the hazard rate is
+For a CSR process, the hazard rate is:
 
 $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
+(i.e., linear in $r$).
 
 Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$ [1].
  <!-- 
@@ -998,15 +1009,15 @@ p
 
 ### $J$-Function
 
-The concepts of the empty-space function $F$ and the nearest-neighbour function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above) [1].
+The concepts of the empty-space function $F$ and the NN function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above) [1].
 
-Another approach is the $J$ function.
+Thus, a related approach is the $J$ function:
 
 $$
-J(r) = \frac{1-G(r)}{1-F(r)}
+J(r) = \frac{1-G(r)}{1-F(r)}.
 $$
 
-"For a homogeneous Poisson process, $F_{pois} \equiv G_{pois}$ such that then $J_{pois} \equiv 1$. Values $J(r) > 1$ are consistent with a regular pattern, and \$J(r) \< 1 is consistent with clustering." [1]
+For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process [1].
 
 ```{r, fig.height = 10, fig.width = 7}
 ### need to redefine the plotting function, because bootstrap is not available for spacing functions ###
@@ -1024,6 +1035,7 @@ plotSpacingMetric <- function(celltype_ls, ppls, fun, x,  edgecorr){
     theme_light()
   return(p)
 }
+## [MR: same comment as above: can we have a super-wrapper?]
 
 p_G <- plotSpacingMetric(celltype_ls, ppls, 'Gest', 'r', 'rs')
 
@@ -1037,6 +1049,8 @@ p_G/p_F/p_J
 ```
 
 ### Accounting for Inhomogeneity in Spacing Functions
+
+[MR: so if there are inhomogeneous versions, should we skip the plots above? Or not, because the inhomogeneous versions are inaccurate because they still assume correlation stationarity. What do we do?!? We need to be careful not to paint overselves into a corner.]
 
 There are inhomogeneous variants of the spacing functions explained above
 
@@ -1052,25 +1066,27 @@ p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jinhom', 'r', 'bord')
 p_G/p_F/p_J
 ```
 
-Again here, comparing the homogeneous versions of the functions with the inhomogeneous ones reveals, that we seem to solve one problem (inhomogeneity) by assuming correlation stationarity. As this is not given, the inhomogeneous versions don't seem to be accurate. In fact, the homogeneous versions are more easily interpretable than the inhomogeneous alternatives.
+Again here, comparing the homogeneous versions of the functions with the inhomogeneous ones reveals, we seem to solve one problem (inhomogeneity) by assuming correlation stationarity. As this is not a given, the inhomogeneous versions do not seem to be accurate. In fact, the homogeneous versions are more easily interpretable than the inhomogeneous alternatives.
 
 ### Nearest-Neighbour Orientation
 
-Next to the distance to the nearest-neighbours, we can estimate the orientation of the vector to the nearest-neighbour. This gives an indication of the orientation of the spacing.
+Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing.
+
+[MR: here just noting that we give no definition of the orientation metric, which counters the quite verbose definitions that we have seen up to this point.]
 
 ```{r}
 p <- plotSpacingMetric(celltype_ls, ppls, 'nnorient', 'phi', 'bordm')
 p
 ```
 
-The values of $\phi$ correspond to the orientation of the point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom).
-We can infer that the orientation of the Ependymal nearest-neighbours is along the vertical axis, OD mature cells don't show a clear pattern and microglial cells a horizontal orientation in their nearest neighbours with a small peak at $\sim 180$ (orientation to the top).
+The values of $\phi$ correspond to the orientation of the point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom) [MR: I find this description quite confusing, because you are not talking about the horizontal/vertical axis of the metric plot, but rather the orientations in the point patterns. And since certain $\phi$s represent these orientations, is it worth adding some shading of the x-axis to highlight this? Thicker lines would also benefit the old people reading this. And I wonder if faceting on celltype would help also. What does the Y-axis represent? And are there local variants of these? Maybe the clustered OD cells have a different orientation than the non-clustered?].
+We can infer that the orientation of the Ependymal NNs is primarily along the vertical axis, OD mature cells do not show a clear orientation and microglial cells a horizontal orientation in their NNs with a modest peak at $\sim 180$ (orientation to the top).
 
-The concept of spacing is not only usable in point pattern analysis but more broadly in any spatial context (e.g. spacing between shapes instead of points).
+Note also tha the concepts of spacing are not only usable in *point* pattern analysis but also more broadly in other spatial contexts (e.g., spacing between shapes instead of points).
 
 ### Edge Corrections
 
-The same consideration about edge effects as for the $K$ functions have to be made for the spacing functions. The uncorrected estimators are negatively biased as estimators for the real spacing functions. The easiest approach is to draw an artificial border and consider nearest neighbours there in. Other approaches are based on sampling. Yet another approach is based on survival analysis. The idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions. This is similar to censored data, where the Kaplan-Meier estimator is the optimal choice [1].
+The same consideration about edge effects as for the $K$ (and related) functions need to be made for the spacing functions; uncorrected estimates are negatively biased as estimators for the real spacing functions [MR: what is meant by "real spacing functions" here?]. The easiest approach is to draw an artificial border and consider NNs within it. Other approaches are based on sampling. Yet another approach relates to survival analysis, with the idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions similar to censored data, where the Kaplan-Meier estimator is the optimal choice [1].
 
 # Continuous Marks
 
@@ -1080,32 +1096,20 @@ The same consideration about edge effects as for the $K$ functions have to be ma
 #| label: load-data 2
 
 #subset the data to only look at sample ID 0.01
-sub = spe[, spe$sample_id == 0.01]
-#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
-(pp = .ppp(sub, marks = "cluster_id"))
-
-
-#subset the data to only look at sample ID 0.01
-sub_2CT = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
-#sub = spe[, spe$sample_id == 0.01 & spe$cluster_id %in% c("Astrocyte", "Pericytes")]
+sub_2CT = spe[, spe$sample_id == "0.01" & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
 (pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
-
-#split the multitype point process into several single type processes
-#fist, set the marks of the point process to be factors
-marks(pp) = factor(marks(pp))
-ppls = split(pp)
+#[MR: this above never gets used?]
 ```
 
-```{r, fig.height=15, fig.width=15}
-plot(ppls)
-```
 
-In `spatstat` a `mark` can basically take any value. It can be discrete as we have seen in the discrete mark chapter or it can take a continuos value, such as gene expression. In our example we take the gene expression of some marker genes from Fig. 6 of the original publication.
+In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or  continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication.
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
-gex <- as.data.frame(t(as.matrix(assay(sub))))[, c('Slc18a2', 'Esr1', 'Pgr')]
-rownames(gex) <- NULL
+genes <- c('Slc18a2', 'Esr1', 'Pgr')
+gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
+  data.frame %>% set_rownames(NULL)
+
 # gene expression to marks
 marks(pp) <- gex
 ```
@@ -1116,11 +1120,15 @@ marks(pp) <- gex
 plot(pp)
 ```
 
+[MR: what is the point of this plot?]
+
 A pairs plot indicates spatial inhomogeneity, i.e. a spatial trend of the of the marks. This plot is only reasonable for a small number of marks however.
 
 ```{r}
-pairs(as.data.frame(pp), panel = panel.smooth)
+pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
 ```
+
+[MR: also not sure the point of this plot?]
 
 The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel. This estimated kernel can be used for visual inspection of the dataset.
 
@@ -1128,14 +1136,14 @@ The `Smooth` command uses cross-validation to select the smoothing bandwidth of 
 ppsmooth <- Smooth(pp, bw.smoothppp)
 plot(ppsmooth)
 ```
-From the estimated intesity plot we can see that the expression of the marker genes is clearly inhomogeneous.
+From the estimated intensity plot, we can see that the expression of the marker genes is clearly inhomogeneous. [MR: what does it mean that marker gene expression is inhomogeneous .. I thought inhomogeneity had to do with the location of points?!]
 
-Nearest-neighbour interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwith for the Gaussian kernel.
+NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwith for the Gaussian kernel. [MR: wouldn't a small bandwidth use also the mark at the spatial location too, in addition to it's neighbours?]
 
 ```{r}
 plot(nnmark(pp))
 ```
-We can use the average value of neighbouring point to predict the expression of a gene at each point. We can then plot the actual marks versus the fitted values to detect anomalies. E. g. `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This gives further indication of structure in the gene expression.
+We can use the average value of neighbouring points to predict the expression of a gene at each point. We can then plot the actual marks versus the fitted values to detect anomalies. For example, `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This gives further indication of structure in the gene expression.[MR: I don't really understand the interpretation here.]
 
 ```{r}
 mfit <- Smooth(pp, bw.smoothppp, at="points")
@@ -1144,20 +1152,25 @@ res <- marks(pp) - mfit
 plot(setmarks(pp, res))
 ```
 
-## Summary functions
+[MR: I don't really have a good intuition of what these plots mean, but I think the plots are anyways hard to interpret. The scale is a bit weird .. I think the point size has some meaning, but that's really hard to see. Colours would be better, but I'm not even sure these plots tell us much interesting. Also, since we are taking differences between values and a smooth fit, the scale of the data becomes important; are we on a "good" scale?]
 
-As in the discrete case the summary functions assume that the point process is stationary.
+## Summary functions for continuous marks
+
+As in the discrete case, summary functions assume that the point process is stationary.
 
 ### Mark correlation function
 
-The mark correlation function measures the dependence between the marks at two points at distance $r$. It is not a correlation in the classical sense, since it can take any nonegative value. The value of 1 indicates no correlation between the marks. The generalized mark correlation function is given by
+The mark correlation function measures the dependence between two marks for two points at distance $r$. It is not a correlation in the classical sense, since it cannot take non-negative values [MR: was this a typo? is this correct?]. Instead, a value of 1 indicates no correlation between the marks [MR: does this mean that negative correlation is not allowed? Or, would it appear as 'less than 1'?]. The generalized mark correlation function is given by:
 
-$$ k_f(r) = \frac{\mathbb{E}[f(m(u)m(v))]}{\mathbb{E}[f(M,M')]}$$
-where $f(m_1,m_2)$ is a test function with two arguments that represent the marks and returns a non-negative value. For continuous non-negative marks the choice of $f$ is by default $f(m_1,m_2)= m_1 m_2$. $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [1].
+$$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$
+where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value [MR: what are $u$ and $v$ in the formula above?]. For continuous non-negative marks, the canonical choice for $f$ is typically  $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [1].
 
 ```{r}
 plot(markcorr(pp))
 ```
+
+[MR: maybe we should create our own plot here? do we need both 'iso' and 'trans' .. is there any info that is represented in the scale of the y-axis? Put all 3 genes on one plot?]
+
 We can compare the mark correlation function to a pointwise simulation envelope in which we generate 5 simulations of random labeling.  
 ```{r}
 ppEsr1 <- subset(pp, select = 'Esr1')
@@ -1180,16 +1193,20 @@ The plot indicates that the mark correlation function is significantly different
 <!-- plot(mc) -->
 <!-- ``` -->
 
-### Mark-weigthed K function
+### Mark-weighted $K$-function
 
-Mark-weigthed K function is a generalization of the K-function in which the contribution of each from each pair of points is weighted by a function of their respective marks. The mark-weighted K-function is given by
+The mark-weigthed $K$-function is a generalization of the $K$-function in which the contribution from each pair of points is weighted by a function of their respective marks. The mark-weighted $K$-function is given by:
 
-$$K_f(r) = \frac 1  \lambda \frac{C_f(r)}{E[ f(M_1, M_2) ]}$$
-with the function $C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1{0 < ||u - x|| \le r} \;  \big| \; u \in X \right]$ which is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$ we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point [1].
+$$K_f(r) = \frac 1  \lambda \frac{C_f(r)}{E[ f(M_1, M_2) ]},$$
+where:
 
-In the scenario of random labeling, the mark-weighted $K$-function corresponds to Ripley's $K$-function.    
+$$ C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1\{0 < ||u - x|| \le r\} \;  \big| \; u \in X \right], $$ 
 
-The default function is $f(m_1, m_2) = m_1 m_2$. 
+is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$, we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f(.,.)$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent [MR: note mix of M1, M2 .. and M, M'], identically distributed random points with the same distribution as the mark of a randomly chosen point [1].
+
+In the scenario of random labeling [MR: what does random labeling mean?], the mark-weighted $K$-function corresponds to Ripley's $K$-function.    
+
+Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. 
 
 ```{r}
 ppEsr1 <- subset(pp, select = 'Esr1')
@@ -1199,19 +1216,23 @@ plot(K.Esr1L)
 ```
 It is important to note that theoretical value is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. 
 
-Here we will compare the $L$-functions, which are the variance stabilized $K$-functions.
+Here we will compare the $L$-functions, which are variance-stabilized $K$-functions.
 
 ```{r}
 L.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2}, returnL = TRUE)
 Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
 plot(eval.fv(L.Esr1L - Lest.ppEsr1))
 ```
-Like for other functions we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals [1].
+
+As for other functions, we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals [1].
 
 ```{r}
 plot(envelope(ppEsr1, fun=Kmark, returnL=TRUE, nsim=50))
 ```
 
+[MR: all these plots need an interpretation, I think.]
+
+[MR: do we need a summary section, just to remind the reader all the ground we covered?]
 
 # Appendix
 

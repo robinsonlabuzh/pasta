@@ -409,19 +409,19 @@ out$tablaZ %>%
 
 <!-- ``` -->
 
-Similar to the simple case without marks it is possible do estimate summary functions. More specifically the summary functions between different marks can be calculated. These summary functions assume that the multitype process is stationary which might not be an appropriate assumption in spatial omcis data, we therefore use inhomogeneous versions of the summary functions.
+Similar to the simple case without marks, it is possible to estimate summary functions. In particular, summary functions *between* different marks can be calculated. We note that the canonical functions assume that the multi-type process is stationary, which might not be an appropriate assumption in most spatial omics dataset, thus we use inhomogeneous versions below.
 
 ### Cross K-function
 
-The cross K-function is a summary function that measures the average number of points of type `j` within a distance `r` of a point of type `i`. The formula is given by 
+The cross K-function is a summary function that measures the average number of points of type `j` within a distance `r` of a point of type `i`. The formula is given by: 
 
 $$
-K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j})|u \in X^{i}]
+K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j})|u \in X^{i}],
 $$
 
 where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$.
 
-First we plot an overview over the cross K function for the different types.
+First, we plot an overview over the cross K function for the different types.
 
 ```{r}
 #| echo: true
@@ -433,8 +433,9 @@ plotCrossAll <- function(ppp, fun, edgecorr){
   # Create a list of ggplot objects using lapply
   plot_list <- lapply(Fall[["fns"]], function(res) {
     ggplot(res, aes(x = r, y = .data[[edgecorr]])) +
-      geom_line(size = 1) +
-      geom_line(aes(x = r, y = theo), linetype = "dotted", size = 1) +
+      geom_line(linewidth = 1) +
+      geom_line(aes(x = r, y = theo), 
+                linetype = "dotted", linewidth = 1) +
       geom_line() +
       labs(title = attributes(res)$yexp) +
       theme_minimal()
@@ -452,11 +453,13 @@ plotCrossAll <- function(ppp, fun, edgecorr){
 plotCrossAll(pp_sel, "Kcross.inhom", "iso")
 ```
 
-The diagonal of the cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent they are also uncorrelated.
+[MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?]
 
-In this overview we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions.
+The diagonal of the cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
 
-However, it is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is confounding between clustering and inhomogeneity. We have already seen that our dataset most likely does not follow the assumption of stationarity. For this reason we will calculate the inhomogneous cross K-function.
+In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions.
+
+It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross K-function.
 
 ```{r}
 #| echo: true
@@ -474,8 +477,10 @@ plotCrossMetric <- function(ppp, fun, from, to, edgecorr){
   return(p)
 }
 
-p_epen_od <- plotCrossMetric(pp_sel, "Kcross.inhom", "Ependymal", "OD Mature", "iso")
-p_epend_micro <- plotCrossMetric(pp_sel, "Kcross.inhom", "Ependymal", "Microglia", "iso")
+p_epen_od <- plotCrossMetric(pp_sel, "Kcross.inhom", 
+                             "Ependymal", "OD Mature", "iso")
+p_epend_micro <- plotCrossMetric(pp_sel, "Kcross.inhom", 
+                                 "Ependymal", "Microglia", "iso")
 
 ```
 ```{r}
@@ -483,7 +488,8 @@ p_epend_micro <- plotCrossMetric(pp_sel, "Kcross.inhom", "Ependymal", "Microglia
 # fig-height: 10
 p_epen_od + p_epend_micro
 ```
-Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line there is indication of clustering while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of clustering between Ependymal and OD Mature cells while there is indication of repulsion between Ependymal and Microglia cells.
+
+Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line, there is indication of clustering while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of clustering between Ependymal and OD Mature cells while there is indication of repulsion between Ependymal and Microglia cells.
 
 ### Cross L-function 
 Alternatively the L cross function with similar interpreation can be calculated using the `Lcross` function.
@@ -552,35 +558,38 @@ p_epen_od + p_epend_micro
 
 ### Mark connection function
 
-The mark connection function is essentially the cross pair-correlation function, i.e. the generalization of the of the pair correlation function to multitpye point processes, divided by the unmarked pair-correlation function. It can be interpreted as the conditional probability that two points a distance r apart have labels of type 1 and of type 2, given the presence of those points. 
+The mark connection function is essentially the cross pair-correlation function, i.e. the generalization of the pair correlation function to multitype point processes, divided by the unmarked pair-correlation function. It can be interpreted as the conditional probability that two points a distance r apart have labels of type 1 and of type 2, given the presence of those points. 
 
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-plotCrossAll(pp_sel, "markconnect", "iso") + scale_y_continuous(limits = c(0, 1))
+plotCrossAll(pp_sel, "markconnect", "iso") + 
+  scale_y_continuous(limits = c(0, 1))
 ```
 
-The dashed lines indicate expected values under random labeling. The values measures dependence or association between the different points. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it is the case for the Microglia cells.
+[MR: wondering .. should these above all be put on the same scale? And, same question as above. Could we think about a more compact representation?]
+
+The dashed lines indicate expected values under random labeling. The values measure dependence (or association) between the different points [MR: is it dependence between different points or dependence b/w different marks?]. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it is the case for the Microglia cells.
 
 ### Cross F-function (empty space function), cross G-function (Nearest-neighbor function) and cross J-function
 
-The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$ it is defined as
+The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
 
 $$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r\}$$.
 
-The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as
+The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
 
 $$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})$$.
 
-If the points are independent of each other the G and F function are identical. Both assume that the process is stationary.
+If the points are independent of each other, the G and F function are identical [I think we mentioned this already in the other vignette]. Both assume that the process is stationary.
 
-There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross the theoretical value indicates independence between the marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$.
+There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$.
 
-The cross J-function is defined as 
+The cross J-function is defined as:
 
 $$J_{ij}(r) = \frac{1-G_{ij}(r)}{1-F_{j}(r)}$$
 
-and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e. that the point processes of each type are independent the G-function is equivalent to the F-function and the J-function is equal to 1. 
+and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the G-function is equivalent to the F-function and the J-function is equal to 1. 
 
 <!-- ### Cross J-function  -->
 
@@ -595,18 +604,19 @@ and summarizes the interpoint dependence between type $i$ and $j$. Under the hyp
 
 ### Dot functions
 
-For each K-, G- and J- function there also exist dot functions which is measuring distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks.  For expample, the K-dot function represents the expected number of other point within distance $r$ of a typical point of type $i$. 
+For each K-, G- and J- function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks [MR: does it measure this dependecne to all other marks simultaneously?].  For expample, the K-dot function represents the expected number of other point within distance $r$ of a typical point of type $i$. 
 
 ```{r}
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 8
+#| fig-height: 4
 plotCrossAll(pp_sel, "Kdot.inhom", "iso")
 ```
-The dot functions are useful summary statistic to analyse the dependence of one mark with all other marks. 
+
+The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 
 
 ## Summary function within and between types
 
-In our original dataset we have a large number of different marks. We picked the three OD mature, Ependymal and Microglia for illustrative purposes. An alternative to looking at all cross summary function combinations, it is possible to compare between and within types. An alternative is to compare within and between types.
+In our original dataset, we have a large number of different marks. We picked three OD mature, Ependymal and Microglia for illustrative purposes. An alternative to looking at all cross summary function combinations, it is possible to compare between and within types.
 
 ### Mark equality function
 
@@ -629,7 +639,8 @@ plotMarkCorr <- function(pp, edgecorr = "iso") {
 
 plotMarkCorr(pp)
 ```
-We can see that in our dataset, it is closer, the more likely it is to find points of the same type.
+
+We can see that in our dataset, it is closer [MR: what does 'it is closer' mean here? Or, do we mean at shorter and shorter distances, we are more likely to find same cell types], the more likely it is to find points of the same type.
 
 <!-- ### I-function  -->
 
@@ -656,19 +667,21 @@ We can see that in our dataset, it is closer, the more likely it is to find poin
 
 # Tests of randomness and independence
 
-In a multitype point process there are two interesting hypothesis:
-  - random labeling hypothesis: the allocation of lables to the points is random
-  - independent component hyopthesis: there is independence between different type of points
+In a multitype point process, there are usually two interesting hypotheses: 
+
+- random-labeling hypothesis: the allocation of labels to the points is random
+- independent component hypothesis: there is independence between different type of points
+
 If both statments are correct, the point pattern is considered to be complete spatially random and independent (CSRI), the marked analog to complete spatial randomness (CSR).
 
 ## Testing random labelling
 
-Random labeling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Test for random labeling can be done using permutation test, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset.
+The random labeling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Testing for random labeling can be done using pa ermutation test, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset.
 
 ## Testing the indepenence of components assumption
 
-The i to j functions are useful to test the independence of different subprocesses. If the processes of type i and j are independent then
-$K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is a need to handle edge effects appearing from random shifts when splitting.
+The i-to-j functions are useful to test the independence of different subprocesses. If the processes of type i and j are independent, then
+$K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is a need to handle edge effects.
 
 ```{r}
 #| echo: true
@@ -689,7 +702,8 @@ plotEnvCross <- function(pp, i, j, fun, nsim = 39, radius = 150, global = FALSE)
   return(p)
 }
 
-pEnv <- plotEnvCross(pp_sel, fun = "Kcross", "Ependymal", "OD Mature", nsim = 39, radius = 150)
+pEnv <- plotEnvCross(pp_sel, fun = "Kcross", 
+                     "Ependymal", "OD Mature", nsim = 39, radius = 150)
 ```
 
 ```{r}
@@ -701,10 +715,11 @@ pEnv
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
-plotEnvCross(pp_sel, fun = "Kcross", "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
+plotEnvCross(pp_sel, fun = "Kcross", 
+             "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
 
-We have indication that the indepence of components assumption should not be rejected. Therefore we assume that Ependtymal and OD Mature cells are independent.
+We have indication that the independence-of-components assumption should not be rejected. Therefore, we assume that Ependymal and OD Mature cells are independent.
 
 <!-- # Multitype models and processes -->
 
@@ -747,6 +762,8 @@ We have indication that the indepence of components assumption should not be rej
 # Continuous Marks
 
 --> do we know any methods for this?
+
+[MR: SpatialDM? DOI: 10.1038/s41467-023-39608-w]
 
 
 # Appendix

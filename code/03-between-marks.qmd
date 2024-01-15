@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Discrete Marks
 
 ## Dependencies
@@ -20,11 +25,11 @@ spe <- readRDS("../data/spe.rds")
 # Load data
 
 ```{r}
-sub <- spe[, spe$sample_id == 0.01]
+sub <- spe[, spe$sample_id == "0.01"]
 (pp <- .ppp(sub, marks = "cluster_id"))
 ```
 
-For simplicity we will mostly look at the three cell types Ependymal, OD Mature and Microglia in this vignette. 
+For simplicity, we will mostly look here at three cell types: Ependymal, OD Mature and Microglia. 
 
 ```{r}
 marks(pp) <- factor(marks(pp))
@@ -39,8 +44,10 @@ pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-plot(pp)
+plot(pp_sel)
 ```
+
+[MR: just wondering if colours would be an easier representation than symbols? And also, do we need this plot?]
 
 <!-- Discrete labels, called "marks", can be extracted with `marks`. -->
 
@@ -77,11 +84,13 @@ plot(pp)
 <!-- do.call(superimpose,ppls) -->
 <!-- ``` -->
 
-The summary of `ppp` (point pattern) object returns general properties, plus intensities, combined and per mark type.
+The summary of `pp` (point pattern) object returns general properties, plus intensities, combined and per mark type.
 
 ```{r}
 summary(pp)
 ```
+
+[MR: do we need the `summary`?]
 
 <!-- If the point pattern has discrete marks, the function `intensity` will return the intensity for each type.  -->
 <!-- ```{r} -->
@@ -97,13 +106,15 @@ summary(pp)
 <!-- intensity(unmark(pp)) -->
 <!-- ``` -->
 
-The stationarity assumption is not appropriate in all cases. To assess stationarity visually we can plot the kernel density estimates, for all points together or per type.
+The stationarity assumption is not appropriate in all cases. To assess stationarity visually, we can plot the kernel density estimates, for all points together or per type.
 
 ```{r}
 #| fig-width: 5
 #| fig-height: 5
 plot(density(pp))
 ```
+
+[MR: this plot above is not especially useful.]
 
 ```{r}
 #| fig-width: 10
@@ -112,9 +123,9 @@ ppls <- split(pp_sel) # split by mark
 plot(density(ppls))
 ```
 
-This indicates that our dataset seems to be inhomogeneous, i.e. the different cell types have different intensity functions
+This indicates that our dataset seems to be inhomogeneous, i.e., the cell types have different intensity functions.
 
-If we plot all on the same estimated intensities on the same scale, the very low intensity of Microglia gets obvious.
+If we plot all estimated intensities on the same scale, the low intensity of Microglia becomes more apparent.
 
 ```{r}
 #| fig-width: 10
@@ -122,7 +133,9 @@ If we plot all on the same estimated intensities on the same scale, the very low
 plot(density(ppls), zlim = c(0, max(density(ppls))))
 ```
 
-The relative risk, i.e. the probability of observing a given celltype at a given location, can be calculated with `relrisk`. The bandwidth for smoothing is calculated with `bw.relrisk` and might need to be adjusted.
+[MR: just to be efficient on space, perhaps just show one of the density plots. But also, density was already discussed in the previous vignette. So, maybe we can also remove it?]
+
+The relative risk, i.e., the probability of observing a given celltype at a given location, can be calculated with `relrisk`. The bandwidth for smoothing is calculated with `bw.relrisk` and might need to be adjusted.
 
 ```{r}
 #| fig-width: 10
@@ -131,6 +144,8 @@ rp <- relrisk(pp_sel,se=TRUE)
 plot(rp$estimate)
 ```
 
+[MR: is it worth plotting these all on the same scale too?]
+
 
 ```{r, eval=FALSE, echo=FALSE}
 im_sum <- im.apply(rp$estimate,sum)
@@ -138,7 +153,9 @@ im_sum <- signif(im_sum,9)
 all(im_sum==1)
 ```
 
-Using the `relrisk` function we can get the dominant mark for different regions of the tissue of interest.
+Using the `relrisk` function, we can get the dominant mark for different regions of the tissue of interest.
+
+[MR: I don't have a good intuition for what this is telling us. Can we say more?]
 
 ```{r, eval=FALSE, echo=FALSE}
 #| fig-width: 10
@@ -155,31 +172,41 @@ A test of segregation of marks can be performed with `segregation.test`. It is b
 
 ```{r}
 #| warning: false
-pp
 segregation.test(pp,nsim=19)
 ```
 
-In this case there is clear indication that the labeling of marks is not random. For more about random labeling check the part in umarked about local scaling.
+In this case, there is clear indication that the labeling of marks is not random. For more about random labeling check the part in umarked about local scaling.
 
 #TODO: shall we move this part to umarked as well, it goes together with the hotspot analysis
 
+[MR: here same thing, we need a little bit of explanation of what this tells you .. it's basically that the points are non-randomly distributed? If so, it doesn't add that much maybe.]
+
 # Measures of spatial segregation
 
-The package `seg` implements different measures of spatial segregation. Spatial segregation measures encompass two distinct concepts. The first describes the evenness versus clustering which is independent of the overall composition of a sample and describes the distribution of individuals. The second describes isolation versus exposure which depends on the overall composition of a sample and describes the degree to which different groups are isolated or exposed to one another.
+The package `seg` implements different measures of spatial segregation, which quantify two distinct aspects. The first describes the evenness versus clustering, which is independent of the overall composition of a sample and describes the distribution of individuals. The second describes isolation versus exposure, which will depend on the composition and describes the degree to which different groups are isolated from or exposed to one another.
 
-Spatial segregation measures developped by Reardon and O'Sullivan (2004) [Reardon, S. F. and O'Sullivan, D. (2004) Measures of spatial segregation. Sociological Methodology, 34, 121-162.]. D, R and H measure spatial evenness while P measures the spatial exposure.
+Spatial segregation measures developped by Reardon and O'Sullivan (2004) [Reardon, S. F. and O'Sullivan, D. (2004) Measures of spatial segregation. Sociological Methodology, 34, 121-162.].  [MR: do proper citation.]
 
-- Dissimilarity index (D) describes how different the composition of a local environment is, on average, from the composition of the total population. It ranges from 0 to 1, where 0 indicates perfect integration, and 1 indicates complete segregation.
-- Relative diversity (R) is a measure of how much less diverse each individuals local environments are, on average, compared to the total population. It ranges from 0 to 1, where 0 indicates perfect integration, and 1 indicates complete segregation.
-- Information theory index (H) is a measure of how much less diverse individuals local environments are, on average, than is the total population. It can be interpreted as a measure of the variation in the diversity of each individuals local environment. It ranges from 0 to 1, where 0 indicates no segregation, and 1 indicates maximum possible segregation, i.e. all subjects in each local environment belong to one group only.
-- The spatial exposure index (P) expresses the degree of spatial exposure of group m to group n. It is the average percentage of group n in the local environments of each member of group m and ranges from 0 (no exposure) to 1 (maximal exposure).
+The segregation measures, D, R and H, measure spatial evenness, while P measures the spatial exposure, as follows:
+
+- The dissimilarity index (D) describes how different the composition of a local environment is [MR: should we define what a 'local environment' is? Is it like a quadrat?], on average, from the composition of the total population. It ranges from 0 to 1, where 0 indicates perfect integration, and 1 indicates complete segregation.
+- Relative diversity (R) is a measure of how much less diverse each local environments is, on average, compared to the total population. It ranges from 0 to 1, where 0 indicates perfect integration, and 1 indicates complete segregation.
+- The information theory index (H) is a measure of how much less diverse local environments are, on average, compared to the entire sample. It can be interpreted as a measure of the variation in diversity of each local environment. It ranges from 0 to 1, where 0 indicates no segregation, and 1 indicates maximum possible segregation, i.e., all subjects in each local environment belong to one group only.
+- The spatial exposure index (P) of mark m to mark n represents the average percentage of mark n in the local environments of each member of group m; it ranges from 0 (no exposure) to 1 (maximal exposure).
 
 
 ```{r}
 # create an indicator matrix
-model.matrix <- matrix(0, nrow=length(marks(pp_sel)), ncol=length(unique(marks(pp_sel))))
-model.matrix[cbind(seq_along(marks(pp_sel)), marks(pp_sel))] <- 1
-colnames(model.matrix) <- unique(marks(pp_sel))
+# model.matrix <- matrix(0, nrow=length(marks(pp_sel)),
+#                        ncol=length(unique(marks(pp_sel))))
+# model.matrix[cbind(seq_along(marks(pp_sel)), 
+#                    marks(pp_sel))] <- 1
+# colnames(model.matrix) <- unique(marks(pp_sel))
+
+mm <- model.matrix(~0 + marks(pp_sel))
+colnames(mm) <- gsub("marks(pp_sel)", "", 
+                     colnames(mm), fixed = TRUE)
+[MR: slightly more compact representation above]
 
 spseg(pp_sel,
       data = model.matrix,
@@ -192,20 +219,22 @@ From `help(spseg)`
 
 > The exposure/isolation index, P, is presented in a matrix form. The spatial exposure of group ‘m’ to group ‘n’ is located in the row ‘m’ and column ‘n’ of the matrix. The matrix is rarely symmetric in practice so the spatial exposure index should be interpreted with care. The spatial isolation index values are given in the diagonal cells of the matrix; cell value at (m, m) indicates the degree of spatial isolation for group ‘m’ for example.
 
+[MR: I think we shouldn't just quote the docs .. we should write this in our own words. Can we write a bit about the context of these 3 cell types?]
+
+
 
 ## Spatial Proximity
 
-Index of Spatial Proximity developed by White (1983) [White, M. J. (1983). The measurement of spatial segregation. The American Journal of Sociology, 88, 1008-1018.].
-
-- This numerical value indicates the degree of segregation. A value of 1 indicates evenness in the sample, and values greater than 1.0 indicate clustering. If the index value is smaller than one, it indicates an unusual form of segregation (i.e., some groups are closer to other groups). It compares the average distance between members of one group with that between all individuals, irrespective of group assignment. It may change depend on the definition of distance.
+An index of Spatial Proximity,  developed by White (1983) [White, M. J. (1983). The measurement of spatial segregation. The American Journal of Sociology, 88, 1008-1018.]. [MR: proper citation] represents the degree of segregation. A value of 1 indicates evenness in the sample, and values greater than 1.0 indicate clustering. If the index value is smaller than one, it indicates an unusual form of segregation (i.e., some groups are closer to other groups). It compares the average distance between members of one group with that between all individuals, irrespective of group assignment. It may change depend on the definition of distance.
 
 ```{r}
 # Index of spatial proximity
 paste0('Index of spatial proximity: ',
 isp(pp_sel,
-    data = model.matrix))
+    data = model.matrix) %>% round(3)) 
 ```
 
+[MR: because it's just a number, we might need a comparative example. From the description above, it indicates clustering. But how to know what contributes to that? Both Ependymal and OD Mature contribute.]
 
 <!-- ### Example of clear spatial segregation -->
 
@@ -260,12 +289,11 @@ isp(pp_sel,
 
 ## Distances and nearest neighbors
 
-Investigating the nearest neighbor distance between point for all combinations of marks can be done as follows:
+Investigating the kth nearest neighbor distance between points for all combinations of marks can be done as follows:
 
 ```{r}
-d <- nndist(pp_sel,by = marks(pp_sel))
-a <- aggregate(d,by = list(from=marks(pp_sel)),min)
-a
+d <- nndist(pp_sel, k = 2, by = marks(pp_sel))
+(a <- aggregate(d, by = list(from=marks(pp_sel)), min))
 ```
 
 <!-- Another option is to either use the `K` nearest neighbors or count the number of points of a given type with a distance closer than `R`. Both can be done with the function `marktable`, where the argument `R` stands for the neighborhood radius and `N` for number of neighbors. -->
@@ -283,22 +311,28 @@ a
 
 ## Nearest neighbor correlations
 
-A overall correlation between marks can be calculated with `nncorr`. It returns two values: `unnormalised`, which is the probability that a point and its nearest neighbor have the same type and `normalised`, which divides the unnormalised probability by the probability of random labeling. So a value close to 1 indicates random labeling. A value much larger than 1 means neighboring point are often of the same type. 
+A overall correlation between marks [MR: what is the interpretation of overall correlation b/w marks when marks are discrete? Or maybe I misunderstand what is meant by correlation here.] can be calculated with `nncorr`. It returns two values: `unnormalised`, which is the probability that a point and its nearest neighbor have the same type and `normalised`, which divides the unnormalised probability by the probability of random labeling. So a value close to 1 indicates random labeling. A value much larger than 1 means neighboring point are often of the same type. 
 
 ```{r}
 nncorr(pp_sel)
 ```
 
+[MR: is this multivariate?]
+
 <!-- The R package `spdep` (https://cran.r-project.org/package=spdep) contains many functions to calculate statistics based on nearest neighbors. -->
 
-Another possibility is to work with nearest neighborhood contingency tables to do statistical tests using the `dixon` function from the R package dixon. It allows to calculate the statistic "segregation of species" S which indicates either random labeling (if S=0), attraction (if S<0) or seggregation (if S>0).
+Another possibility is to work with nearest neighborhood contingency tables to do statistical tests using the `dixon` function from the R package dixon. It allows to calculate the statistic "segregation of species", S, which indicates either random labeling (if S=0), attraction (if S<0) or segregation (if S>0).
 
 ```{r}
-#| echo: false
+#| echo: true
+#| message: false
 out <- dixon(as.data.frame(pp_sel))
-out$tablaZ
+out$tablaZ %>% 
+  arrange(desc(abs(`Z `))) %>%
+  select(-`  p-val.Nobs`)
 ```
 
+[MR: Is there a typo above? It gives S>0 for Ependymal-Ependymal, but S>0 represents segregation, not attraction .. but Ependymal is quite clustered.]
 
 <!-- ### Cuzick-Edwards' k-NN test -->
 

@@ -42,17 +42,15 @@ plot(ppls, main = 'Point Pattern Marks Separated', nrows = 2)
 
 ### Point Process
 
-```{r}
-
-```
+In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns, pp. 127].
 
 ### Complete Spatial Randomness
 
-Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely random process is characterised by two properties, homogeneity and independence, as discussed below.
+Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely spatial random process is characterised by two properties, homogeneity and independence, as discussed below [@baddeleySpatialPointPatterns, pp. 132].
 
 #### Homogeneity
 
-Homogeneity implies that the expected number of points falling into a given region $B$ is proportional to its area $|B|$ given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [1]:
+"Homogeneity [...] means that the expected number of points falling in a region B should be proportional to its area |B|"  [@baddeleySpatialPointPatterns, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns, pp. 132-133]. :
 
 $$
 \mathbb{E}[X\cap B] = \lambda |B|.
@@ -67,11 +65,11 @@ $$
 \mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
 \label{eq:poisson_process}
 $$
-where $k = \lambda |B|$ [1].
+where $k = \lambda |B|$ [@baddeleySpatialPointPatterns, pp. 133].
 
 ### Inhomogeneous Poisson Process
 
-A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over the region [1]:
+A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns, pp. 138]. 
 
 $$
 \mu = \int_{B} \lambda(u) du.
@@ -80,21 +78,21 @@ $$
 
 ### Isotropy
 
-A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [1].
+A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [@baddeleySpatialPointPatterns, pp. 147].
 
 ### Stationarity
 
-A point process is called stationary if, when viewed through a window $W$, its statistical properties do not depend on the location of the window [1].
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146].
 
 #### Correlation stationarity
 
-It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are ``correlation stationary'', which specifies the metric only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [1].
+It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the metric only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns, pp. 689].
 
 ### Local scaling
 
-The inhomogeneous K-function further assumes that while the intensity is spatially-varying, the scale of the interaction remains constant. This is equivalent to the assumption that in small subregions, the process is stationary and isotropic, but the rescaling factor can vary across the total process. In this case the locally-scaled version of the K-function is applicable [1].
+If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric are applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns, pp. 246-247].
 
-We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats [MR: add reference].
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats [@baddeleySpatialPointPatterns, pp. 689-693].
 
 ```{r, warning=FALSE}
 pp_sel <-  subset(pp, marks %in% "OD Mature", drop = TRUE)
@@ -122,14 +120,78 @@ res.scaled$p.value
 res.inhom$p.value
 ```
 
-[MR: how do we interpret these P-values? Should we describe more?]
+The p-value of the test for local scaling is `r res.scaled$p.value` which indicates that the assumption of local scaling is rejected. Therefore, the distribution of oligodendrocytes is not a scaled version of an overall distribution pattern.
 
+The p-value of the test for inhomogeneity `r res.inhom$p.value` indicates that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
 
-Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types. [MR: can we make this reference a proper (numbered) reference?] [Source](https://idblr.rbind.io/post/pvalues-spatial-segregation/)
+<!-- 
+[MR: can we skip this one below? It represents the diff to Poisson for 3 cell types combined, which seems difficult to interpret]
 
+```{r}
+f0 <- pValuesHotspot(pp_sel)
 
-#TODO: We should maybe move this to after the intensity part
-[MR: agree, this should come right after quadrat counting]
+# Plot significant p-values
+plot(f0$p, main = "Significant difference\n to Poisson process alpha = 0.05")
+```
+-->
+
+### Intensity
+
+Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first moment property because it is related to the expected number of points . More formally the average intensity of a point process is defined as:
+
+$$
+\bar{\lambda} = \frac{n(x)}{|W|}
+\label{eq:average_intensity}
+$$
+
+As this is an average over the entire window, it only really makes sense for a homogeneous point process [@baddeleySpatialPointPatterns, pp. 157-160]
+
+#### Estimating Intensity
+
+For a homogeneous point process, the intensity can be estimated in a simplistic way: summing the individual intensities of the marks [@baddeleySpatialPointPatterns, pp. 161].
+
+```{r, cache=FALSE}
+intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(intensity(pp))
+
+intensityPointProcess(pp, mark = FALSE) %>% round(6)
+```
+
+Otherwise, we can compute the intensity for each mark individually.
+
+```{r, cache=FALSE}
+intensityPointProcess(pp, mark = TRUE) %>% round(8)
+```
+
+#### Kernel Estimation
+
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns, pp. 168].
+
+```{r, fig.width=8, fig.height=8}
+pp_sel <-  subset(pp, marks %in% "Inhibitory", drop = TRUE)
+Dens <- density(pp_sel, sigma = 100)
+plot(Dens, main = 'Kernel Density (Inhibitory cells)')
+```
+
+#### Quadrat Counting
+
+In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [@baddeleySpatialPointPatterns, pp. 163].
+
+```{r, fig.width=12, fig.height=12, cache=FALSE}
+Q5 <- quadratcount(pp, nx=8, ny=8)
+plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
+plot(Q5, col='black', add=TRUE)
+```
+
+Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns, pp. 165-165].
+
+```{r, cache=FALSE}
+val <- quadrat.test(ppls$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
+val
+```
+
+A p-value of `r val$p.value` indicates that the null hypothesis of irregularity can not be rejected strongly. Thus, the point pattern of oligodendrocyts is strongly irregular.
+
+Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types [@bullerAreasSpatialSegregation2020a].
 
 ```{r}
 # select marks
@@ -140,78 +202,6 @@ f1 <- pValuesHotspotMarks(pp_sel)
 
 # Plot significant p-values
 plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
-```
-
-[MR: can we skip this one below? It represents the diff to Poisson for 3 cell types combined, which seems difficult to interpret]
-
-```{r}
-f0 <- pValuesHotspot(pp_sel)
-
-# Plot significant p-values
-plot(f0$p, main = "Significant difference\n to Poisson process alpha = 0.05")
-```
-
-
-### Intensity
-
-Intensity is the expected density of points per unit area, as seen above [MR: where was it seen above?]. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first moment property because it is related to the expected number of points [1]. [MR: worth mentioning the lambda function here at all? Just to connect with above.]
-
-#### Estimating Intensity
-
-For a homogeneous point process, the intensity can be estimated in a simplistic way: summing the individual intensities of the marks [1].
-
-```{r, cache=FALSE}
-intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(intensity(pp))
-
-intensityPointProcess(pp, mark = FALSE) %>% round(6)
-```
-[MR: proposal above for more compact code]
-
-Otherwise, we can compute the intensity for each mark individually.
-
-```{r, cache=FALSE}
-intensityPointProcess(pp, mark = TRUE) %>% round(8)
-```
-
-[MR: I suggest to put KERNAL ESTIMATION here, then QUADRAT COUNTING below; then the density estimation part is together and then the density analysis part is together.]
-
-#### Quadrat Counting
-
-In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [1].
-
-```{r, fig.width=12, fig.height=12, cache=FALSE}
-Q5 <- quadratcount(pp, nx=8, ny=8)
-plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
-plot(Q5, col='black', add=TRUE)
-```
-
-Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [1].
-
-[MR: how do we adjut for the missing cells at the bottom? Or should we just mention it as a potential disadvantage. And, is all cells the best example? Would it be better to show]
-
-```{r, cache=FALSE}
-quadratTestPointProcess <- function(pp, mark){
-  if(mark==TRUE){
-    return(lapply(split(pp), quadrat.test, 5, alternative="regular", method="MonteCarlo"))
-  }
-  else{
-    return(quadrat.test(unmark(pp), 5, alternative="regular", method="MonteCarlo"))
-  }
-}
-quadratTestPointProcess(pp, mark=FALSE)
-```
-
-[MR: given that we only call this function once now, does it still make sense to have a wrapper function. Maybe just call quadrat.test directly?]
-[MR: should we also interpret this P-value=1 with a sentence?]
-
-#### Kernel Estimation
-
-In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [1]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [1].
-
-```{r, fig.width=8, fig.height=8}
-pp_sel <-  subset(pp, marks %in% "Inhibitory", drop = TRUE)
-Dens <- density(pp_sel, sigma = 100)
-plot(Dens, main = 'Kernel Density (Inhibitory cells)')
 ```
 
 ### Testing for CSR

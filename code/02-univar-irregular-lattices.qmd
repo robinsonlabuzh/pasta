@@ -15,6 +15,7 @@ editor_options:
 source("utils.R")
 theme_set(theme_minimal())
 ```
+this is a test
 
 Until now, we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of individual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (e.g., spot-based spatial transcriptomics data), the sample areas in an irregular lattice can have different sizes and are not necessarily regularly distributed over the sample space.
 

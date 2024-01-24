@@ -58,13 +58,13 @@ plotSpatialFeature(sfe, c("TAGLN"),
 
 ## Irregular lattice and neighbourhood matrix
 
-In general, a spatial autocorrelation measure has the following elements: a function, $f(x_i, x_j)$, of the values of interest at locations $i$ and $j$ and a neighbourhood or weight matrix, $w_{ij}$. The function $f$ relates the measured values $x_i$ and $x_j$ and the neighbourhood matrix $w_{ij}$ builds in the spatial relationship between location $i$ and $j$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007, @pebesmaSpatialDataScience2023].
+In general, a spatial autocorrelation measure has the following elements: a function, $f(x_i, x_j)$, of the values of interest at locations $i$ and $j$ and a neighbourhood or weight matrix, $w_{ij}$. The function $f$ relates the measured values $x_i$ and $x_j$ and the neighbourhood matrix $w_{ij}$ builds in the spatial relationship between location $i$ and $j$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
 
 <!-- Such analysis techniques rely on a neighborhood matrix, a matrix that indicates which cells are neighbors [MR: how is the neighbourhood matrix related to the weights matrix?]. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice, it can be more complicated as the reconstruction of the cells is often not perfect [MR: what does it mean that the reconstruction is often not perfect?]. -->
 
 ## Neighbourhood matrix
 
-One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009, @zuurAnalysingEcologicalData2007, @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
 
 Segmentation of individual cells is challenging [@wangCellSegmentationImage2019], therefore construction of contiguity-based neighbours based on individual cell segmentation assumes perfect segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
 
@@ -87,7 +87,7 @@ colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
 
 Global methods give us an overview over the entire field of view and summarize the spatial distribution of the cells (for a given measurement such as gene expression) in a single value. The most common global measures are Moran's I and Geary's C coefficients; these coefficients are a function of the weight matrix and the variables of interest.
 
-In general, a global spatial autocorrelation measure has the form of a double sum over all locations: $\sum_i \sum_j f(x_i,x_j) w_{ij}$.
+In general, a global spatial autocorrelation measure has the form of a double sum over all locations $$\sum_i \sum_j f(x_i,x_j) w_{ij} .$$
 
 ## Global Moran's I coefficient
 
@@ -188,7 +188,38 @@ res$geary.mc_p.value_sample01
 
 Again, the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
 
-> TODO: GLOBAL GETIS ORD ??
+## Global Getis-Ord $G$ statistic
+
+The global $G$ [@getisAnalysisSpatialAssociation1992] statistic is a generalisation of the local version (see below) and summarises the contributions of all pairs of values $(x_i, x_j)$ in the dataset. Formally that is
+
+
+$$
+G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_{j=1}^n x_i x_j}, \text{s.t } j \neq i
+$$
+
+The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the datapoints whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather consider both. 
+
+It is recommended to use binary weights for this calculation. We will use the `spdep` package directly to calculate the global $G$ statistic.
+
+### Implementation using `spdep`
+
+```{r}
+# Get the weight matrix from sfe object
+weights_neighbourhoods_binary <- colGraph(sfe)
+# Change it to binary weights
+weights_neighbourhoods_binary$style <- "B" 
+# Calculate the global G statistic
+spdep::globalG.test(x = counts(sfe)["KRT17",], 
+                    listw = weights_neighbourhoods_binary)
+```
+
+<!-- ```{r} -->
+<!-- sfe <- runUnivariate(sfe, -->
+<!--                      features = c("KRT17", "TAGLN"), -->
+<!--                      colGraphName = "knn5", -->
+<!--                      type = "globalG.test") -->
+<!-- ``` -->
+
 
 # Local measures
 
@@ -340,7 +371,7 @@ plotLocalResult(sfe, "localC",
 
 ## Local Getis-Ord statistic
 
-The local Getis-Ord $G_i$ [@ordLocalSpatialAutocorrelation1995, @getisAnalysisSpatialAssociation1992] statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$, according to:
+The local Getis-Ord $G_i$ [@ordLocalSpatialAutocorrelation1995; @getisAnalysisSpatialAssociation1992] statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$, according to:
 
 $$
 G_i(d) = \frac{\sum_{j \neq i } w_{ij}(d)x_j}{\sum_{j \neq i} x_j}.
@@ -386,9 +417,6 @@ The results above gives an estimate of the local Getis-Ord statistic for each ce
 ```{r}
 #| fig-width: 25
 #| fig-height: 10
-# select subregion
-bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
-sfe_sub <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
 
 # run localG with permutation test
 sfe_sub <- runUnivariate(sfe_sub,
@@ -425,19 +453,21 @@ The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ s
 | large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
 | small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                                                                           |
 
-### Implementation using `spded`
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
 
-p <- localplotCell(sfe, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'feature')
-q <- localplotCell(sfe, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'feature')
-tmap_arrange(p,q)
+# run localG with permutation test
+sfe_sub <- runUnivariate(sfe_sub,
+                     features = "KRT17",
+                     type = "LOSH")
+
+
+plotLocalResult(sfe_sub, "LOSH",
+                features = "KRT17",
+                colGeometryName = "centroids")
+
 ```
 
 ## A note of caution

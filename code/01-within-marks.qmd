@@ -82,58 +82,52 @@ A point process is called isotropic, if its statistical properties are invariant
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146].
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window [@baddeleySpatialPointPatterns, pp. 218].
 
 #### Correlation stationarity
 
-It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the metric only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns, pp. 689].
+It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the correlation metrics only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns, pp. 689].
 
 ### Local scaling
 
-If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric are applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns, pp. 246-247].
+If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns, pp. 246-247].
 
-We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimatied functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats [@baddeleySpatialPointPatterns, pp. 689-693].
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Furthermore, the outcome of the permutation test depends heavily on the choice of the quadrats. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns, pp. 689-693].
 
 ```{r, warning=FALSE}
-pp_sel <-  subset(pp, marks %in% "OD Mature", drop = TRUE)
-
-odrho <- rhohat(unmark(pp_sel), "x", method="tr")
-odlambda <- predict(odrho)
-
-od4 <- quantess(unmark(pp_sel), "x", 2)
-od42 <- nestsplit(pp_sel, od4, ny=3)
-
-plot(od42)
-
-od42$inten <- factor(as.integer(od42$f1) <= 1, labels=c("Hi","Lo"))
-
-res.scaled <- studpermu.test(od42, pts ~ inten, summaryfunction=Kscaled,
-               minpoints = 10)
-
-res.inhom <- studpermu.test(od42, pts ~ inten, summaryfunction=Kinhom,
-               lambda=odlambda, minpoints = 10)
-
-#p-value of the local-scaling test
-res.scaled$p.value
-
-#p-value of the inhomogeneity test
-res.inhom$p.value
+permutation_test <- function(pp, mark, split, minpoints) {
+  pp_sel <-  subset(pp, marks %in% mark, drop = TRUE)
+  
+  rho_est <- rhohat(unmark(pp_sel), "x", method="tr")
+  lambda <- predict(rho_est)
+  
+  tesselation <- quantess(unmark(pp_sel), "x", 2)
+  tesselation_split <- nestsplit(pp_sel, tesselation, ny=split)
+  
+  plot(tesselation_split, main = mark)
+  
+  tesselation_split$inten <- factor(as.integer(tesselation_split$f1) <= 1, labels=c("Hi","Lo"))
+  
+  res.scaled <- studpermu.test(tesselation_split, pts ~ inten, summaryfunction=Kscaled,
+                 minpoints = minpoints)
+  
+  res.inhom <- studpermu.test(tesselation_split, pts ~ inten, summaryfunction=Kinhom,
+                 lambda=lambda, minpoints = minpoints)
+  
+  #p-value of the local-scaling test
+  print(paste0(mark,' local scaling test ', res.scaled$p.value))
+  
+  #p-value of the inhomogeneity test
+  print(paste0(mark,' inhomogeneity test ', res.inhom$p.value))
+}
+lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp, x, split = 3, minpoints = 10))
 ```
 
-The p-value of the test for local scaling is `r res.scaled$p.value` which indicates that the assumption of local scaling is rejected. Therefore, the distribution of oligodendrocytes is not a scaled version of an overall distribution pattern.
+The p-value of the test for local scaling for both Microglia and OD mature cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells and oligodendrocytes is not a scaled version of an overall distribution pattern.
 
-The p-value of the test for inhomogeneity `r res.inhom$p.value` indicates that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
+The p-value of the test for inhomogeneity `for both Microglia and OD mature cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
 
-<!-- 
-[MR: can we skip this one below? It represents the diff to Poisson for 3 cell types combined, which seems difficult to interpret]
-
-```{r}
-f0 <- pValuesHotspot(pp_sel)
-
-# Plot significant p-values
-plot(f0$p, main = "Significant difference\n to Poisson process alpha = 0.05")
-```
--->
+For ependymal cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. [ME: Does this make sense? Or is this just an artifact?] 
 
 ### Intensity
 
@@ -182,7 +176,7 @@ plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
 ```
 
-Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns, pp. 165-165].
+Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns, pp. 164-165].
 
 ```{r, cache=FALSE}
 val <- quadrat.test(ppls$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
@@ -206,101 +200,15 @@ plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
 
 ### Testing for CSR
 
-Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR that are summarised in the wrapper below [1].
-
-[MR: this wrapper below is not very compact (I have some thoughts ..), but I also wonder .. we only ever use clark-evans, so as above we could just call that one and mention there are other variants?]
+Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR, here we show the use-case of the clark-evans test [@baddeleySpatialPointPatterns, pp. 165-166].
 
 ```{r, cache=FALSE}
-#PRE: takes a point process and the indication, which test for CSR should be performed and potentially a covariate
-#POST: returns if a point process or its individual point process marks are CSR or not.
-#TODO: Change maybe to a switch statment in terms of computing time; Change lapply to mclapply later on
-#TODO: There is a conceptual mistake - we pull out marks and test them against a markov simulation. It should rather be to test against all the other cells
-testingCSR <- function(
-    pp,
-    method = c('quadrat','cdf','bermans','clark-evans','hopkins-skellam'),
-    mark = FALSE,
-    covariate = NULL,
-    test = c('ks', 'cvm', 'ad'),
-    verbose = FALSE
-){
-  #perform a quadrattest for individual marks or for the entire pointprocess
-  if(method == 'quadrat'){
-    if(mark == TRUE){
-      test.result <- lapply(split(pp), quadrat.test, 5, method="MonteCarlo")
-    }
-    else{
-      test.result <- quadrat.test(unmark(pp), 5, method="MonteCarlo")
-    }
-   }
-  #perform a cdftest for individual marks or for the entire pointprocess given a covariate
-  else if(method == 'cdf' && !is.null(covariate)){
-    if(mark == TRUE){
-      test.result <- lapply(split(pp), cdf.test, covariate, test=test)
-    }
-    else{
-      test.result <- cdf.test(unmark(pp), covariate, test=test)
-    }
-  }
-  #perform a bermans test for individual marks or for the entire pointprocess
-  else if(method == 'bermans' && !is.null(covariate)){
-     if(mark == TRUE){
-      test.result <- lapply(split(pp), berman.test, covariate, test='Z1')
-    }
-    else{
-      test.result <- berman.test(unmark(pp), covariate, test='Z1')
-    } 
-  }
-  #perform a clark evans test for individual marks or for the entire pointprocess
-  else if(method == 'clark-evans'){
-     if(mark == TRUE){
-      test.result <- lapply(split(pp), clarkevans.test)
-    }
-    else{
-      test.result <- clarkevans.test(unmark(pp))
-    } 
-  }
-  #perform a hopkins-skellam test for individual marks or for the entire pointprocess
-  else if(method == 'hopkins-skellam'){
-     if(mark == TRUE){
-      test.result <- lapply(split(pp), hopskel.test)
-    }
-    else{
-      test.result <- hopskel.test(unmark(pp))
-    } 
-  }
-  #base case of the "switch" statement
-  else{
-    print("ERROR: non-specified arguments or methods")
-    return(NULL)
-  }
-  
-  #summarise the results as a mask of booleans to indicate which structures are 
-  #random and which are not
-  if(mark==TRUE){
-    p.value.mask <- lapply(test.result, function(x) x$p.value>0.05)
-  }
-  else{
-    p.value.mask <- test.result$p.value>0.05
-  }
-  #return the values of the test calculations, either just the boolean if 
-  #CSR or not or the entire test statistics
-  if(verbose == TRUE){
-    return(test.result)
-  }
-  else{
-    return(p.value.mask)
-  }
-}
-result <- testingCSR(pp,method='clark-evans',mark=TRUE, verbose=TRUE)
-
-testingCSR(ppls$Ependymal, method='clark-evans')
-testingCSR(ppls$`OD Mature`, method='clark-evans')
-testingCSR(ppls$Microglia, method='clark-evans')
+clarkevans.test(ppls$`OD Mature`)
 ```
 
 ## Correlation
 
-Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points.
+Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points [@baddeleySpatialPointPatterns, pp. 199].
 
 ````{=html}
 <!-- 
@@ -338,80 +246,37 @@ fryplot(ppls$Microglia)
 
 #### Empirical Ripley's $K$
 
-In the framework of correlation analysis, we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. as a histogram. The histogram of this point process is a difficult statistic [MR: what does it mean to be a 'difficult statistic'? Maybe we can phrase this better.], as it depends on the observation window $W$, thus the histogram can change significantly with a different window. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$ [1]
+In the framework of correlation analysis, we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. as a histogram. The histogram of this point process depends on the observation window $W$, thus the histogram can change significantly with a different window. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$  [@baddeleySpatialPointPatterns, pp. 203]
+
+What we actually measure here is "the average number of r-neighbours of a typical random point"  [@baddeleySpatialPointPatterns, pp. 204]. This number is still dependent on the size of the observation window so we can standardise it by the number of points and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function  [@baddeleySpatialPointPatterns, pp. 204]:
 
 $$
-\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n \sum_{j=1, j \neq i}^n I\{d_{ij}\leq r\},
+\hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\} e_{ij}(r)
 $$
 
-where $I(.)$ is the indicator function (1 if the condition is true, 0 if not). The contribution of each point $x_i$ to the sum above is:
-
-$$
-t_i(r) = \sum_{j \neq i} I \{d_{ij}\leq r\},
-$$
-
-where $t_i(r)$ is the number of points that fall within a radius $r$ centered at $x_i$. It follows then that [1]:
-
-$$
-\hat{H}(r) = \frac{1}{n(n-1)}\sum_{i=1}^n t_i(r) = \frac{1}{n-1} \bar{t}(r).
-$$
-
-What we actually measure here is "the average number of r-neighbours of a typical random point". This number is still dependent on the size of the observation window so we can standardise it by the number of points and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [1]:
-
-$$
-\hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\}.
-$$
-
-The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. However, using the empirical $K$ function assumes though that the point process has homogeneous intensity [1], which is often not the case for biological tissue. We will return to this issue below in the ``Correcting for Inhomogeneity'' [MR: add link to section below?]
-
-#### True $K$-function
-
-Instead of the summary of pairwise distances, we are interested in the point process. In order to do so, we have to think about the expected number of $r$-neighbours given a point $X$ at a location $u$ divided by its intensity $\lambda$ [1]. This corresponds to:
-
-$$
-K(r) = \frac{1}{\lambda} \mathbb{E} [t(u,r,X)|u \in X],
-$$
-
-where
-
-$$
-t(u,r,X) = \sum_{j=1}^{n(X)} \mathbb{1} \{0<||u-x_j||\leq r\}.
-
-$$
-<!--
-This definition of the true $K$ function is only valid if the point process is stationary. For a homogeneous Poisson process we obtain
-
-$$
-K_{pois}(r) = \pi r^2
-$$
-
--->
-
-[MR: just thinking .. how much of this math do we really need?]
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. However, using the empirical $K$ function assumes though that the point process has homogeneous intensity, which is often not the case for biological tissue  [@baddeleySpatialPointPatterns, pp. 204-205]. We will return to this issue below in the ``Correcting for Inhomogeneity``. The term $e_{ij}(r)$ is for edge correction. We will briefly cover this in ``Edge effects and their corrections for spatial metrics``
 
 #### Edge effects and their corrections for spatial metrics
 
-Edge effects describe the phenomenon that entire point process is not observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [1].
+Edge effects describe the phenomenon that entire point process is not observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [@baddeleySpatialPointPatterns, pp. 213].
 
-There are many corrections for edge effects that are briefly listed here:
+There are many corrections for edge effects that are briefly listed here [@baddeleySpatialPointPatterns, pp. 214-219]:
 
-##### Border correction
+Border correction:
 
 In border correction the summation of data points is restricted to $x_i$ for which $b(x_i,r)$ is completely in the window $W$.
 
-##### Isotropic correction
+Isotropic correction:
 
 We can regard edge effect as a sampling bias. Larger distances (e.g. close to the edges) are less likely to be observed. This can be corrected for.
 
-##### Translation correction
+Translation correction:
 
 A stationary point process $X$ is invariant to translations. So the entire point process can be shifted by a vector $s$ to be at the position $X+s$.
 
-[MR: do we need sub-sub-subsections above? Since there is only 1-2 sentences in each sub-heading, could we compress this all to a paragraph?]
-
 ### The $L$-function
 
-The $K$-function can be ``centered'', which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function (see spicyR for reference) [MR: do proper citation here?]:
+The $K$-function can be ``centered'', which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function [@canete2022spicyr]:
 
 $$
 L(r) = \sqrt{\frac{K(r)}{\pi}}.
@@ -419,14 +284,14 @@ $$
 
 ### Pair Correlation function
 
-We have seen above that the $K$-function is cumulative in nature. That is, the contributions of all distances smaller equal to $r$ are considered. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [1], according to:
+We have seen above that the $K$-function is cumulative. That is, the contributions of all distances smaller equal to $r$ are considered. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [@baddeleySpatialPointPatterns, pp. 225], according to:
 
 $$
 g(r) = \frac{K'(r)}{2\pi r},
 $$
 
-where $g(r)$ is the probability of observing a pair of points of the process separated by a distance $r$ divided by the corresponding probability for a Poisson process [1]. [MR: I removed the quotes here because it got to be too many quotes overall. We may need to rephrase a little bit.]
-
+where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius.
+<!-- 
 #### Estimator of the pair correlation function
 
 [MR: just wondering .. is the section important?]
@@ -444,8 +309,9 @@ $$
 $$
 
 In the above, $\kappa$ can be any probability density over the real line with mean 0. Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$ [1].
+-->
 
-```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
 #| warning: false
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
@@ -493,20 +359,18 @@ p_L <- plotMetric(celltype_ls, ppls, 'Lest', 'iso')
 p_g <- plotMetric(celltype_ls, ppls, 'pcf', 'border')
 ```
 
-```{r, cache=FALSE, fig.height = 10, fig.width = 7}
-p_K/p_L/p_g
+```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
+p_homo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
 ```
 
-[MR: should we write some sentences to interpret these plots? Or do we even skip it here because it's likely an inhomogeneous process and not valid?]
-
-[MR: could we make a more compact representation like 1 row x 3 columns and have a common legend?]
+As we have seen above in the test for homogeneity in oligodendrocytes, the assumptions of homogeneity are not given in our data. Therefore, we will have to use the inhomogeneous alternatives of the metrics instead.
 
 ### Correcting for Inhomogeneity
 
 #### Inhomogeneous $K$-function
 
-In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account in the analysis. Biological point patterns display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives [MR: this suggest almost that we should skip the homogeneous statistics above, no?]. Inhomogeneous alternatives can be calculated via:
-
+In the case that a spatial pattern is known or suspected to be inhomogeneous, we have to take this into account in the analysis. Biological point patterns display inhomogeneity very often, therefore this analysis is preferred over the homogeneous alternatives. Inhomogeneous alternatives can be estimated via:
+<!--
 $$
 K_{inhom}(r) = \mathbb{E} \left[\sum_{x_j \in X} \frac{1}{\lambda(x_j)}\mathbb{1}\{0<||u-x_j||\leq r\}|u \in X\right].
 $$
@@ -524,6 +388,15 @@ D = \frac{1}{|W|}\sum_i \frac{1}{\hat{\lambda}(x_i)}
 $$
 
 [MR: just wondering how important all these formulas are? Do we want a full mathematical description, or does the mathematical description still help us to unpack what is needed for the common situation of inhomogeneous point patterns?]
+-->
+
+
+$$
+\hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r),
+$$
+
+where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an estimator of the intensity at point $x_i$. The inhomogeneity correction happens via these $\hat{\lambda}(x_i)$ per point $x_i$. The estimation of these local intensities can happen in a data-dependent manner via kernel-smoothing. As this is the same data to then calculate the metric on, this can lead to biases. However, in the case where the local intensities are known, the inhomogeneous $K$ function is an unbiased estimator [@baddeleySpatialPointPatterns, pp. 243-244].
+
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 p_K <- plotMetric(celltype_ls, ppls, 'Kinhom', 'iso')
@@ -533,19 +406,22 @@ p_L <- plotMetric(celltype_ls, ppls, 'Linhom', 'iso')
 p_g <- plotMetric(celltype_ls, ppls, 'pcfinhom', 'border')
 ```
 
-```{r, cache=FALSE, fig.height = 10, fig.width = 7}
-p_K/p_L/p_g
+```{r, cache=FALSE, fig.height = 6, fig.width = 16}
+p_inhomo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
+p_inhomo
 ```
-
-[MR: what if we plotted 1x3 w/ common legend?]
 
 The inhomogeneous $K$-function tells us that the microglia cells follow close to a Poisson process (dashed line) closely and can therefore be assumed to be randomly distributed and not clustered. Ependymal cells show a high degree of clustering at a low radius $r$. OD mature cells exhibit a medium level of clustering.
 
-The $L$-function is a variance stabilised (source spicyR) [MR: proper citation] version of the $K$-function [MR: also, we've already described the L-function above, so we probably don't need to repeat it here]. Thus, the information is complementary to the above. As with the $K$-function, the microglia cells are along the dashed Poisson line, indicating no clustering; ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering.
+In the $L$-function, the microglia cells are along the dashed Poisson line, indicating no clustering; ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering.
 
 The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
 
+Interestingly, the curves for the inhomogeneous functions of ependymal cells and OD mature cells cross the poisson line at $r=300$. This means that the inhomogeneous functions find repulsion of ependymal cells and OD mature cells past a radius of $r=300$.   
+
+<!--
 We should further note that the inhomogeneity correction assumes that the process is correlation stationary, meaning that the summary statistics are the same in each quadrat. This is clearly violated at least for Ependymal cells and OD mature cells [MR: how do we know this is violated? Can we test somehow also for this departure?]. Therefore, the question remains whether acounting for one issue (homogeneity) via a correction that assumes correlation stationarity does not just exchange one problem for another. Nonetheless, these measures do give some quantitative summaries of clustering .. [MR: should we add a sentence like this? Otherwise, it does question whether it is valid to do any of this.]
+-->
 
 ### Local Scaling
 
@@ -558,16 +434,17 @@ g(u,v) = g_1 \left(\frac{||u-v||}{s}\right).
 $$
 
 In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor [1].
-
+<!--
 #### Locally-scaled pair-correlation function
 
 would work by taking the derivative of the locally scaled $K$-function [MR: this is not written as a proper sentence. And as it's super short, do we need a subsection for it?]
+-->
 
 #### Locally-scaled $L$-function
 
 Since the $L$-function is simply a transformation of the $K$-function, the same local scaling can apply to the $L$-function.
 
-```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
+```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 ### need to redefine the metric function, because bootstrap is not available for locally scaled functions ###
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
 #POST: result of the metric
@@ -614,61 +491,24 @@ p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')$p
 p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
 ```
 
-```{r, cache=FALSE, fig.height = 10, fig.width = 7}
-p_K/p_L
+```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
+p_scaled <- wrap_plots(list(p_K,p_L), guides = 'collect')
 ```
-
-[MR: as above, should we plot these in 1 plot (1 row, 2 columns, 1 legend)]
-
-
-```{r, eval=FALSE, include=FALSE}
-plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
-  res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
-  #plot the curve
-  p <- ggplot(res_df, aes(x=r, y=.data[[edgecorr]], col= type))+
-    geom_line(linewidth=1)+
-    ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", linewidth=1)+
-    ylab(edgecorr) +
-    # scale_color_manual(name='Point Processes',
-    #                  breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
-    #                  values=c('Ependymal'='red', 'Microglia'='dark green', 'OD Mature'='blue', 'Poisson'='black'))+
-    theme_light()
-  return(list(p = p, res_df = res_df))
-}
-
-functional.pca.pp <- function(res_df){
-  df <- res_df
-  fd_obj <- fdapace::MakeFPCAInputs(IDs = res_df$type, tVec=res_df$r, yVec=res_df$border)
-  #check that the FPCA object is valid
-  fdapace::CheckData(fd_obj$Ly, fd_obj$Lt)
-  #run the computation of the FPCA - would work with sparse data.
-  fpca_obj <- fdapace::FPCA(fd_obj$Ly, fd_obj$Lt, list(plot = TRUE, kernel='rect'))
-  #fdapace::CreatePathPlot(fpca_obj,K = 3, pch = 4,showObs = FALSE, showMean = TRUE)
-  return(fpca_obj)
-}
-celltype_ls_new <- c("Ependymal", "OD Mature", "Microglia", "Ambiguous", "Astrocyte", "Endothelial", "Excitatory", "Inhibitory", "OD Immature", "Pericytes")
-print(plotScaledMetric(celltype_ls_new, ppls, 'Lscaled', 'iso')$p)
-res_df <- plotScaledMetric(celltype_ls_new, ppls, 'Lscaled', 'iso')$res_df
-
-fpca_obj <- functional.pca.pp(res_df) 
-
-fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>% rename(PC1 = V1, PC2 = V2)
-fpca_pc_df$type <- celltype_ls_new
-# assume they are in same order
-
-ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = type, label = type)) +
-  geom_text(hjust=0, vjust=0) +
-  geom_point() +
-  theme_light() +
-  ggtitle("Biplot of the L curves of all Celltypes")
-```
-
+<!--
 The interpretation of the locally-scaled $L$-function is similar to that of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the CSR Poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed Poisson line, unlike in the inhomogeneous version.
 
 Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation.
 
 [MR: this last paragraph is a very important point; I wonder if we should say more. The problem is that there is a lot of build-up to this point .. and we should make it clear what to use in the general situation.]
+-->
+
+As seen by our permutation tests we have some grounds to believe that the pattern of ependymal cells is locally scaled. Therefore, we will analyse this pattern using a locally scaled K and L function. 
+
+We see, that again our ependymal cells are very far from the poisson process line, indicating strong clustering among ependymal cells. 
+
+```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
+wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect')
+```
 
 #### Local Indicators of Spatial Association
 
@@ -885,7 +725,7 @@ p
 ```
 
 In the MNND empirical distribution, the ependymal cells show the shortest NN distances, a reflection of their clustering. The OD mature cells have larger NN distances as well as a bimodal distribution, indicating a mix of longer and wider distances (as visible in the LISA $L$-functions). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
-
+<!--
 #### DBScan
 
 Often, we are interested which spatial structures build a spatial unit. One way to answer this question is to use spatially aware clustering. 
@@ -912,7 +752,7 @@ We see that DBScan identifies four clusters. A top cluster in red and two main s
 another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}. [MR: unfinished?]
 
 [MR: personally, I don't see a lot of value in the DBScan analysis, but you can try and convince me.]
-
+-->
 ### Nearest-neighbour function $G$ and empty-space function $F$
 
 #### Definitions of $F$ and $G$ function
@@ -1034,8 +874,8 @@ p_F <- plotSpacingMetric(celltype_ls, ppls, 'Fest', 'r', 'rs')
 p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jest', 'r', 'rs')
 ```
 
-```{r, warning=FALSE, fig.height = 10, fig.width = 7}
-p_G/p_F/p_J
+```{r, cache=FALSE, fig.height = 6, fig.width = 16}
+wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 ```
 
 ### Accounting for Inhomogeneity in Spacing Functions
@@ -1052,8 +892,8 @@ p_F <- plotSpacingMetric(celltype_ls, ppls, 'Finhom', 'r', 'bord')
 p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jinhom', 'r', 'bord')
 ```
 
-```{r, cache=FALSE, fig.height = 10, fig.width = 7}
-p_G/p_F/p_J
+```{r, cache=FALSE, fig.height = 6, fig.width = 16}
+wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 ```
 
 Again here, comparing the homogeneous versions of the functions with the inhomogeneous ones reveals, we seem to solve one problem (inhomogeneity) by assuming correlation stationarity. As this is not a given, the inhomogeneous versions do not seem to be accurate. In fact, the homogeneous versions are more easily interpretable than the inhomogeneous alternatives.

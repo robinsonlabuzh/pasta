@@ -410,7 +410,7 @@ We should further note that the inhomogeneity correction assumes that the proces
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells increases from one side to another. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns pp. 246-247][prokevsova2006statistics].
+In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells increases from one side to another [ME needs a reference]. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns pp. 246-247][prokevsova2006statistics].
 
 To circumvent this local scaling, we can assume that the process is subdivided into small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic [@baddeleySpatialPointPatterns pp. 246-247].
 
@@ -493,7 +493,7 @@ All the variants assume something about the properties of the metrics and given 
 
 #### Local Indicators of Spatial Association
 
-It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [1].
+It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns pp. 247-248].
 
 
 ##### Local $L$ function
@@ -537,7 +537,7 @@ There are inhomogeneous versions of these (e.g. `localLinhom`) that are not show
 
 ##### Functional PCA for the $n$ Curves
 
-We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function instead of a point). For the $n$ functions above, functional PCA will recover the main trends in the data. 
+We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function instead of a point). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsay2005principal]. We use the R package fdapace to perform functional PCA [@zhou2022fdapace]. 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
@@ -598,13 +598,13 @@ ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) +
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [2].
+Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [@ramsay2005principal].
 
 The last plot shows the biplot of the functional PCA [MR: should we mention "loadings"?]. Each point is a cell from the OD mature cells with the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. [MR: here I also wonder whether plotting the points by their spatial location and colouring by their loadings of PC1-PC3 would be interesting to look at. I added an example in the code; to me, it looks interesting]
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the following, we will continue towards even higher-order statistics. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [1].
+So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the following, we will continue towards even higher-order statistics. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [@baddeleySpatialPointPatterns pp. 249].
 
 $$
 T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
@@ -616,7 +616,7 @@ $$
 m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
 
-```{r}
+```{r, include=FALSE}
 p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'border')
 p
 ```

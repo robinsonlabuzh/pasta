@@ -37,19 +37,20 @@ rowData(sfe)$is_neg <- neg_inds
 sfe <- logNormCounts(sfe)
 ```
 
-[MR: do these need to be recalculated?]
+<!-- [MR: do these need to be recalculated?] -->
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
 
-In this vignette, we will show the metrics related to two marker genes: KRT17 (basal cells) and TAGLN (smooth muscle cells). 
+In this vignette, we will show the metrics related a ligand-receptor pair, CEACAM6 and EGFR which was identified in the original publication of the CosMx dataset [@heHighplexImagingRNA2022].
+
 
 ```{r}
-plotSpatialFeature(sfe, c("KRT17"),
+plotSpatialFeature(sfe, c("CEACAM6"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
   theme_void()
 
-plotSpatialFeature(sfe, c("TAGLN"),
+plotSpatialFeature(sfe, c("EGFR"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
   theme_void()
@@ -63,48 +64,94 @@ weights_neighbourhoods <- colGraph(sfe, "knn5")
 ```
 
 
+# Global Measures for Bivariate Data
+
+# Global Bivariate Moran's I
+
+For two continous observation the global bivariate Moran's I is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
+
+$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
+
+where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
+
+The global bivariate Moran's I is a measure of autocorrelation of the variables $x$ and $y$ with the spatial lag of $y$. Therefore the result might overestimate the spatial autocorrelation of the variables due to the inherent (non-spatial) correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
+
+### Implementation using `spded`
+
+```{r}
+res_xy <- spdep::moran_bv(x = logcounts(sfe)["CEACAM6",],
+         y = logcounts(sfe)["EGFR",],
+         listw =  colGraph(sfe, "knn5"),
+         nsim = 499)
+boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
+plot(res_xy)
+```
+
+From the result of the global measure, the overall spatial autocorrelation of the two genes is not significant.
+
+## Global Bivariate Lee's L
+
+
+Lee’s L is a bivariate measure that combines non-spatial pearson correlation with spatial autocorrelation via Moran’s I [@leeDevelopingBivariateSpatial2001]. This enables us to asses the spatial dependence of two continuous variables in a single measure. The measure is defined as
+
+$$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}, $$
+
+where $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$, $x$ and $y$ the two variables and $\bar{x}$ and $\bar{y}$ their means. 
+
+### Implementation using `spded`
+
+```{r}
+res_lee <- calculateBivariate(sfe, type = "lee.mc", 
+                   feature1 = "CEACAM6", feature2 = "EGFR",
+                   nsim = 499)
+res_lee$lee.mc_statistic
+res_lee$ lee.mc_p.value
+```
+
+The interpretation of the result is not straightforward, as identical patterns do not have a value of 1 but have a value depending on their spatial arrangement. In general positive values indicate spatial co-occurrence while negative values indicate spatial segregation of the pattern of variables of $x$ and $y$ [@leeDevelopingBivariateSpatial2001]. 
+
 # Local Measures for Bivariate Data
 
 ## Bivariate Lee's L
 
-Lee’s L is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran’s I. This enables us to asses the spatial dependence of two (continuous) variables in a single measure. The measure is defined as:
+Similar to the global variant of Lee's L the local variant [@leeDevelopingBivariateSpatial2001] is defined as 
 
-$$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}, $$
-where $w_{ij}$ is the spatial weights matrix for positions $i$ and $j$, $x$ and $y$ the two variables and $\bar{x}$ and $\bar{y}$ their means [MR: notation-wise, I wonder if it's better to use a and b (or something else) instead of x and y, just so that we don't confuse .. many might think x and y as the coordinate values, not the gene expression values].
+$$L_i(x,y) = \frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}, $$
+Local Lee's L is a measure of spatial co-expression, when the variables of interest are gene expression measurements and can also be a metric of co-localization. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation. 
 
-[MR: maybe mention the term "co-localization" term somewhere in here .. these measure could be quite important for analyses of ligand-receptor interactions .. or at least spatial co-expression .. SpatialDM is a good reference for this: DOI=10.1038/s41467-023-39608-w]
+This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on bivariate Moran's I and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
 
 ### Implementation using `voyager`
 
 ```{r}
 sfe <- runBivariate(sfe, type = "locallee",
-                    feature1 = "KRT17", feature2 = "TAGLN")
+                    feature1 = "CEACAM6", feature2 = "EGFR")
 
 plotLocalResult(sfe, "locallee", 
                 features = localResultFeatures(sfe, "locallee"),
-                ncol = 2, colGeometryName = "centroids")
+                ncol = 2, colGeometryName = "centroids",
+                divergent = TRUE, diverge_center = 0) 
+  
 ```
 
-[MR: for this plot above, is it worth having a dual-colour .. because there are both positive and negative values .. could be worth having 0 as the lightest colour and one colour for +, another for -]
 
-### Implementation using `spdep`
+<!-- ### Implementation using `spdep` -->
 
-```{r}
-loc <- lee(x = logcounts(sfe)["KRT17",],
-           y = logcounts(sfe)["TAGLN",],
-           n = length(logcounts(sfe)["TAGLN",]),
-           listw = weights_neighbourhoods)
+<!-- ```{r} -->
+<!-- loc <- lee(x = logcounts(sfe)["KRT17",], -->
+<!--            y = logcounts(sfe)["TAGLN",], -->
+<!--            n = length(logcounts(sfe)["TAGLN",]), -->
+<!--            listw = weights_neighbourhoods) -->
 
-#convert into a plain sf object for plotting
-sf <- colGeometries(sfe)$cellSeg
+<!-- #convert into a plain sf object for plotting -->
+<!-- sf <- colGeometries(sfe)$cellSeg -->
 
-sf$locEffect <- loc$localL
+<!-- sf$locEffect <- loc$localL -->
 
-tm_shape(sf) + tm_fill(col = 'locEffect')  
-```
+<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
+<!-- ``` -->
 
-[MR: do we need both implementations?]
-
+<!-- [MR: do we need both implementations?] -->
 
 
 # Local Measures for Multivariate Data

@@ -24,6 +24,30 @@ spe <- readRDS("../data/spe.rds")
 #subset the data to only look at sample ID 0.01
 sub <- spe[, spe$sample_id == "0.01"]
 (pp <- .ppp(sub, marks = "cluster_id"))
+```
+
+<!-- If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns. -->
+
+## Concepts and Definitions of Point Processes
+
+### Point Process
+
+In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns, pp. 127].
+
+### Observation Windows
+
+The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inference on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns, pp. 144-145].
+
+There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within a the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns, pp. 144-145].
+
+In both cases it is important to understand the direction of the bias. If the unknown window is estimated to be smaller than the true window, we underestimate the window. This then again leads to an overestimation of the density of points and to other characteristics of the pattern. Therefore, an underestimation of the window size is more concerning than a slight overestimation [@baddeleySpatialPointPatterns, pp. 144-145].
+
+In our example dataset we analyse the mouse preoptic hypothalamus [@moffitt2018molecular]. This is a tissue of the mouse brain that is cut out of a bigger context. The lower boundary is the end of the tissue whereas the upper three boundaries are a technical boundary. Therefore, our example is a mixture between window sampling and the small world model. In order to decrease the bias of the tissue boarder, we use the Ripley-Rasson estimate of a spatial domain to estimate the sampling window.
+
+```{r}
+Window(pp) <- ripras(pp)
+
+#plot(pp)
 
 #split the multitype point process into several single type processes
 #first, set the marks of the point process to be factors
@@ -31,18 +55,11 @@ marks(pp) <- factor(marks(pp))
 ppls <- split(pp)
 ```
 
-<!-- If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns. -->
-
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
 #Plot the marks separately 
 plot(ppls, main = 'Point Pattern Marks Separated', nrows = 2)
 ```
 
-## Concepts and Definitions of Point Processes
-
-### Point Process
-
-In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns, pp. 127].
 
 ### Complete Spatial Randomness
 
@@ -94,14 +111,14 @@ If a process is not correlation stationary, so the estimates of the inhomogeneou
 
 We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Furthermore, the outcome of the permutation test depends heavily on the choice of the quadrats. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns, pp. 689-693].
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, eval = FALSE}
 permutation_test <- function(pp, mark, split, minpoints) {
   pp_sel <-  subset(pp, marks %in% mark, drop = TRUE)
   
   rho_est <- rhohat(unmark(pp_sel), "x", method="tr")
   lambda <- predict(rho_est)
-  
-  tesselation <- quantess(unmark(pp_sel), "x", 2)
+
+  tesselation <- quantess(unmark(pp_sel), "x", 3)
   tesselation_split <- nestsplit(pp_sel, tesselation, ny=split)
   
   plot(tesselation_split, main = mark)
@@ -123,11 +140,9 @@ permutation_test <- function(pp, mark, split, minpoints) {
 lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp, x, split = 3, minpoints = 10))
 ```
 
-The p-value of the test for local scaling for both Microglia and OD mature cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells and oligodendrocytes is not a scaled version of an overall distribution pattern.
+The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
 
-The p-value of the test for inhomogeneity `for both Microglia and OD mature cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
-
-For ependymal cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. [ME: Does this make sense? Or is this just an artifact?] 
+For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. [ME: Does this make sense? Or is this just an artifact?] 
 
 ### Intensity
 
@@ -209,38 +224,6 @@ clarkevans.test(ppls$`OD Mature`)
 ## Correlation
 
 Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points [@baddeleySpatialPointPatterns, pp. 199].
-
-````{=html}
-<!-- 
-### Morisita Index
-
-$$
-M = m \frac{\sum_jn_j(n_j-1)}{n(n-1)}
-$$
-
-where we subdivide the point process into $m$ quadrats. The formula above is called the Morisita index which is the ratio of observed and expected fractions. If the points are independent the Morisita index is close to 1, greater than 1 if they are clustered, and less than 1 if they are regular. This concept is closely linked to the index of dispersion (in fact with a bit of algebra, these two can be transformed into each other)
-
-$$
-I = \frac{s^2}{\bar{n}} = \frac{m}{n(m-1)}\sum_{j=1}^m\left(n_j-\frac{n}{m}\right)^2
-$$
-
-```{r, cache=FALSE}
-miplot(ppls$Ependymal)
-miplot(ppls$`OD Mature`)
-miplot(ppls$Microglia)
-```
-
-### Fry plot
-
-A fryplot is a scatterplot of the vector differences $x_j-x_i$ between all paris of distinct points in the pattern.
-
-```{r, cache=FALSE}
-fryplot(ppls$Ependymal)
-fryplot(ppls$`OD Mature`)
-fryplot(ppls$Microglia)
-``` 
--->
-````
 
 ### Ripley's $K$
 
@@ -363,7 +346,7 @@ p_g <- plotMetric(celltype_ls, ppls, 'pcf', 'border')
 p_homo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
 ```
 
-As we have seen above in the test for homogeneity in oligodendrocytes, the assumptions of homogeneity are not given in our data. Therefore, we will have to use the inhomogeneous alternatives of the metrics instead.
+As we have seen above in the test for homogeneity in oligodendrocytes, the assumptions of homogeneity are not given in our data. Therefore, we will have to use the inhomogeneous alternatives (inhomogeneity correction and local scaling) of the metrics instead.
 
 ### Correcting for Inhomogeneity
 
@@ -415,7 +398,7 @@ The inhomogeneous $K$-function tells us that the microglia cells follow close to
 
 In the $L$-function, the microglia cells are along the dashed Poisson line, indicating no clustering; ependymal cells are highly clustered at low values of $r$, whereas OD mature show intermediate clustering.
 
-The pair correlation function is the derivative of the $K$-function. Therefore, it is not a sum of the points in the circle with radius $r$ but rather the individual points on the radius $r + h$ where $h$ is very small. The pcf plot gives similar information as before: microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
+The pair correlation function is the derivative of the $K$-function. The pcf plot gives similar information as before: microglia cells are around the dashed Poisson line. OD Mature cells show a rather broad range of correlations between $r \in [20,100]$. Ependymal cells have a very strong correlation at $\sim r = 25$.
 
 Interestingly, the curves for the inhomogeneous functions of ependymal cells and OD mature cells cross the poisson line at $r=300$. This means that the inhomogeneous functions find repulsion of ependymal cells and OD mature cells past a radius of $r=300$.   
 
@@ -427,22 +410,13 @@ We should further note that the inhomogeneity correction assumes that the proces
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$-function approach above, we assume that the local scale of the point process is not changed. However, the intensity can vary spatially [MR: Here, I'm struggling to know the difference b/w scale and intensity .. did we clearly specify this]. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells that increases from one side to another. Therefore, we can assume that the process is subdivided in small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic. For two locations $u$ and $v$ we would then assume that:
+In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells increases from one side to another. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns pp. 246-247][prokevsova2006statistics].
 
-$$
-g(u,v) = g_1 \left(\frac{||u-v||}{s}\right).
-$$
-
-In this example, $g_1$ is the pair correlation function of the template process and $s$ a scaling factor [1].
-<!--
-#### Locally-scaled pair-correlation function
-
-would work by taking the derivative of the locally scaled $K$-function [MR: this is not written as a proper sentence. And as it's super short, do we need a subsection for it?]
--->
+To circumvent this local scaling, we can assume that the process is subdivided into small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic [@baddeleySpatialPointPatterns pp. 246-247].
 
 #### Locally-scaled $L$-function
 
-Since the $L$-function is simply a transformation of the $K$-function, the same local scaling can apply to the $L$-function.
+Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns pp. 246-247].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 ### need to redefine the metric function, because bootstrap is not available for locally scaled functions ###
@@ -458,6 +432,10 @@ metricRes <- function(ppls, celltype, fun){
 #PRE: celltypes, function to calculation and edge correction method
 #POST: dataframe of 
 metricResToDF <- function(celltype_ls, ppls, fun, edgecorr){
+  if(fun == 'pcf'){
+    res_ls <- lapply(celltype_ls, metricRes, fun = 'Kscaled', ppls = ppls)
+    res_df <- lapply(res_ls, pcf)
+  }
   res_ls <- lapply(celltype_ls, metricRes, fun = fun, ppls = ppls)
   #stick all values into a dataframe
   res_df <- c()
@@ -472,6 +450,7 @@ metricResToDF <- function(celltype_ls, ppls, fun, edgecorr){
 plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
   res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
   #plot the curve
+  print(res_df)
   p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
     geom_line(linewidth=1)+
     ggtitle(paste0(fun, '-function'))+
@@ -489,26 +468,28 @@ plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
 
 p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')$p
 p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
+p_g <- plotScaledMetric(celltype_ls, ppls, 'pcf', 'iso')$p
 ```
 
+
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
-p_scaled <- wrap_plots(list(p_K,p_L), guides = 'collect')
+p_scaled <- wrap_plots(list(p_K, p_L, p_g), guides = 'collect')
+p_scaled
 ```
-<!--
-The interpretation of the locally-scaled $L$-function is similar to that of the inhomogeneous $L$-function. The correlation is strongest for Ependymal cells, followed by OD mature cells. Microglia cells are again close to the CSR Poisson process. Note that here, the curves of the Ependymal and OD mature cells stay always above the dashed Poisson line, unlike in the inhomogeneous version.
 
-Given that our biological samples are both inhomogeneous and locally scaled by eye (can be tested as seen above), the locally scaled $L$-function seems a good variant for assessing correlation.
+As seen by our permutation tests we have grounds to believe that the patterns of ependymal and OD mature cells are locally scaled. Therefore, we will analyse this pattern using a locally scaled K and L function. 
 
-[MR: this last paragraph is a very important point; I wonder if we should say more. The problem is that there is a lot of build-up to this point .. and we should make it clear what to use in the general situation.]
--->
+We see, that again our ependymal cells are very far from the poisson process line, indicating strong clustering among ependymal cells. The OD mature cells range in the middle showing intermediate clustering
 
-As seen by our permutation tests we have some grounds to believe that the pattern of ependymal cells is locally scaled. Therefore, we will analyse this pattern using a locally scaled K and L function. 
-
-We see, that again our ependymal cells are very far from the poisson process line, indicating strong clustering among ependymal cells. 
-
-```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
+```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
 wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect')
 ```
+
+In the section on homogeneity vs. inhomogeneity above we have argued using permutation tests that our pattern is no homogeneous but rather inhomogeneous. In fact, both OD mature cells and ependymal cells even show local scaling. In the plot above we see all variants of the correlation metrics. Given the assumptions of either homogeneity (first row), inhomogeneity (second row) and local scaling (third row) changes the interpretation to some extent. 
+
+Deciding whether a pattern is homogeneous or not is easy and should always be done. In fact, most biological tissue will be inhomogeneous. The kind of inhomogeneity is more difficult to determine. Since the inhomogeneous curves (second row) and the local scaling curves (third row) are very different, it matters a lot to have good grounds to assume one or the other. Given our permutation tests above, we see that most support is found for local scaling metrics.
+
+All the variants assume something about the properties of the metrics and given valuable insights. In the choice which metric fits the most, some care has to be taken.
 
 #### Local Indicators of Spatial Association
 
@@ -523,7 +504,7 @@ L_odmature_lisa <- localL(ppls$`OD Mature`)
 df <- as.data.frame(L_odmature_lisa)
 dfm <- reshape2::melt(df, "r")
 
-get_sel <- dfm %>% filter(r > 200.1358 & r < 200.1360, variable != "theo") %>%
+get_sel <- dfm %>% filter(r > 200.5630 & r < 201.4388, variable != "theo") %>%
   mutate(sel = value) %>% select(variable, sel)
 
 dfm <- dfm %>% left_join(get_sel)
@@ -603,10 +584,12 @@ ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) +
 
 ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC1)) + 
   scale_color_continuous(type = "viridis") +
+  theme_light() +
   geom_point()
 
 ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) + 
   scale_color_continuous(type = "viridis") +
+  theme_light() +
   geom_point()
 
 ```
@@ -634,7 +617,7 @@ m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
 
 ```{r}
-p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'trans')
+p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'border')
 p
 ```
 

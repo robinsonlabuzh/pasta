@@ -26,7 +26,7 @@ sub <- spe[, spe$sample_id == "0.01"]
 (pp <- .ppp(sub, marks = "cluster_id"))
 ```
 
-<!-- If not otherwise indicated, all information was taken from Baddeley et al. - Spatial Point Patterns. -->
+The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeley2014package]. This chapter relies heavily on both publications.
 
 ## Concepts and Definitions of Point Processes
 
@@ -495,7 +495,6 @@ All the variants assume something about the properties of the metrics and given 
 
 It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns pp. 247-248].
 
-
 ##### Local $L$ function
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -531,7 +530,7 @@ q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) +
 p|q
 ```
 
-In the case of the OD mature cells, we obtain further information with this plot. We note that there are two distinct populations of curves: those that are clearly above the CSR Poisson line [MR: do we know that the lower population is around CSR? Should we plot Poisson directly?] and others that are around/underneath the CSR line. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering (the upper part of the plot) and more random parts (lower part).
+In the case of the OD mature cells, we obtain further information with this plot. We note that there are two distinct populations of curves: those that are clearly above the mean LISA curve in black and others that are around/underneath. This indicates that there are two different kinds of interactions in the OD mature cells. Stronger clustering and less clustered regions.
 
 There are inhomogeneous versions of these (e.g. `localLinhom`) that are not shown here for brevity.
 
@@ -542,8 +541,8 @@ We apply functional PCA to retrieve the main trends in these individual curves. 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
 functional.pca.pp <- function(df){
-  # df_fdob <- asinh(df %>% as.matrix / 50)  # [MR: should we transform? if so, how?]
-  df_fdob <- df %>% as.matrix # [MR: should we transform? if so, how?]
+  df_fdob <- asinh(df %>% as.matrix / 50)  # [MR: should we transform? if so, how?]
+  #df_fdob <- df %>% as.matrix # [MR: should we transform? if so, how?]
   #remove theo column - we want only the actual estimations in there without the Poisson line theo
   if('r' %in% colnames(df) || 'theo' %in% colnames(df))
      df_fdob <- df_fdob[,!colnames(df_fdob) %in% c("r", "theo")]
@@ -594,18 +593,17 @@ ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) +
 
 ```
 
-[MR: made a note in the code above. Should we transform before PCA?]
-
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
 Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [@ramsay2005principal].
 
-The last plot shows the biplot of the functional PCA [MR: should we mention "loadings"?]. Each point is a cell from the OD mature cells with the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. [MR: here I also wonder whether plotting the points by their spatial location and colouring by their loadings of PC1-PC3 would be interesting to look at. I added an example in the code; to me, it looks interesting]
+The last plot shows the biplot of the loadings of the functional PCA. Each point is a cell from the OD mature cells with the loadings of the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. 
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the following, we will continue towards even higher-order statistics. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [@baddeleySpatialPointPatterns pp. 249].
+So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [@baddeleySpatialPointPatterns pp. 249].
 
+<!--
 $$
 T(r) = \frac{1}{\lambda^3}\mathbb{E}\left[\sum_{i=1}^n\sum_{j=1\\j\neq i}^nm(x_i,x_j,u) | u \in X\right]
 $$
@@ -622,10 +620,10 @@ p
 ```
 
 [MR: should we skip the plot in this section?]
-
+-->
 ## Spacing
 
-So far, most approaches considered intensity and correlation as measures to assess a point pattern. Next, we will look at measures of spacing and shortest-distances to assess spatial arrangements [1].
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. Next, we will look at measures of spacing and shortest-distances to assess spatial arrangements [@baddeleySpatialPointPatterns pp. 255].
 
 Baddeley et.al. summarises three basic distances to measure:
 
@@ -633,42 +631,11 @@ Baddeley et.al. summarises three basic distances to measure:
 -   NN distances: $d_i = \min_{j \neq i}d_{ij}$
 -   empty-space distance: $d(u) = \min_j||u-x_j||$
 
-Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above. [MR: maybe add ref to that section?]
-
-````{=html}
-<!-- ### Exploratory Graphics
-
-#### Stienen Diagram
-
-The stienen diagram is obtained by drawing circles around each point in the process of the size of its NN distance
-
-```{r}
-stienen(ppls$Ependymal)
-stienen(ppls$`OD Mature`)
-stienen(ppls$Microglia)
-```
-
-#### Dirichlet Tiles
-
-Dirichlet tiles are considered as the space "that is closer to $x_i$ than to any other point in the pattern $x$:"
-
-$$
-C(x_i|x) = \{u \in \mathbb{R}^2:||u-x_i|| = \min_{j} ||u-x_j||\}
-$$
-
-These dirichlet tiles are convex polygons
-
-```{r}
-plot(dirichlet(ppls$Ependymal))
-plot(dirichlet(ppls$`OD Mature`))
-plot(dirichlet(ppls$Microglia))
-``` 
--->
-````
+Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above ``Testing for CSR''.
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a curve for each specified $k$ [MR: do we need to say that a curve here is a density of a distribution?] for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [1].
+Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a density for each specified $k$ for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [@baddeleySpatialPointPatterns pp. 256]. Note, that these distances are "raw" nearest-neighbour distances which are not corrected for edge effects. Edge correction for the nearest neighbour distance ($k = 1$) is implemented in the function `Gest` below.
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -708,34 +675,7 @@ p
 ```
 
 In the MNND empirical distribution, the ependymal cells show the shortest NN distances, a reflection of their clustering. The OD mature cells have larger NN distances as well as a bimodal distribution, indicating a mix of longer and wider distances (as visible in the LISA $L$-functions). Microglia cells show the widest distances and the symmetry of the curve indicates similar distances throughout the field of view.
-<!--
-#### DBScan
 
-Often, we are interested which spatial structures build a spatial unit. One way to answer this question is to use spatially aware clustering. 
-Here we show one very basic approach, DBScan (density-based spatial clustering with applications for noise). DBScan is an algorithm that uses a parameter called minimal Features. If the number of points per cluster is smaller than the minimal number of features, it is either noise or it is merged with another cluster. Another parameter $\epsilon$ defines the distance at which a point has to lay in order to be part of a cluster. The value of this parameter $\epsilon$ can be determined by an elbow plot, similar to clustering resolution parameters in other algorithms.
-[MR: can we make this reference below a proper reference?]
-[Source](https://pro.arcgis.com/en/pro-app/latest/tool-reference/spatial-statistics/how-density-based-clustering-works.htm)
-
-```{r, cache=FALSE}
-pp_df <- as.data.frame(ppls$`OD Mature`)
-#determine the correct epsilon neighbourhood
-dbscan::kNNdistplot(pp_df, k=5)
-```
-
-Given the kNN distance plot we visually detect the "knee" of the curve to be at an distance $\epsilon$ of $200$. This value is needed for the computation of DBScan.
-
-```{r}
-#perform DBScan
-pp_dbscan <- dbscan::dbscan(pp_df[-3], eps =200, minPts = 5)
-plot(pp_df[-3], col = pp_dbscan$cluster)
-```
-
-We see that DBScan identifies four clusters. A top cluster in red and two main side clusters in black and green. There is another cluster in blue that is at the top right corner.
-
-another lead to follow in detected spatial clusters is scan statistics with the \texttt{R} package \texttt{rflexscan}. [MR: unfinished?]
-
-[MR: personally, I don't see a lot of value in the DBScan analysis, but you can try and convince me.]
--->
 ### Nearest-neighbour function $G$ and empty-space function $F$
 
 #### Definitions of $F$ and $G$ function
@@ -746,7 +686,9 @@ $$
 d(u,X) = \min\{||u-x_i||: x_i \in X\}
 $$
 
-[MR: what does one do for a non-stationary process?]
+Note that this is an edge-corrected distribution function of the nearest-neighbour distance above.
+
+[MR: what does one do for a non-stationary process?] [ME: that is a very good question, basically all point pattern methods assume stationarity]
 
 The empty space function is then the cumulative distribution function of the empty-space distances defined above:
 
@@ -772,13 +714,11 @@ $$
 G_{pois} \equiv F_{pois}.
 $$
 
-For a general point process, the $F$ and $G$ functions are different [1].
-
-[MR: so actually, from the notation, I don't see why F and G would be different for a general point process .. they are simply two ways to express the distance to the nearest point. What am I missing?]
+For a general point process, the $F$ and $G$ functions are different [@baddeleySpatialPointPatterns pp. 261-264].
 
 ### Empty-space hazard
 
-The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too [MR: what disadvantages? maybe say them explicitly here]. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons, this is no longer the derivative of the $F$ function but rather a hazard rate [1]:
+The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disadvantages as with the $K$ function occur here too [MR: what disadvantages? maybe say them explicitly here]. Therefore, an analogue to the pair-correlation function would make sense to consider. For practical reasons, this is no longer the derivative of the $F$ function but rather a hazard rate:
 
 $$
 h(r) = \frac{f(r)}{1-F(r)}.
@@ -789,40 +729,12 @@ For a CSR process, the hazard rate is:
 $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
-(i.e., linear in $r$).
 
-Here we use a variance stabilising transformation as suggested by Baddeley et. al. This transformation means that if the process is completely spatial random, the hazard is equal to the intensity $\lambda$ [1].
- <!-- 
-```{r}
-fhazard_ependymal <- envelope(ppls$Ependymal, Fhazard, nsim=39, fix.n=TRUE,
-transform=expression(./(2*pi*r)))
-fhazard_ependymal$type <- 'Ependymal'
-
-fhazard_odmature <- envelope(ppls$`OD Mature`, Fhazard, nsim=39, fix.n=TRUE,
-transform=expression(./(2*pi*r)))
-fhazard_odmature$type <- 'OD Mature'
-
-fhazard_microglia <- envelope(ppls$Microglia, Fhazard, nsim=39, fix.n=TRUE,
-transform=expression(./(2*pi*r)))
-fhazard_microglia$type <- 'Microglia'
-
-#create a list that combines bove values
-fhazard_list<- rbind(fhazard_ependymal, fhazard_odmature, fhazard_microglia)
-
-p <- ggplot(fhazard_list, aes(x=r, y=obs, col= type))+
-  geom_line(key_glyph = "point")+
-  guides(color = guide_legend(override.aes = list(size = 3))) +
-  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)+
-  ggtitle('Empty-space hazard')+
-  geom_line(aes(x=r,y=theo),linetype = "dashed", show.legend = FALSE)+
-  theme_light() #+ theme(legend.key.size = unit(0.5, "lines"))
-p
-```
- -->
-
+(i.e., linear in $r$)  [@baddeleySpatialPointPatterns pp. 271-274].
+ 
 ### $J$-Function
 
-The concepts of the empty-space function $F$ and the NN function $G$ are somewhat complementary. If one decreases, the other increases. A comparison of these two functions as a measure of CSR is the Hopkins-Skellam test (implemented above) [1].
+The concepts of the empty-space function $F$ and the NN function $G$ are somewhat complementary. If one decreases, the other increases.
 
 Thus, a related approach is the $J$ function:
 
@@ -830,7 +742,7 @@ $$
 J(r) = \frac{1-G(r)}{1-F(r)}.
 $$
 
-For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process [1].
+For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process  [@baddeleySpatialPointPatterns pp. 274-276].
 
 ```{r, fig.height = 10, fig.width = 7}
 ### need to redefine the plotting function, because bootstrap is not available for spacing functions ###
@@ -879,13 +791,12 @@ p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jinhom', 'r', 'bord')
 wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 ```
 
-Again here, comparing the homogeneous versions of the functions with the inhomogeneous ones reveals, we seem to solve one problem (inhomogeneity) by assuming correlation stationarity. As this is not a given, the inhomogeneous versions do not seem to be accurate. In fact, the homogeneous versions are more easily interpretable than the inhomogeneous alternatives.
+[ME: add some text to inhomogeneity]
 
 ### Nearest-Neighbour Orientation
 
-Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing.
+Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns pp. 278-279, @baddeley2014package].
 
-[MR: here just noting that we give no definition of the orientation metric, which counters the quite verbose definitions that we have seen up to this point.]
 
 ```{r}
 p <- plotSpacingMetric(celltype_ls, ppls, 'nnorient', 'phi', 'bordm')
@@ -893,6 +804,7 @@ p
 ```
 
 The values of $\phi$ correspond to the orientation of the point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom) [MR: I find this description quite confusing, because you are not talking about the horizontal/vertical axis of the metric plot, but rather the orientations in the point patterns. And since certain $\phi$s represent these orientations, is it worth adding some shading of the x-axis to highlight this? Thicker lines would also benefit the old people reading this. And I wonder if faceting on celltype would help also. What does the Y-axis represent? And are there local variants of these? Maybe the clustered OD cells have a different orientation than the non-clustered?].
+
 We can infer that the orientation of the Ependymal NNs is primarily along the vertical axis, OD mature cells do not show a clear orientation and microglial cells a horizontal orientation in their NNs with a modest peak at $\sim 180$ (orientation to the top).
 
 Note also tha the concepts of spacing are not only usable in *point* pattern analysis but also more broadly in other spatial contexts (e.g., spacing between shapes instead of points).

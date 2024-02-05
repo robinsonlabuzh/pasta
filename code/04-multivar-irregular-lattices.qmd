@@ -158,7 +158,7 @@ plotLocalResult(sfe, "locallee",
 
 ## Multivariate local Geary's C
 
-Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. It is defined as:
+Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. [@anselinLocalIndicatorMultivariate2019] defines it as
 
 $$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2,$$
 
@@ -166,64 +166,64 @@ and can be generalized to $k$ parameters by expanding
 
 $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
-where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. Compared to bivariates Lee it means that we use more than two variables. [MR: I don't have a good intution for the extension to multiple variables here .. say we had 10 genes, how do we interpret that? It seems like the bivariate version is quite straightforward to digest, but beyond that I find it confusing. OK, but your example below is only with 2.]
+where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretaing the mixture of similarity in the geographic space and similarity in the attribute space. 
 
-We will use the two marker genes to calculate the multi-variate Geary's C. 
+Here we use the marker genes used in the original paper that study apoptosis [@heHighplexImagingRNA2022, Supplementary Table 1] in a subset of the tissue, as the computation is very intensive.
 
 ```{r}
-hvgs <- getTopHVGs(sfe, fdr.threshold = 0.01)
+apoptosis_genes <- c("BAX", "BCL2", "BCL2L1", "BIRC5", "CASP3", "CASP8", "TP53")
 
-sfe <- runMultivariate(sfe, type = "localC_multi",
-                    subset_row = c("KRT17", "TAGLN"),
-                    dest = "colData")
+# Subset of the tissue
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 15800, ymin = 155200, ymax = 164200)))
+sfe_sub <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
 
-# plotLocalResult(sfe, "localC_multi", features = c("KRT17"), ncol = 2,
-#                 colGeometryName = "centroids")
+sfe_sub <- runMultivariate(sfe_sub, type = "localC_multi",
+                    subset_row = apoptosis_genes)
 
 # Local C mutli is stored in colData so this is a workaround to plot it
-plotSpatialFeature(sfe,"localC_multi", colGeometryName = "centroids")
+plotSpatialFeature(sfe_sub, "localC_multi", colGeometryName = "centroids")
 ```
 
-The plot indicates regions where the gene expression is more similar homogeneous [MR: "more similar homogeneous" sounds weird .. can we just say "more homogeneous" or "more similar"?] (low Geary's C) and regions where the gene expression is more dissimilar heterogeneous [MR: same here] (large Geary's C value). Importantly, strong similarity in one or some variables may compensate for dissimilarity in other variables [MR: this makes interpretation tricky/confusing]. The local Geary’s C value is not scaled.
+The plot indicates regions where the gene expression is more homogeneous (low Geary's C) and regions where the gene expression is more heterogeneous (large Geary's C value). Importantly, strong similarity in one or some variables may compensate for dissimilarity in other variables, which makes the interpretation tricky. The local Geary’s C value is not scaled.
 
-Note that the computation is very cost intensive.
+We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple values but the exact combination is not known. For further details, see [@anselinLocalIndicatorMultivariate2019].
+
+[MR: this makes me question how we should present this. SG: Good question, it comes very close to spatial clustering here, maybe we can show this as a preview for other methods that we do not discuss.. From the @anselinLocalIndicatorMultivariate2019 publication: "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014)."]
 
 ```{r}
-sfe <- runMultivariate(sfe, type = "localC_perm_multi",
-                    subset_row = c("KRT17", "TAGLN"),
-                    dest = "colData")
+sfe_sub <- runMultivariate(sfe_sub, type = "localC_perm_multi",
+                    subset_row = apoptosis_genes,
+                    nsim = 100)
 
-# Local C mutli is stored in colData so this is a workaround to plot it
-plotSpatialFeature(sfe,"localC_perm_multi", colGeometryName = "centroids")
+# stored as spatially reduced dim; plot it in this way
+spatialReducedDim(sfe_sub, "localC_perm_multi",  c(1, 11))
 ```
 
-We can further plot the results of the permutation test. This can indicate interesting regions, but should be interpreted with care for various reasons. For example, since we are looking for similarity in a combination of multiple values, the exact combination is not known. For further details, see Anselin (2019). [MR: this makes me question how we should present this.]
+<!-- ```{r} -->
+<!-- loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])), -->
+<!--        listw = weights_neighbourhoods, nsim = 1) -->
 
-```{r}
-loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])),
-       listw = weights_neighbourhoods, nsim = 1)
+<!-- #convert into a plain sf object for plotting -->
+<!-- sf <- colGeometries(sfe)$cellSeg -->
 
-#convert into a plain sf object for plotting
-sf <- colGeometries(sfe)$cellSeg
+<!-- sf$locEffect <- loc -->
 
-sf$locEffect <- loc
-
-tm_shape(sf) + tm_fill(col = 'locEffect')  
-```
+<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
+<!-- ``` -->
 
 It would be interesting to do this not only on the cell level, but also on the *domain* level.
 
 ## Local Neighbor Match Test
 
-This test is useful to assess the overlap of the k-nearest neighbour from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
+This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
 
 [MR: how are the KNNs calculated in the attribute space?]
 
 ```{r}
 sf <- colGeometries(sfe)$cellSeg
-sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[c(hvgs),])))
+sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[c(apoptosis_genes),])))
 
-nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
+nbr_test <- neighbor_match_test(sf[c(apoptosis_genes)], k = 20)
 
 sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
@@ -237,11 +237,6 @@ Cardinality is a measure of how many neighbours of each cell are in common. Some
 Again, this analysis should probably be performed on a structure level instead of a single cell level.  
 
 [MR: should we do the analysis at the structure/domain level then?]
-
-# References
-
-Anselin, Luc. 1995. “Local Indicators of Spatial Association—LISA.” Geogr. Anal. 27 (2): 93–115.
-———. 2019. “A Local Indicator of Multivariate Spatial Association: Extending Geary’s c.” Geogr. Anal. 51 (2): 133–50.
 
 # Appendix
 

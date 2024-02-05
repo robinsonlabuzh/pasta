@@ -418,6 +418,9 @@ The results above gives an estimate of the local Getis-Ord statistic for each ce
 #| fig-width: 25
 #| fig-height: 10
 
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
+sfe_sub <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+
 # run localG with permutation test
 sfe_sub <- runUnivariate(sfe_sub,
                      features = "KRT17",

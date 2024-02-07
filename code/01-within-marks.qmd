@@ -35,13 +35,15 @@ names(pp_ls) <- zstack_list
 
 The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeley2014package]. This chapter relies heavily on both publications.
 
-[ME: add a paragraph on multivariate vs multitype point patterns. this is important to understand what comes next. something on dependence and independence of point patterns.]
-
 ## Concepts and Definitions of Point Processes
 
 ### Point Process
 
 In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns, pp. 127].
+
+When considering a pattern with $m$ multiple types, as we do in the [@moffitt2018molecular] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process and thus depend on each other. In the multivariate framework we assume that the types stem from independent point processes and therefore we can consider dependencies of one type alone. Whether or not the underlying point processes are independent depends on the biological question. If we analyse two celltypes in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider the point processes as independent [@baddeleySpatialPointPatterns, pp. 565].
+
+In the following we will often compare the distribution of ependymal cells across different z-slices of the same tissue. We assume these slices to be enough far away to be considered independent. Therefore, we are in a multivariate setting. Sometimes, we show examples of methods for one celltype in a slice. This would correspond to a univariate setting.
 
 ### Observation Windows
 
@@ -59,6 +61,7 @@ setRiprasWindows <- function(pp){
   marks(pp) <- factor(marks(pp))
   return(pp)
 }
+#the entire point patterns with the ripras windows
 pp_ls_complete <- lapply(pp_ls, setRiprasWindows)
 
 separateMarks <- function(pp){
@@ -66,6 +69,7 @@ separateMarks <- function(pp){
   ppls <- split(pp)
   return (ppls)
 }
+#the point patterns separated by their marks
 pp_ls <- lapply(pp_ls_complete, separateMarks)
 ```
 
@@ -765,7 +769,7 @@ Note also tha the concepts of spacing are not only usable in *point* pattern ana
 
 ### Edge Corrections
 
-The same consideration about edge effects as for the $K$ (and related) functions need to be made for the spacing functions; uncorrected estimates are negatively biased as estimators for the real spacing functions [MR: what is meant by "real spacing functions" here?]. The easiest approach is to draw an artificial border and consider NNs within it. Other approaches are based on sampling. Yet another approach relates to survival analysis, with the idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions similar to censored data, where the Kaplan-Meier estimator is the optimal choice [1].
+The same consideration about edge effects as for the $K$ (and related) functions need to be made for the spacing functions; uncorrected estimates are negatively biased estimators. The easiest approach is to draw an artificial border and consider NNs within it. Other approaches are based on sampling. Yet another approach relates to survival analysis, with the idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions similar to censored data, where the Kaplan-Meier estimator is the optimal choice  [@baddeleySpatialPointPatterns pp. 286-292].
 
 # Continuous Marks
 
@@ -784,16 +788,14 @@ sub <- spe[, spe$sample_id == '0.01']
 ```
 
 
-In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or  continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication.
+In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or  continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@baddeleySpatialPointPatterns pp. 637, @moffitt2018molecular]. This is a typical numerical mark for points in a biological dataset.
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
-
 genes <- c('Slc18a2', 'Esr1', 'Pgr')
 gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
   data.frame %>% set_rownames(NULL)
-
-# gene expression to marks
+# gene expression to marks [ME: is it really expression?]
 marks(pp) <- gex
 ```
 
@@ -803,15 +805,15 @@ marks(pp) <- gex
 plot(pp)
 ```
 
-[MR: what is the point of this plot?]
+Here we see spatial distribution of the counts of the three genes Slc18a2, Esr1 and Pgr. The size of the circles indicates the counts of the transcripts at that spot. [ME: is this true?] Since there are really a lot of points, we can't easily distinguish general patterns of count distributions.
 
-A pairs plot indicates spatial inhomogeneity, i.e. a spatial trend of the of the marks. This plot is only reasonable for a small number of marks however.
+We can investigate the distribution of the marks against the spatial location of the points and against each other. This is done with the function `pairs` from `spatstat`. It generates a scatterplot of the counts of the marks (in our case the three genes) against each other and against the $x$ and $y$ coordinates. We can add a non-linear smoothing curve to make the general trends a bit more obvious [@baddeleySpatialPointPatterns pp.641].
 
 ```{r}
 pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
 ```
 
-[MR: also not sure the point of this plot?]
+We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of Esr1 and Pgr are positively associated, indicating a dependence of these two marks. 
 
 The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel. This estimated kernel can be used for visual inspection of the dataset.
 

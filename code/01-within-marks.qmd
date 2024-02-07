@@ -21,12 +21,21 @@ source("utils.R")
 #| label: load-data
 spe <- readRDS("../data/spe.rds")
 
-#subset the data to only look at sample ID 0.01
-sub <- spe[, spe$sample_id == "0.01"]
-(pp <- .ppp(sub, marks = "cluster_id"))
+#subset the data to only look at sample ID 0.01, 0.06 and 0.26
+zstack_list <- list("-0.29", "0.01", "0.06")
+
+selectZstacks <- function(zstack, spe){
+  sub <- spe[, spe$sample_id == zstack]
+  pp <- .ppp(sub, marks = "cluster_id")
+  return(pp)
+}
+pp_ls <- lapply(zstack_list, selectZstacks, spe)
+names(pp_ls) <- zstack_list
 ```
 
 The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeley2014package]. This chapter relies heavily on both publications.
+
+[ME: add a paragraph on multivariate vs multitype point patterns. this is important to understand what comes next. something on dependence and independence of point patterns.]
 
 ## Concepts and Definitions of Point Processes
 
@@ -45,19 +54,24 @@ In both cases it is important to understand the direction of the bias. If the un
 In our example dataset we analyse the mouse preoptic hypothalamus [@moffitt2018molecular]. This is a tissue of the mouse brain that is cut out of a bigger context. The lower boundary is the end of the tissue whereas the upper three boundaries are a technical boundary. Therefore, our example is a mixture between window sampling and the small world model. In order to decrease the bias of the tissue boarder, we use the Ripley-Rasson estimate of a spatial domain to estimate the sampling window.
 
 ```{r}
-Window(pp) <- ripras(pp)
+setRiprasWindows <- function(pp){
+  Window(pp) <- ripras(pp)
+  marks(pp) <- factor(marks(pp))
+  return(pp)
+}
+pp_ls_complete <- lapply(pp_ls, setRiprasWindows)
 
-#plot(pp)
-
-#split the multitype point process into several single type processes
-#first, set the marks of the point process to be factors
-marks(pp) <- factor(marks(pp))
-ppls <- split(pp)
+separateMarks <- function(pp){
+  #split the multitype point process into several single type processes
+  ppls <- split(pp)
+  return (ppls)
+}
+pp_ls <- lapply(pp_ls_complete, separateMarks)
 ```
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
 #Plot the marks separately 
-plot(ppls, main = 'Point Pattern Marks Separated', nrows = 2)
+plot(pp_ls[['0.01']], main = 'Point Pattern Marks Separated', nrows = 2)
 ```
 
 
@@ -137,12 +151,14 @@ permutation_test <- function(pp, mark, split, minpoints) {
   #p-value of the inhomogeneity test
   print(paste0(mark,' inhomogeneity test ', res.inhom$p.value))
 }
-lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp, x, split = 3, minpoints = 10))
+lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp_ls_complete[['0.01']], x, split = 3, minpoints = 10))
 ```
 
 The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
 
 For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. [ME: Does this make sense? Or is this just an artifact?] 
+
+As the interpretation of the permutation test is highly dependent on the quadrats, the results should be interpreted with care. Both inhomogeneous and locally scaled versions of the summary functions have support and both offer interesting insights into the spatial pattern. Therefore, we will compare all versions and show what the choice of metrics means for their interpretation.
 
 ### Intensity
 
@@ -162,13 +178,13 @@ For a homogeneous point process, the intensity can be estimated in a simplistic 
 ```{r, cache=FALSE}
 intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(intensity(pp))
 
-intensityPointProcess(pp, mark = FALSE) %>% round(6)
+intensityPointProcess(pp_ls[['0.01']], mark = FALSE) %>% round(6)
 ```
 
 Otherwise, we can compute the intensity for each mark individually.
 
 ```{r, cache=FALSE}
-intensityPointProcess(pp, mark = TRUE) %>% round(8)
+intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
 ```
 
 #### Kernel Estimation
@@ -176,7 +192,7 @@ intensityPointProcess(pp, mark = TRUE) %>% round(8)
 In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns, pp. 168].
 
 ```{r, fig.width=8, fig.height=8}
-pp_sel <-  subset(pp, marks %in% "Inhibitory", drop = TRUE)
+pp_sel <-  subset(pp_ls[['0.01']]$Inhibitory, drop = TRUE)
 Dens <- density(pp_sel, sigma = 100)
 plot(Dens, main = 'Kernel Density (Inhibitory cells)')
 ```
@@ -185,16 +201,16 @@ plot(Dens, main = 'Kernel Density (Inhibitory cells)')
 
 In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [@baddeleySpatialPointPatterns, pp. 163].
 
-```{r, fig.width=12, fig.height=12, cache=FALSE}
-Q5 <- quadratcount(pp, nx=8, ny=8)
-plot(unmark(pp), main='Unmarked Point Pattern Quadrats')
+```{r, fig.width=12, fig.height=12, cache=FALSE, eval=FALSE}
+Q5 <- quadratcount(pp_ls[['0.01']], nx=8, ny=8)
+plot(unmark(pp_ls_complete[['0.01']]), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
 ```
 
 Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns, pp. 164-165].
 
 ```{r, cache=FALSE}
-val <- quadrat.test(ppls$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
+val <- quadrat.test(pp_ls[['0.01']]$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
 val
 ```
 
@@ -205,7 +221,7 @@ Alternatively, we can inspect departures from the hypothesis that points were ge
 ```{r}
 # select marks
 selection <- c('OD Mature', 'Ependymal', 'Microglia')
-pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+pp_sel <-  subset(pp_ls_complete[['0.01']], marks %in% selection, drop = TRUE)
 
 f1 <- pValuesHotspotMarks(pp_sel)
 
@@ -218,7 +234,7 @@ plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
 Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR, here we show the use-case of the clark-evans test [@baddeleySpatialPointPatterns, pp. 165-166].
 
 ```{r, cache=FALSE}
-clarkevans.test(ppls$`OD Mature`)
+clarkevans.test(pp_ls[['0.01']]$`OD Mature`)
 ```
 
 ## Correlation
@@ -299,18 +315,24 @@ In the above, $\kappa$ can be any probability density over the real line with me
 #| warning: false
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
 #POST: result of the metric
-metricResBoot <- function(ppls, celltype, fun){
-  metric.res <- lohboot(ppls[[celltype]], fun = fun)
+metricRes <- function(zstack, ppls, celltype, fun, bootstrap){
+  if(bootstrap){
+    metric.res <- lohboot(ppls[[zstack]][[celltype]], fun = fun)
+  }
+  else{
+    metric.res <- do.call(fun, args = list(X=ppls[[zstack]][[celltype]]))
+  }
   metric.res$type <- celltype
-  metric.res
+  metric.res$zstack <- zstack
+  return(metric.res)
 }
 
 #PRE: celltypes, function to calculation and edge correction method
 #POST: dataframe of 
-metricResBootToDF <- function(celltype_ls, ppls, fun, edgecorr){
-  lapply(celltype_ls, function(u) {
-    metricResBoot(u, fun = fun, ppls = ppls) %>%
-      as.data.frame
+metricResToDF <- function(zstack_ls, celltype, ppls, fun, edgecorr, bootstrap){
+  lapply(zstack_ls, function(u) {
+    metricRes(u, fun = fun, ppls = ppls, celltype = celltype, bootstrap)  %>%
+      as.data.frame()
   }) %>% bind_rows
 }
 
@@ -318,32 +340,34 @@ metricResBootToDF <- function(celltype_ls, ppls, fun, edgecorr){
 
 #PRE: Celltypes of interest, function to analyse, edge correction to perform
 #POST: plot of the metric
-plotMetric <- function(celltype_ls, ppls, fun, edgecorr){
-  res_df <- metricResBootToDF(celltype_ls, ppls, fun, edgecorr)
+plotMetric <- function(zstack_ls, ppls, celltype, x, fun, edgecorr, bootstrap){
+  res_df <- metricResToDF(zstack_ls, celltype, ppls, fun, edgecorr, bootstrap)
   #plot the curve
-  ggplot(res_df, aes(x=r, y=.data[[edgecorr]], col= type))+
-    geom_line()+
-    geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
+  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], col= (zstack)))+
+    geom_line() +
+    {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)}+
     ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed")+
+    geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed")+
     ylab(edgecorr) +
     scale_color_manual(name='Point Processes',
-                     breaks=c('Ependymal', 'Microglia', 
-                              'OD Mature', 'Poisson'),
-                     values=c('Ependymal'='red', 
-                              'Microglia'='dark green', 
-                              'OD Mature'='blue', 'Poisson'='black'))+
+                     breaks=c('-0.29', '0.01',
+                              '0.06', 'Poisson'),
+                     values=c('-0.29'='red',
+                              '0.01'='dark green',
+                              '0.06'='blue', 'Poisson'='black'))+
     theme_light()
+    return(p)
 }
 
-celltype_ls <- c("Ependymal", "OD Mature", "Microglia")
-p_K <- plotMetric(celltype_ls, ppls, 'Kest', 'iso')
-p_L <- plotMetric(celltype_ls, ppls, 'Lest', 'iso')
-p_g <- plotMetric(celltype_ls, ppls, 'pcf', 'border')
+celltype_ls <- "Ependymal"
+p_K <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
+p_L <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
+p_g <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
 p_homo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
+p_homo
 ```
 
 As we have seen above in the test for homogeneity in oligodendrocytes, the assumptions of homogeneity are not given in our data. Therefore, we will have to use the inhomogeneous alternatives (inhomogeneity correction and local scaling) of the metrics instead.
@@ -382,11 +406,9 @@ where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an est
 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-p_K <- plotMetric(celltype_ls, ppls, 'Kinhom', 'iso')
-
-p_L <- plotMetric(celltype_ls, ppls, 'Linhom', 'iso')
-
-p_g <- plotMetric(celltype_ls, ppls, 'pcfinhom', 'border')
+p_K <- plotMetric(zstack_list, pp_ls, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
+p_L <- plotMetric(zstack_list, pp_ls, celltype_ls,'r', 'Linhom', 'iso', bootstrap = TRUE)
+p_g <- plotMetric(zstack_list, pp_ls, celltype_ls,'r', 'pcfinhom', 'border', bootstrap = TRUE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -419,61 +441,14 @@ To circumvent this local scaling, we can assume that the process is subdivided i
 Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns pp. 246-247].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
-### need to redefine the metric function, because bootstrap is not available for locally scaled functions ###
-#PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
-#POST: result of the metric
-metricRes <- function(ppls, celltype, fun){
-  metric.res <- do.call(fun, args = list(X=ppls[[celltype]]))
-  metric.res$type <- celltype
-  return(metric.res)
-}
-# [MR: can we write this such that it works for all functions? Like have a super wrapper?]
-
-#PRE: celltypes, function to calculation and edge correction method
-#POST: dataframe of 
-metricResToDF <- function(celltype_ls, ppls, fun, edgecorr){
-  if(fun == 'pcf'){
-    res_ls <- lapply(celltype_ls, metricRes, fun = 'Kscaled', ppls = ppls)
-    res_df <- lapply(res_ls, pcf)
-  }
-  res_ls <- lapply(celltype_ls, metricRes, fun = fun, ppls = ppls)
-  #stick all values into a dataframe
-  res_df <- c()
-  for(i in 1:length(celltype_ls))res_df <- rbind(res_df, res_ls[[i]])
-  return(res_df)
-}
-# [MR: this also doesn't look to different to the one above, which makes me think we should write it also as a super wrapper?]
-
-### need to redefine the plotting function, because bootstrap is not available for locally scaled functions ###
-#PRE: Celltypes of interest, function to analyse, edge correction to perform
-#POST: plot of the metric
-plotScaledMetric <- function(celltype_ls, ppls, fun, edgecorr){
-  res_df <- metricResToDF(celltype_ls, ppls, fun, edgecorr)
-  #plot the curve
-  print(res_df)
-  p <- ggplot(res_df, aes(x=r, y=res_df[[edgecorr]], col= type))+
-    geom_line(linewidth=1)+
-    ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=r,y=theo, color = 'Poisson'),linetype = "dashed", linewidth=1)+
-    ylab(edgecorr) +
-    scale_color_manual(name='Point Processes',
-                     breaks=c('Ependymal', 'Microglia', 'OD Mature', 'Poisson'),
-                     values=c('Ependymal'='red', 'Microglia'='dark green', 'OD Mature'='blue', 'Poisson'='black'))+
-    theme_light()
-  return(list(p = p, res_df = res_df))
-}
-
-# [MR: again, stark similarity to those above. Should rewrite.]
-
-
-p_K <- plotScaledMetric(celltype_ls, ppls, 'Kscaled', 'iso')$p
-p_L <- plotScaledMetric(celltype_ls, ppls, 'Lscaled', 'iso')$p
-p_g <- plotScaledMetric(celltype_ls, ppls, 'pcf', 'iso')$p
+p_K <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Kscaled', 'iso', bootstrap = FALSE)
+p_L <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Lscaled', 'iso', bootstrap = FALSE)
+#p_g <- plotScaledMetric(zstack_list,celltype_ls, pp_ls, 'pcfscaled', 'iso')$p
 ```
 
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
-p_scaled <- wrap_plots(list(p_K, p_L, p_g), guides = 'collect')
+p_scaled <- wrap_plots(list(p_K, p_L), guides = 'collect')
 p_scaled
 ```
 
@@ -485,9 +460,9 @@ We see, that again our ependymal cells are very far from the poisson process lin
 wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect')
 ```
 
-In the section on homogeneity vs. inhomogeneity above we have argued using permutation tests that our pattern is no homogeneous but rather inhomogeneous. In fact, both OD mature cells and ependymal cells even show local scaling. In the plot above we see all variants of the correlation metrics. Given the assumptions of either homogeneity (first row), inhomogeneity (second row) and local scaling (third row) changes the interpretation to some extent. 
+In the section on homogeneity vs. inhomogeneity above we have argued using permutation tests that our pattern is not homogeneous but rather inhomogeneous. In fact, both OD mature cells and ependymal cells even show local scaling in the permutation test. In the plot above we see all variants of the correlation metrics. Given the assumptions of either homogeneity (first row), inhomogeneity (second row) and local scaling (third row) changes the interpretation to some extent. 
 
-Deciding whether a pattern is homogeneous or not is easy and should always be done. In fact, most biological tissue will be inhomogeneous. The kind of inhomogeneity is more difficult to determine. Since the inhomogeneous curves (second row) and the local scaling curves (third row) are very different, it matters a lot to have good grounds to assume one or the other. Given our permutation tests above, we see that most support is found for local scaling metrics.
+Deciding whether a pattern is homogeneous or not is easy and should always be done. In fact, most biological tissue will be inhomogeneous. The kind of inhomogeneity is more difficult to determine. Since the inhomogeneous curves (second row) and the local scaling curves (third row) are very different, it matters a lot to have good grounds to assume one or the other. Given our permutation tests above, we see that most support is found for local scaling metrics. 
 
 All the variants assume something about the properties of the metrics and given valuable insights. In the choice which metric fits the most, some care has to be taken.
 
@@ -498,7 +473,7 @@ It is worth noting that the $K$- and $L$-functions described above are summary s
 ##### Local $L$ function
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-L_odmature_lisa <- localL(ppls$`OD Mature`)
+L_odmature_lisa <- localL(pp_ls[['0.01']]$`OD Mature`)
 
 df <- as.data.frame(L_odmature_lisa)
 dfm <- reshape2::melt(df, "r")
@@ -515,7 +490,7 @@ p <- ggplot(dfm, aes(x=r, y=value, group=variable, colour=sel)) +
   theme(legend.position = "none") +
   theme_light()
 
-ppdf <- as.data.frame(pp) %>% filter(marks=="OD Mature")
+ppdf <- as.data.frame(pp_ls_complete[['0.01']]) %>% filter(marks=="OD Mature")
 ppdf$sel <- get_sel$sel # assume they are in same order
 
 q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) + 
@@ -614,8 +589,8 @@ $$
 m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
 
-```{r, include=FALSE}
-p <- plotScaledMetric(celltype_ls, ppls, 'Tstat', 'border')
+```{r, include=FALSE, eval=FALSE}
+p <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Tstat', 'border', bootstrap = FALSE)
 p
 ```
 
@@ -653,9 +628,9 @@ metricRes_nndist <- function(ppls, celltype, fun){
   return(metric.res)
 }
 # [MR: again, this function looks again like those before and maybe could be done as an all-in-one wrapper.]
-
+celltypes <- c("Ependymal", "OD Mature", "Microglia")
 #go through all defined celltypes and calculate the nearest-neighbour distance
-res_ls <- lapply(celltype_ls, metricRes_nndist, fun = nndistance, ppls = ppls)
+res_ls <- lapply(celltypes, metricRes_nndist, fun = nndistance, ppls = pp_ls[['0.01']])
 #initialise a dataframe for the metric values and the type information
 res_df <- data.frame(metric = numeric(0), type = character(0))
 # Loop through the res_ls list and combine the metric values with their corresponding type - ChatGPT
@@ -745,28 +720,9 @@ $$
 For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process  [@baddeleySpatialPointPatterns pp. 274-276].
 
 ```{r, fig.height = 10, fig.width = 7}
-### need to redefine the plotting function, because bootstrap is not available for spacing functions ###
-#PRE: Celltypes of interest, function to analyse, edge correction to perform
-#POST: plot of the metric
-plotSpacingMetric <- function(celltype_ls, ppls, fun, x,  edgecorr){
-  res_df <- metricResToDF(celltype_ls, ppls, fun)
-  #plot the curve
-  p <- ggplot(res_df, aes(x=res_df[[x]], y=res_df[[edgecorr]], col= type))+
-    geom_line()+
-    ylab(edgecorr) +
-    xlab(x) +
-    ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=res_df[[x]], y=theo), linetype = 'dashed')+
-    theme_light()
-  return(p)
-}
-## [MR: same comment as above: can we have a super-wrapper?]
-
-p_G <- plotSpacingMetric(celltype_ls, ppls, 'Gest', 'r', 'rs')
-
-p_F <- plotSpacingMetric(celltype_ls, ppls, 'Fest', 'r', 'rs')
-
-p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jest', 'r', 'rs')
+p_G <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Gest', 'rs', bootstrap = FALSE)
+p_F <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Fest', 'rs', bootstrap = FALSE)
+p_J <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Jest', 'rs', bootstrap = FALSE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -780,11 +736,9 @@ wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 There are inhomogeneous variants of the spacing functions explained above
 
 ```{r}
-p_G <- plotSpacingMetric(celltype_ls, ppls, 'Ginhom', 'r', 'bord')
-
-p_F <- plotSpacingMetric(celltype_ls, ppls, 'Finhom', 'r', 'bord')
-
-p_J <- plotSpacingMetric(celltype_ls, ppls, 'Jinhom', 'r', 'bord')
+p_G <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Ginhom', 'bord', bootstrap = FALSE)
+p_F <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Finhom', 'bord', bootstrap = FALSE)
+p_J <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Jinhom', 'bord', bootstrap = FALSE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -799,7 +753,7 @@ Next to the NN distance, we can estimate the *orientation* of the neighbours, wh
 
 
 ```{r}
-p <- plotSpacingMetric(celltype_ls, ppls, 'nnorient', 'phi', 'bordm')
+p <- plotMetric(zstack_list, pp_ls, celltype_ls, 'phi', 'nnorient', 'bordm', bootstrap = FALSE)
 p
 ```
 
@@ -819,10 +773,13 @@ The same consideration about edge effects as for the $K$ (and related) functions
 
 ```{r, message=FALSE}
 #| label: load-data 2
-
+# redefine the pp here to be zstack 0.01
+pp <- pp_ls_complete[['0.01']]
 #subset the data to only look at sample ID 0.01
 sub_2CT = spe[, spe$sample_id == "0.01" & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
 (pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
+
+sub <- spe[, spe$sample_id == '0.01']
 #[MR: this above never gets used?]
 ```
 
@@ -831,6 +788,7 @@ In `spatstat`, a `mark` can basically take any value, discrete (as we have seen 
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
+
 genes <- c('Slc18a2', 'Esr1', 'Pgr')
 gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
   data.frame %>% set_rownames(NULL)

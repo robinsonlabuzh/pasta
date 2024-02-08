@@ -560,16 +560,17 @@ ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) +
   theme_light() +
   ggtitle("Biplot of the LISA L curves of the OD mature cells")
 
-ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC1)) + 
+p1 <- ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC1)) + 
   scale_color_continuous(type = "viridis") +
   theme_light() +
   geom_point()
 
-ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) + 
+p2 <- ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) + 
   scale_color_continuous(type = "viridis") +
   theme_light() +
   geom_point()
 
+p1|p2
 ```
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.

@@ -289,7 +289,8 @@ plotCrossAll <- function(ppp, fun, edgecorr){
       theme_minimal()
   })
   
-  p <- wrap_plots(plot_list, nrow = ceiling(length(plot_list)/3), ncol = 3) + 
+  p <- wrap_plots(plot_list, nrow = sqrt(length(plot_list)), 
+                  ncol = sqrt(length(plot_list))) + 
     plot_layout(guides = "collect") & theme(legend.position='bottom')
   return(p)
 }
@@ -514,10 +515,12 @@ plotMarkCorr <- function(pp, edgecorr = "iso") {
         theme_minimal()
 }
 
-plotMarkCorr(pp)
+plotMarkCorr(pp_sel)
 ```
 
-We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. The curve never crosses the dashed line at 1, which means that it is generally more likely to find points of the same type at any distance than expected by chance.
+We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. 
+
+> The curve never crosses the dashed line at 1, which means that it is generally more likely to find points of the same type at any distance than expected by chance.
 
 <!-- ### I-function  -->
 

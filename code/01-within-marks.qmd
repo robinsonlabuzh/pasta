@@ -62,7 +62,7 @@ setRiprasWindows <- function(pp){
   return(pp)
 }
 #the entire point patterns with the ripras windows
-pp_ls_complete <- lapply(pp_ls, setRiprasWindows)
+pp <- lapply(pp_ls, setRiprasWindows)
 
 separateMarks <- function(pp){
   #split the multitype point process into several single type processes
@@ -70,7 +70,7 @@ separateMarks <- function(pp){
   return (ppls)
 }
 #the point patterns separated by their marks
-pp_ls <- lapply(pp_ls_complete, separateMarks)
+pp_ls <- lapply(pp, separateMarks)
 ```
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE}
@@ -117,9 +117,9 @@ A point process is called isotropic, if its statistical properties are invariant
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window [@baddeleySpatialPointPatterns, pp. 218].
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window [@baddeleySpatialPointPatterns, pp. 218]. This means it is stationary in all statistical properties, first-order properties (intensity) and second-order properties (e.g. correlation).
 
-#### Correlation stationarity
+#### Correlation stationarity / Second-order stationarity
 
 It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the correlation metrics only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns, pp. 689].
 
@@ -155,7 +155,7 @@ permutation_test <- function(pp, mark, split, minpoints) {
   #p-value of the inhomogeneity test
   print(paste0(mark,' inhomogeneity test ', res.inhom$p.value))
 }
-lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp_ls_complete[['0.01']], x, split = 3, minpoints = 10))
+lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp[['0.01']], x, split = 3, minpoints = 10))
 ```
 
 The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
@@ -207,7 +207,7 @@ In quadrat counting, all points falling into a given quadrat are counted. This g
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE, eval=FALSE}
 Q5 <- quadratcount(pp_ls[['0.01']], nx=8, ny=8)
-plot(unmark(pp_ls_complete[['0.01']]), main='Unmarked Point Pattern Quadrats')
+plot(unmark(pp[['0.01']]), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
 ```
 
@@ -225,7 +225,7 @@ Alternatively, we can inspect departures from the hypothesis that points were ge
 ```{r}
 # select marks
 selection <- c('OD Mature', 'Ependymal', 'Microglia')
-pp_sel <-  subset(pp_ls_complete[['0.01']], marks %in% selection, drop = TRUE)
+pp_sel <-  subset(pp[['0.01']], marks %in% selection, drop = TRUE)
 
 f1 <- pValuesHotspotMarks(pp_sel)
 
@@ -294,79 +294,70 @@ g(r) = \frac{K'(r)}{2\pi r},
 $$
 
 where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius.
-<!-- 
-#### Estimator of the pair correlation function
-
-[MR: just wondering .. is the section important?]
-
-The pair correlation function can be estimated via kernel smoothing. In very large datasets the pair correlation function can be approximated using histogram-based methods [1] according to:
-
-$$
-\hat{g}(r) = \frac{|W|}{2 \pi r n (n-1)} \sum_{i=1}^n\sum_{j=1, j \neq i}^n \kappa_h(r-d_{ij})e_{ij}(r),
-$$
-
-where $\kappa$ is the smoothing kernel. $\kappa_h(x)$ is a rescaled version of the template kernel $\kappa$
-
-$$
-\kappa_h(x) = \frac{1}{h}\kappa\left(\frac{x}{h}\right)
-$$
-
-In the above, $\kappa$ can be any probability density over the real line with mean 0. Usually, the Epanechinikov kernel is used as smoothing kernel with half-width $w$ [1].
--->
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
 #| warning: false
+
 #PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
 #POST: result of the metric
-metricRes <- function(zstack, ppls, celltype, fun, bootstrap){
-  if(bootstrap){
-    metric.res <- lohboot(ppls[[zstack]][[celltype]], fun = fun)
+metricRes <- function(plot_by, pp, celltype, fun, bootstrap, continuous, f){
+  if(continuous){
+    pp <- subset(pp, select = plot_by)
   }
   else{
-    metric.res <- do.call(fun, args = list(X=ppls[[zstack]][[celltype]]))
+    pp_sel <- pp[[plot_by]]
+    pp <- subset(pp_sel, marks == celltype)
+  }
+  if(bootstrap){
+    metric.res <- lohboot(pp, fun = fun, f = f)
+  }
+  else{
+    metric.res <- do.call(fun, args = list(X=pp, f=f))
   }
   metric.res$type <- celltype
-  metric.res$zstack <- zstack
+  metric.res$plot_by <- plot_by
   return(metric.res)
 }
 
 #PRE: celltypes, function to calculation and edge correction method
 #POST: dataframe of 
-metricResToDF <- function(zstack_ls, celltype, ppls, fun, edgecorr, bootstrap){
-  lapply(zstack_ls, function(u) {
-    metricRes(u, fun = fun, ppls = ppls, celltype = celltype, bootstrap)  %>%
+metricResToDF <- function(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f){
+  lapply(plot_by, function(u) {
+    metricRes(u, fun = fun, pp = pp, celltype = celltype, bootstrap, continuous, f)  %>%
       as.data.frame()
   }) %>% bind_rows
 }
 
-# [MR: try to write the above a litte more compactly]
+# [MR: try to write the above a little more compactly]
 
 #PRE: Celltypes of interest, function to analyse, edge correction to perform
 #POST: plot of the metric
-plotMetric <- function(zstack_ls, ppls, celltype, x, fun, edgecorr, bootstrap){
-  res_df <- metricResToDF(zstack_ls, celltype, ppls, fun, edgecorr, bootstrap)
-  #plot the curve
-  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], col= (zstack)))+
-    geom_line() +
-    {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)}+
-    ggtitle(paste0(fun, '-function'))+
-    geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed")+
-    ylab(edgecorr) +
-    scale_color_manual(name='Point Processes',
-                     breaks=c('-0.29', '0.01',
-                              '0.06', 'Poisson'),
-                     values=c('-0.29'='red',
-                              '0.01'='dark green',
-                              '0.06'='blue', 'Poisson'='black'))+
-    theme_light()
-    return(p)
+plotMetric <- function(plot_by, pp, celltype = NULL, x, fun, edgecorr, bootstrap = FALSE, continuous = FALSE, f = NULL){
+  #calculate the metric and store as dataframe
+  res_df <- metricResToDF(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f)
+  #plot the curves
+  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], col= (plot_by)))+
+      geom_line() +
+      {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)}+
+      ggtitle(paste0(fun, '-function'))+
+      geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed")+
+      ylab(edgecorr) +
+      # scale_color_manual(name='Point Processes',
+      #                  breaks=c('-0.29', '0.01',
+      #                           '0.06', 'Poisson'),
+      #                  values=c('-0.29'='red',
+      #                           '0.01'='dark green',
+      #                           '0.06'='blue', 'Poisson'='black'))+
+      theme_light()
+  
+  return(p)
 }
 
 celltype_ls <- "Ependymal"
-p_K <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
-p_L <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
-p_g <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
+p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
+p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
+p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
@@ -410,9 +401,9 @@ where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an est
 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-p_K <- plotMetric(zstack_list, pp_ls, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
-p_L <- plotMetric(zstack_list, pp_ls, celltype_ls,'r', 'Linhom', 'iso', bootstrap = TRUE)
-p_g <- plotMetric(zstack_list, pp_ls, celltype_ls,'r', 'pcfinhom', 'border', bootstrap = TRUE)
+p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
+p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r', 'Linhom', 'iso', bootstrap = TRUE)
+p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r', 'pcfinhom', 'border', bootstrap = TRUE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -445,8 +436,8 @@ To circumvent this local scaling, we can assume that the process is subdivided i
 Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns pp. 246-247].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
-p_K <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Kscaled', 'iso', bootstrap = FALSE)
-p_L <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Lscaled', 'iso', bootstrap = FALSE)
+p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kscaled', 'iso', bootstrap = FALSE)
+p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lscaled', 'iso', bootstrap = FALSE)
 #p_g <- plotScaledMetric(zstack_list,celltype_ls, pp_ls, 'pcfscaled', 'iso')$p
 ```
 
@@ -494,7 +485,7 @@ p <- ggplot(dfm, aes(x=r, y=value, group=variable, colour=sel)) +
   theme(legend.position = "none") +
   theme_light()
 
-ppdf <- as.data.frame(pp_ls_complete[['0.01']]) %>% filter(marks=="OD Mature")
+ppdf <- as.data.frame(pp[['0.01']]) %>% filter(marks=="OD Mature")
 ppdf$sel <- get_sel$sel # assume they are in same order
 
 q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) + 
@@ -725,9 +716,9 @@ $$
 For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process  [@baddeleySpatialPointPatterns pp. 274-276].
 
 ```{r, fig.height = 10, fig.width = 7}
-p_G <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Gest', 'rs', bootstrap = FALSE)
-p_F <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Fest', 'rs', bootstrap = FALSE)
-p_J <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Jest', 'rs', bootstrap = FALSE)
+p_G <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Gest', 'rs', bootstrap = FALSE)
+p_F <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Fest', 'rs', bootstrap = FALSE)
+p_J <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Jest', 'rs', bootstrap = FALSE)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -741,9 +732,9 @@ wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 There are inhomogeneous variants of the spacing functions explained above
 
 ```{r}
-p_G <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Ginhom', 'bord', bootstrap = FALSE)
-p_F <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Finhom', 'bord', bootstrap = FALSE)
-p_J <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Jinhom', 'bord', bootstrap = FALSE)
+p_G <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Ginhom', 'bord')
+p_F <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Finhom', 'bord')
+p_J <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Jinhom', 'bord')
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -758,7 +749,7 @@ Next to the NN distance, we can estimate the *orientation* of the neighbours, wh
 
 
 ```{r}
-p <- plotMetric(zstack_list, pp_ls, celltype_ls, 'phi', 'nnorient', 'bordm', bootstrap = FALSE)
+p <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'phi', 'nnorient', 'bordm', bootstrap = FALSE)
 p
 ```
 
@@ -779,7 +770,7 @@ The same consideration about edge effects as for the $K$ (and related) functions
 ```{r, message=FALSE}
 #| label: load-data 2
 # redefine the pp here to be zstack 0.01
-pp <- pp_ls_complete[['0.01']]
+pp <- pp[['0.01']]
 #subset the data to only look at sample ID 0.01
 sub_2CT = spe[, spe$sample_id == "0.01" & spe$cluster_id %in% c("Astrocyte", "Inhibitory")]
 (pp_2CT = .ppp(sub_2CT, marks = "cluster_id"))
@@ -815,7 +806,7 @@ pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
 ```
 
 We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of Esr1 and Pgr are positively associated, indicating a dependence of these two marks. 
-
+<!--
 The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel. This estimated kernel can be used for visual inspection of the dataset.
 
 ```{r}
@@ -823,13 +814,18 @@ ppsmooth <- Smooth(pp, bw.smoothppp)
 plot(ppsmooth)
 ```
 From the estimated intensity plot, we can see that the expression of the marker genes is clearly inhomogeneous. [MR: what does it mean that marker gene expression is inhomogeneous .. I thought inhomogeneity had to do with the location of points?!]
+-->
 
-NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwith for the Gaussian kernel. [MR: wouldn't a small bandwidth use also the mark at the spatial location too, in addition to it's neighbours?]
+NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwidth for Gaussian kernel smoothing [@baddeleySpatialPointPatterns pp. 642]. 
 
 ```{r}
 plot(nnmark(pp))
 ```
+
+We see that there is e.g. a clear spatial structure in the expression of e.g. `Esr1`. It shows a half moon shape.
+<!--
 We can use the average value of neighbouring points to predict the expression of a gene at each point. We can then plot the actual marks versus the fitted values to detect anomalies. For example, `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This gives further indication of structure in the gene expression.[MR: I don't really understand the interpretation here.]
+
 
 ```{r}
 mfit <- Smooth(pp, bw.smoothppp, at="points")
@@ -839,6 +835,7 @@ plot(setmarks(pp, res))
 ```
 
 [MR: I don't really have a good intuition of what these plots mean, but I think the plots are anyways hard to interpret. The scale is a bit weird .. I think the point size has some meaning, but that's really hard to see. Colours would be better, but I'm not even sure these plots tell us much interesting. Also, since we are taking differences between values and a smooth fit, the scale of the data becomes important; are we on a "good" scale?]
+-->
 
 ## Summary functions for continuous marks
 
@@ -846,63 +843,39 @@ As in the discrete case, summary functions assume that the point process is stat
 
 ### Mark correlation function
 
-The mark correlation function measures the dependence between two marks for two points at distance $r$. It is not a correlation in the classical sense, since it cannot take non-negative values [MR: was this a typo? is this correct?]. Instead, a value of 1 indicates no correlation between the marks [MR: does this mean that negative correlation is not allowed? Or, would it appear as 'less than 1'?]. The generalized mark correlation function is given by:
+The mark correlation function measures the dependence between two marks for two points at distance $r$. It is applicable to stationary point processes with marks. It is not a correlation in the classical sense, since it cannot take negative values [MR: was this a typo? is this correct?]. Instead, a value of 1 indicates no correlation between the marks [MR: does this mean that negative correlation is not allowed? Or, would it appear as 'less than 1'?]. The generalized mark correlation function is given by:
 
 $$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$
-where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value [MR: what are $u$ and $v$ in the formula above?]. For continuous non-negative marks, the canonical choice for $f$ is typically  $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [1].
+where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value [MR: what are $u$ and $v$ in the formula above?]. For continuous non-negative marks, the canonical choice for $f$ is typically  $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns pp. 644-645].
 
 ```{r}
-plot(markcorr(pp))
+plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'markcorr', edgecorr = 'iso', continuous = TRUE)
 ```
 
-[MR: maybe we should create our own plot here? do we need both 'iso' and 'trans' .. is there any info that is represented in the scale of the y-axis? Put all 3 genes on one plot?]
-
-We can compare the mark correlation function to a pointwise simulation envelope in which we generate 5 simulations of random labeling.  
-```{r}
-ppEsr1 <- subset(pp, select = 'Esr1')
-markcorr.Esr1 <- envelope(ppEsr1, markcorr, nsim=10)
-
-plot(markcorr.Esr1)
-```
-
-The plot indicates that the mark correlation function is significantly different from the random case. The positive association of expression of the Esr1 gene declines with distance. This is consistent with clustering we saw in the residual plot above. 
-
-<!-- We can calculate the cross correlation function between the different gene expression measurments, the diagonal is equivalent to `markcorr` -->
-
-<!-- ```{r} -->
-<!-- mc <- markcrosscorr(pp) -->
-<!-- ``` -->
-
-
-<!-- ```{r} -->
-<!-- par(mar = c(1, 1, 1, 1)) -->
-<!-- plot(mc) -->
-<!-- ``` -->
+From this plot we show that all genes show a positive correlation at small distances which decline with increasing radius $r$. The association is strongest for the Slc18a2 gene. We can calculate simulation envelopes to estimate the significance of this association. This is not shown for brevity.
 
 ### Mark-weighted $K$-function
 
-The mark-weigthed $K$-function is a generalization of the $K$-function in which the contribution from each pair of points is weighted by a function of their respective marks. The mark-weighted $K$-function is given by:
+The mark-weigthed $K$-function is a generalization of the $K$-function in which the contribution from each pair of points is weighted by a function of their respective marks. It is given by:
 
 $$K_f(r) = \frac 1  \lambda \frac{C_f(r)}{E[ f(M_1, M_2) ]},$$
 where:
 
 $$ C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1\{0 < ||u - x|| \le r\} \;  \big| \; u \in X \right], $$ 
 
-is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$, we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f(.,.)$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M, M′)$ where $M, M′$ represent independent [MR: note mix of M1, M2 .. and M, M'], identically distributed random points with the same distribution as the mark of a randomly chosen point [1].
+is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$, we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f(.,.)$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M_1, M_2)$ where $M_1, M_2$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point [@baddeleySpatialPointPatterns pp. 646-647].
 
-In the scenario of random labeling [MR: what does random labeling mean?], the mark-weighted $K$-function corresponds to Ripley's $K$-function.    
+In the scenario of random labeling, so where the labels or in this case marks are distributed randomly, the mark-weighted $K$-function corresponds to the standard Ripley's $K$-function.    
 
-Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. 
+Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we weigh each interaction between points by the product of the continuous marks of both points.
 
 ```{r}
-ppEsr1 <- subset(pp, select = 'Esr1')
-
-K.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2})
-plot(K.Esr1L)
+plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'Kmark', edgecorr = 'iso', continuous = TRUE, f = function(m1,m2){m1*m2})
 ```
-It is important to note that theoretical value is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. 
 
-Here we will compare the $L$-functions, which are variance-stabilized $K$-functions.
+It is important to note that theoretical value is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues.
+
+Here we will compare the $L$-functions weighted by the mark of the gene Esr1 and the unmarked $L$-function [@baddeleySpatialPointPatterns pp. 646-647]. 
 
 ```{r}
 L.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2}, returnL = TRUE)
@@ -910,15 +883,12 @@ Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
 plot(eval.fv(L.Esr1L - Lest.ppEsr1))
 ```
 
-As for other functions, we can calculate a simulation envelope for the mark-weighted K-function to get confidence intervals [1].
+We note that the difference between $L$-function weighted by the expression of Esr1 minus the unmarked $L$-function is positively different to the poisson difference, meaning that the expression of the continuous mark Esr1 is correlated among itself. 
 
-```{r}
-plot(envelope(ppEsr1, fun=Kmark, returnL=TRUE, nsim=50))
-```
 
-[MR: all these plots need an interpretation, I think.]
+# Summary
 
-[MR: do we need a summary section, just to remind the reader all the ground we covered?]
+In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be discrete (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
 
 # Appendix
 

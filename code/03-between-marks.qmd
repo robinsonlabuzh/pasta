@@ -32,16 +32,15 @@ sub <- spe[, spe$sample_id == "0.01"]
 
 ## Multitype and Multivariate viewpoint
 
-A pattern with multiple types of points can be seen in different ways. One the one hand the *multitype approach* assumes that the points $x$ were recorded together with with their labels $m$ and we assume that they were generated at the same time The locations and labels therefore have a joint distribution $P(X,M)$. On the other hand one can assume that the pattern with multiple types of points is a combination of several distinct point patterns, one for each type of point. This is the *multivariate approach* and the different point patterns form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns, pp. 565-567]:
+A pattern with multiple type of points, e.g. cell types, can be seen in different ways. One the one hand, the **multitype approach** assumes that the points $x$ were recorded together with with their labels $m$ and that they were generated at the same time. The locations and labels therefore have a joint distribution $P(X,M)$. On the other hand one can assume that the pattern with multiple types of points is a combination of several distinct point patterns, one for each type of point. This is the **multivariate approach** and the different point patterns $A$ and $B$ form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns, pp. 565-567]:
 
 - complete spatial randomness and independence (CSRI): the points are distributed at random; the type of each points is randomly allocated; independence between points of different types; allocation of the types independently of the other points and of its location.
 - random labeling: each point is assigned a type at random independently of its location
-- independence of components that the points of different types are independent of each other.
+- independence of components:  the points of different types are independent of each other.
 
+Apart from CSRI is is also important for the analysis if we can assume stationarity, i.e. the distribution of the points is the same everywhere in the window.
 
-The other important question is if we can assume stationarity, i.e., the distribution of the points is the same everywhere in the window.
-
-For simplicity, we will focus on three cell types of our point pattern: Ependymal, OD Mature and Microglia. This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the total unmarked pattern.
+For simplicity, we will focus on three cell types of our point pattern: Ependymal, OD Mature and Microglia. This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the pattern.
 
 ```{r}
 marks(pp) <- factor(marks(pp))
@@ -120,8 +119,6 @@ The `relrisk` function further gives us the dominant mark for different regions 
 ```{r}
 #| fig-width: 10
 #| fig-height: 10
-#| eval: false
-#| include: false
 rpd <- relrisk(pp_sel, diggle = TRUE)
 dom <- im.apply(rpd, which.max)
 dom <- eval.im(factor(dom, levels = seq_along(levels(unique(marks(pp_sel)))),
@@ -234,7 +231,7 @@ plot(dom,las=2,main="Dominant mark")
 
 To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by [@dixonNearestneighborContingencyTable2002]. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
 
-The measure of segregation is defined as 
+The measure of segregation $S$ is defined in [@dixonNearestneighborContingencyTable2002] as 
 
 $$S_{i,j}= \frac{\log[(N_{i,j}/(N_i−N_{i,j})]}{[(N_i−1)/(N−N_i)]}$$
 where $N_i$ is the number of individuals $i$, $N_{i,j}$ is the number of individuals of type $i$ with a nearest neighbor of type $j$, and $N$ is the total number of individuals. 
@@ -251,7 +248,7 @@ out$tablaZ %>%
   select(-`  p-val.Nobs`)
 ```
 
-In this table we see that most Ependymal cells are very clustered, while Microglia are more evenly distributed. Further we see that it is less likelt to find a Ependymal cells next to a OD mature cells than by chance. 
+In this table we see that most Ependymal cells are very clustered, while Microglia are more evenly distributed. Further we see that it is less likely to find a Ependymal cells next to a OD mature cells than by chance. 
 
 OD Mature cells show this interesting characteristic that they are clustered in some parts of the tissue and more evenly distributed in other parts of the structure. This characteristic is not visible in the table. The statistic also considers only the nearest neighbour and ignores neighbours that are further away. 
 
@@ -276,6 +273,7 @@ First, we plot an overview over the cross K function for the different types.
 #| message: false
 #| results: hide
 plotCrossAll <- function(ppp, fun, edgecorr){
+  nMarks <- length(unique(marks(ppp)))
   Fall <- alltypes(ppp, fun)
   
   # Create a list of ggplot objects using lapply
@@ -289,40 +287,39 @@ plotCrossAll <- function(ppp, fun, edgecorr){
       theme_minimal()
   })
   
-  p <- wrap_plots(plot_list, nrow = sqrt(length(plot_list)), 
-                  ncol = sqrt(length(plot_list))) + 
+  p <- wrap_plots(plot_list, ncol = nMarks) + 
     plot_layout(guides = "collect") & theme(legend.position='bottom')
   return(p)
 }
 ```
 
-```{r}
-#| include: false
-#| eval: false
-plotCrossAll <- function(ppp, fun, edgecorr){
-  Fall <- alltypes(ppp, fun)
-  df.all <- data.frame()
-  
-  for (l in Fall[["fns"]]) {
-    attr <- paste(attributes(l)$ylab[1])
-    df <- data.frame(l)
-    df$Function <- attr
-    df$from <- strsplit(attr, split = '\"')[[1]][4]
-    df.all <- rbind(df.all, df)
-  }
-  
-  p <- ggplot(df.all, aes(x = r, y = iso, color = Function)) +
-    geom_line(linewidth = 1) +
-    geom_line(aes(x = r, y = theo), 
-              linetype = "dotted", linewidth = 1, color = "black") +
-    geom_line() +
-    facet_wrap(~from) +
-    theme_minimal() +
-    scale_color_brewer(palette = "Set1")
-  return(p)
-}
+<!-- ```{r} -->
+<!-- #| include: false -->
+<!-- #| eval: false -->
+<!-- plotCrossAll <- function(ppp, fun, edgecorr){ -->
+<!--   Fall <- alltypes(ppp, fun) -->
+<!--   df.all <- data.frame() -->
 
-```
+<!--   for (l in Fall[["fns"]]) { -->
+<!--     attr <- paste(attributes(l)$ylab[1]) -->
+<!--     df <- data.frame(l) -->
+<!--     df$Function <- attr -->
+<!--     df$from <- strsplit(attr, split = '\"')[[1]][4] -->
+<!--     df.all <- rbind(df.all, df) -->
+<!--   } -->
+
+<!--   p <- ggplot(df.all, aes(x = r, y = iso, color = Function)) + -->
+<!--     geom_line(linewidth = 1) + -->
+<!--     geom_line(aes(x = r, y = theo),  -->
+<!--               linetype = "dotted", linewidth = 1, color = "black") + -->
+<!--     geom_line() + -->
+<!--     facet_wrap(~from) + -->
+<!--     theme_minimal() + -->
+<!--     scale_color_brewer(palette = "Set1") -->
+<!--   return(p) -->
+<!-- } -->
+
+<!-- ``` -->
 
 
 ```{r}  
@@ -335,7 +332,7 @@ plotCrossAll(pp_sel, "Kcross.inhom", "iso")
 
 The diagonal of the cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
 
-It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns, 5.7.4, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaces, which seems counter intuitive. However, this is the result of the pattern being inhomogneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. Furhtermore, the estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns, p. 605].
+It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns, 5.7.4, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. Furthermore, the estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns, p. 605].
 
 In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
 
@@ -436,7 +433,7 @@ p_epen_od + p_epend_micro
 
 ### Mark connection function
 
-The mark connection function is essentially the cross pair-correlation function, i.e. the generalization of the pair correlation function to multitype point processes, divided by the unmarked pair-correlation function. It can be interpreted as the conditional probability that two points a distance r apart have labels of type 1 and of type 2, given the presence of those points [@baddeleySpatialPointPatterns]. 
+The mark connection function is the cross pair-correlation function, i.e. the generalization of the pair correlation function to a multitype point processes, divided by the unmarked pair-correlation function. It can be interpreted as the conditional probability that two points a distance $r$apart have labels of type A and of type B, given the presence of those points [@baddeleySpatialPointPatterns, pp. 596-597]. 
 
 ```{r}
 #| fig-width: 15
@@ -447,27 +444,27 @@ plotCrossAll(pp_sel, "markconnect", "iso") +
 
 <!-- [MR: wondering .. should these above all be put on the same scale? And, same question as above. Could we think about a more compact representation?] -->
 
-The dashed lines indicate expected values under random labeling. The values measure dependence (or association) between the different labelled points. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it is the case for the Microglia cells.
+The dashed lines indicate expected values under random labeling. The values measure dependence (or association) between the different labelled points. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it it could be the case for the Microglia cells. Furthermore, as the calculation is based on the $K$ function, the mark connection function assumes homogenity.
 
 ### Cross F-function (empty space function), cross G-function (Nearest-neighbor function) and cross J-function
 
 The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
 
-$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r\}$$.
+$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r\}.$$
 
 The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
 
-$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})$$.
+$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u}).$$
 
 If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary.
 
-There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$.
+There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$ [@baddeleySpatialPointPatterns, p. 597 ff].
 
 The cross J-function is defined as:
 
 $$J_{ij}(r) = \frac{1-G_{ij}(r)}{1-F_{j}(r)}$$
 
-and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the G-function is equivalent to the F-function and the J-function is equal to 1 [@baddeleySpatialPointPatterns]. 
+and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the G-function is equivalent to the F-function and the J-function is equal to 1 [@baddeleySpatialPointPatterns, p. 597 ff]. 
 
 <!-- ### Cross J-function  -->
 
@@ -482,7 +479,7 @@ and summarizes the interpoint dependence between type $i$ and $j$. Under the hyp
 
 ### Dot functions
 
-For each K-, G- and J- function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For expample, the K-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns]. 
+For each K-, G- and J- function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For expample, the K-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns, p. 600 ff]. 
 
 ```{r}
 #| fig-width: 8
@@ -500,7 +497,7 @@ In our original dataset, we have a large number of different marks. We picked th
 
 The Mark or Type Equality function for a stationary multitype point process measures the correlation between types of two points separated by distance r. It is the sum of the mark connection function of all pairs of points of the same type.
 
-If k < 1, points at distance r are less likely than expected to be of the same type. If > 1, they are more likely to be of the same type. The value 1 indicates a lack of correlation [@baddeleySpatialPointPatterns].
+If k < 1, points at distance r are less likely than expected to be of the same type. If > 1, they are more likely to be of the same type. The value 1 indicates a lack of correlation [@baddeleySpatialPointPatterns, p. 603 ff].
 
 ```{r}
 #| fig-width: 5
@@ -518,9 +515,7 @@ plotMarkCorr <- function(pp, edgecorr = "iso") {
 plotMarkCorr(pp_sel)
 ```
 
-We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. 
-
-> The curve never crosses the dashed line at 1, which means that it is generally more likely to find points of the same type at any distance than expected by chance.
+We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. The curve never crosses the dashed line at 1, which means that it is generally more likely to find points of the same type at any distance than expected by chance.
 
 <!-- ### I-function  -->
 
@@ -552,16 +547,16 @@ In a multitype point process, there are usually two interesting hypotheses:
 - random-labeling hypothesis: the allocation of labels to the points is random
 - independent component hypothesis: there is independence between different type of points
 
-If both statments are correct, the point pattern is considered to be complete spatially random and independent (CSRI), the marked analog to complete spatial randomness (CSR) [@baddeleySpatialPointPatterns].
+If both statments are correct, the point pattern is considered to be complete spatially random and independent (CSRI), the marked analog to complete spatial randomness (CSR) [@baddeleySpatialPointPatterns, p. 605 ff].
 
 ## Testing random labelling
 
-The random labeling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Testing for random labeling can be done using permutation test, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset [@baddeleySpatialPointPatterns].
+The random labeling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Testing for random labeling can be done using permutation test, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset [@baddeleySpatialPointPatterns, p. 609 ff].
 
 ## Testing the indepenence of components assumption
 
 The i-to-j functions are useful to test the independence of different subprocesses. If the processes of type i and j are independent, then
-$K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is a need to handle edge effects [@baddeleySpatialPointPatterns].
+$K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, randomization tests can be used in which simulated patterns from the dataset are generated and randomly split into subpatterns. These are then compared to the null hypothesis in which all subpatterns should be statistically equivalent to the original. However, this approach assumes stationarity and there is a need to handle edge effects [@baddeleySpatialPointPatterns, p. 606 ff].
 
 ```{r}
 #| echo: true

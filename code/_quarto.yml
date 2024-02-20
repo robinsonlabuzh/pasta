@@ -3,6 +3,8 @@ project:
   execute-dir: file
   output-dir: ../docs
 
+bibliography: ../misc/PASTA.bib
+
 execute: 
   cache: false
   warning: false
@@ -15,7 +17,12 @@ format:
     toc-depth: 3
     standalone: true
     embed-resources: true
+    code-fold: true
+    code-summary: "Show the code"
     
+editor_options: 
+  chunk_output_type: console
+
 website:
   page-navigation: true
   navbar:
@@ -25,11 +32,11 @@ website:
         file: 00-home.qmd
       - text: "Setup"
         file: 00-setup.qmd
-      - sidebar:cellbased
-      - sidebar:spots 
+      - sidebar:imagebased
+      - sidebar:spotbased
   sidebar:
-    - id: cellbased 
-      title: "Cell-based Analysis"
+    - id: imagebased 
+      title: "Image-based Analysis"
       style: "docked"
       background: light
       collapse-level: 3
@@ -49,7 +56,7 @@ website:
         - text: "Multivariate Lattice Methods"
           file: 04-multivar-irregular-lattices.qmd
           
-    - id: spots
+    - id: spotbased
       title: "Spot-based Analysis"
       style: "docked"
       background: light

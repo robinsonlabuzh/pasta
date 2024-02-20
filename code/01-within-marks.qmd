@@ -31,27 +31,27 @@ pp_ls <- lapply(zstack_list, selectZstacks, spe)
 names(pp_ls) <- zstack_list
 ```
 
-The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeley2014package]. This chapter relies heavily on both publications.
+The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns2015]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeleySpatstatPackageAnalyzing2005]. This chapter relies heavily on both publications.
 
 ## Concepts and Definitions of Point Processes
 
 ### Point Process
 
-In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns, pp. 127].
+In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
 
-When considering a pattern with $m$ multiple types, as we do in the [@moffitt2018molecular] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process and thus depend on each other. In the multivariate framework we assume that the types stem from independent point processes and therefore we can consider dependencies of one type alone. Whether or not the underlying point processes are independent depends on the biological question. If we analyse two celltypes in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider the point processes as independent [@baddeleySpatialPointPatterns, pp. 565].
+When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process and thus depend on each other. In the multivariate framework we assume that the types stem from independent point processes and therefore we can consider dependencies of one type alone. Whether or not the underlying point processes are independent depends on the biological question. If we analyse two celltypes in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider the point processes as independent [@baddeleySpatialPointPatterns2015, pp. 565].
 
 In the following we will often compare the distribution of mature oligodendrocytes (OD mature cells) across different z-slices of the same tissue. We assume these slices to be enough far away to be considered independent. Therefore, we are in a multivariate setting. Sometimes, we show examples of methods for one celltype in a slice. This would correspond to a univariate setting.
 
 ### Observation Windows
 
-The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inference on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns, pp. 144-145].
+The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inference on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 144-145].
 
-There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns, pp. 144-145].
+There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns2015, pp. 144-145].
 
-In both cases it is important to understand the direction of the bias. If the unknown window is estimated to be smaller than the true window, we underestimate the window. This then again leads to an overestimation of the density of points and to other characteristics of the pattern. Therefore, an underestimation of the window size is more concerning than a slight overestimation [@baddeleySpatialPointPatterns, pp. 144-145].
+In both cases it is important to understand the direction of the bias. If the unknown window is estimated to be smaller than the true window, we underestimate the window. This then again leads to an overestimation of the density of points and to other characteristics of the pattern. Therefore, an underestimation of the window size is more concerning than a slight overestimation [@baddeleySpatialPointPatterns2015, pp. 144-145].
 
-In our example dataset we analyse the mouse preoptic hypothalamus [@moffitt2018molecular]. This is a tissue of the mouse brain that is cut out of a bigger context. The lower boundary is the end of the tissue whereas the upper three boundaries are a technical boundary. Therefore, our example is a mixture between window sampling and the small world model. In order to decrease the bias of the tissue boarder, we use the Ripley-Rasson estimate of a spatial domain to estimate the sampling window.
+In our example dataset we analyse the mouse preoptic hypothalamus [@moffittMolecularSpatialFunctional2018]. This is a tissue of the mouse brain that is cut out of a bigger context. The lower boundary is the end of the tissue whereas the upper three boundaries are a technical boundary. Therefore, our example is a mixture between window sampling and the small world model. In order to decrease the bias of the tissue boarder, we use the Ripley-Rasson estimate of a spatial domain to estimate the sampling window.
 
 ```{r}
 setRiprasWindows <- function(pp){
@@ -83,11 +83,11 @@ dev.off()
 
 ### Complete Spatial Randomness
 
-Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely spatial random process is characterised by two properties, homogeneity and independence, as discussed below [@baddeleySpatialPointPatterns, pp. 132].
+Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely spatial random process is characterised by two properties, homogeneity and independence, as discussed below [@baddeleySpatialPointPatterns2015, pp. 132].
 
 #### Homogeneity
 
-"Homogeneity [...] means that the expected number of points falling in a region B should be proportional to its area |B|"  [@baddeleySpatialPointPatterns, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns, pp. 132-133]. :
+"Homogeneity [...] means that the expected number of points falling in a region B should be proportional to its area |B|"  [@baddeleySpatialPointPatterns2015, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns2015, pp. 132-133]. :
 
 $$
 \mathbb{E}[X\cap B] = \lambda |B|.
@@ -102,11 +102,11 @@ $$
 \mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
 \label{eq:poisson_process}
 $$
-where $k = \lambda |B|$ [@baddeleySpatialPointPatterns, pp. 133].
+where $k = \lambda |B|$ [@baddeleySpatialPointPatterns2015, pp. 133].
 
 ### Inhomogeneous Poisson Process
 
-A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns, pp. 138]. 
+A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns2015, pp. 138]. 
 
 $$
 \mu = \int_{B} \lambda(u) du.
@@ -115,21 +115,21 @@ $$
 
 ### Isotropy
 
-A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [@baddeleySpatialPointPatterns, pp. 147].
+A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [@baddeleySpatialPointPatterns2015, pp. 147].
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns, pp. 218].
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218].
 
 #### Correlation stationarity / Second-order stationarity
 
-It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the correlation metrics only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns, pp. 689].
+It is important to note that the metrics designed for inhomogeneous point processes should not be applied to every spatially inhomogeneous point process. They should only be applied to point processes that are "correlation stationary", which specifies the correlation metrics only depends on the relative position in subpatterns of the point process, i.e., that estimates of the inhomogeneous metric should be similar in different subquadrats of the point pattern [@baddeleySpatialPointPatterns2015, pp. 689].
 
 ### Local scaling
 
-If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns, pp. 246-247].
+If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns2015, pp. 246-247].
 
-We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Furthermore, the outcome of the permutation test depends heavily on the choice of the quadrats. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns, pp. 689-693].
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Furthermore, the outcome of the permutation test depends heavily on the choice of the quadrats. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns2015, pp. 689-693].
 
 ```{r, warning=FALSE, eval = FALSE}
 permutation_test <- function(pp, mark, split, minpoints) {
@@ -175,11 +175,11 @@ $$
 \label{eq:average_intensity}
 $$
 
-As this is an average over the entire window, it only really makes sense for a homogeneous point process [@baddeleySpatialPointPatterns, pp. 157-160]
+As this is an average over the entire window, it only really makes sense for a homogeneous point process [@baddeleySpatialPointPatterns2015, pp. 157-160]
 
 #### Estimating Intensity
 
-For a homogeneous point process, the intensity can be estimated in a simplistic way: summing the individual intensities of the marks [@baddeleySpatialPointPatterns, pp. 161].
+For a homogeneous point process, the intensity can be estimated in a simplistic way: summing the individual intensities of the marks [@baddeleySpatialPointPatterns2015, pp. 161].
 
 ```{r, cache=FALSE}
 intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(intensity(pp))
@@ -195,7 +195,7 @@ intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
 
 #### Kernel Estimation
 
-In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns, pp. 168].
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns2015, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
 
 ```{r, fig.width=8, fig.height=8}
 pp_sel <-  subset(pp_ls[['0.01']]$`OD Mature`, drop = TRUE)
@@ -205,7 +205,7 @@ plot(Dens, main = 'Kernel Density (OD Mature cells)')
 
 #### Quadrat Counting
 
-In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [@baddeleySpatialPointPatterns, pp. 163].
+In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [@baddeleySpatialPointPatterns2015, pp. 163].
 
 ```{r, fig.width=12, fig.height=12, cache=FALSE, eval=FALSE}
 Q5 <- quadratcount(pp_ls[['0.01']], nx=8, ny=8)
@@ -213,7 +213,7 @@ plot(unmark(pp[['0.01']]), main='Unmarked Point Pattern Quadrats')
 plot(Q5, col='black', add=TRUE)
 ```
 
-Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns, pp. 164-165].
+Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns2015, pp. 164-165].
 
 ```{r, cache=FALSE}
 val <- quadrat.test(pp_ls[['0.01']]$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
@@ -222,7 +222,7 @@ val
 
 A p-value of `r val$p.value` indicates that the null hypothesis of irregularity can not be rejected strongly. Thus, the point pattern of oligodendrocyts is strongly irregular.
 
-Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types [@bullerAreasSpatialSegregation2020a].
+Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types [@bullerAreasSpatialSegregation2020].
 
 ```{r}
 # select marks
@@ -237,7 +237,7 @@ plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
 
 ### Testing for CSR
 
-Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR, here we show the use-case of the clark-evans test [@baddeleySpatialPointPatterns, pp. 165-166].
+Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR, here we show the use-case of the clark-evans test [@baddeleySpatialPointPatterns2015, pp. 165-166].
 
 ```{r, cache=FALSE}
 clarkevans.test(pp_ls[['0.01']]$`OD Mature`)
@@ -245,27 +245,27 @@ clarkevans.test(pp_ls[['0.01']]$`OD Mature`)
 
 ## Correlation
 
-Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points [@baddeleySpatialPointPatterns, pp. 199].
+Correlation, or more generally covariance, represents a second-order summary statistic and measures dependence between data points [@baddeleySpatialPointPatterns2015, pp. 199].
 
 ### Ripley's $K$
 
 #### Empirical Ripley's $K$
 
-In the framework of correlation analysis, we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. as a histogram. The histogram of this point process depends on the observation window $W$, thus the histogram can change significantly with a different window. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$  [@baddeleySpatialPointPatterns, pp. 203]
+In the framework of correlation analysis, we often look at distances $d_{ij} = ||x_i-x_j||$ of all points. It is then natural to look at the summary of these distances, $d_{ij}$, e.g. as a histogram. The histogram of this point process depends on the observation window $W$, thus the histogram can change significantly with a different window. Therefore, we look at the empirical distribution function of the distances $d_{ij}$ that are smaller or equal than a radius $r$  [@baddeleySpatialPointPatterns2015, pp. 203]
 
-What we actually measure here is "the average number of r-neighbours of a typical random point"  [@baddeleySpatialPointPatterns, pp. 204]. This number is still dependent on the size of the observation window so we can standardise it by the number of points and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function  [@baddeleySpatialPointPatterns, pp. 204]:
+What we actually measure here is "the average number of r-neighbours of a typical random point"  [@baddeleySpatialPointPatterns2015, pp. 204]. This number is still dependent on the size of the observation window so we can standardise it by the number of points and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function  [@baddeleySpatialPointPatterns2015, pp. 204]:
 
 $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\} e_{ij}(r)
 $$
 
-The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. However, using the empirical $K$ function assumes though that the point process has homogeneous intensity, which is often not the case for biological tissue  [@baddeleySpatialPointPatterns, pp. 204-205]. We will return to this issue below in the ``Correcting for Inhomogeneity``. The term $e_{ij}(r)$ is for edge correction. We will briefly cover this in ``Edge effects and their corrections for spatial metrics``
+The standardisation makes it possible to compare point patterns with different observation windows and with different numbers of points. However, using the empirical $K$ function assumes though that the point process has homogeneous intensity, which is often not the case for biological tissue  [@baddeleySpatialPointPatterns2015, pp. 204-205]. We will return to this issue below in the ``Correcting for Inhomogeneity``. The term $e_{ij}(r)$ is for edge correction. We will briefly cover this in ``Edge effects and their corrections for spatial metrics``
 
 #### Edge effects and their corrections for spatial metrics
 
-Edge effects describe the phenomenon that not the entire point process is observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [@baddeleySpatialPointPatterns, pp. 213].
+Edge effects describe the phenomenon that not the entire point process is observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [@baddeleySpatialPointPatterns2015, pp. 213].
 
-There are many corrections for edge effects that are briefly listed here [@baddeleySpatialPointPatterns, pp. 214-219]:
+There are many corrections for edge effects that are briefly listed here [@baddeleySpatialPointPatterns2015, pp. 214-219]:
 
 Border correction:
 
@@ -281,7 +281,7 @@ A stationary point process $X$ is invariant to translations. So the entire point
 
 ### The $L$-function
 
-The $K$-function can be ``centered'', which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function [@canete2022spicyr]:
+The $K$-function can be ``centered'', which is then called the $L$-function. The $L$-function is a variance-stabilising version of the $K$-function [@caneteSpicyRSpatialAnalysis2022]:
 
 $$
 L(r) = \sqrt{\frac{K(r)}{\pi}}.
@@ -295,7 +295,7 @@ $$
 g(r) = \frac{K'(r)}{2\pi r},
 $$
 
-where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius [@baddeleySpatialPointPatterns, pp. 225].
+where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius [@baddeleySpatialPointPatterns2015, pp. 225].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
@@ -398,7 +398,7 @@ $$
 \hat{K}_{inhom}(r) = \frac{1}{D^p|W|}\sum_i\sum_{j \neq i} \frac{\mathbb{1}\{||u-x_j||\leq r\}}{\hat{\lambda}(x_j)\hat{\lambda}(x_i)}e(x_j,x_i;r),
 $$
 
-where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an estimator of the intensity at point $x_i$. The inhomogeneity correction happens via these $\hat{\lambda}(x_i)$ per point $x_i$. The estimation of these local intensities can happen in a data-dependent manner via kernel-smoothing. As this is the same data to then calculate the metric on, this can lead to biases. However, in the case where the local intensities are known, the inhomogeneous $K$ function is an unbiased estimator [@baddeleySpatialPointPatterns, pp. 243-244].
+where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an estimator of the intensity at point $x_i$. The inhomogeneity correction happens via these $\hat{\lambda}(x_i)$ per point $x_i$. The estimation of these local intensities can happen in a data-dependent manner via kernel-smoothing. As this is the same data to then calculate the metric on, this can lead to biases. However, in the case where the local intensities are known, the inhomogeneous $K$ function is an unbiased estimator [@baddeleySpatialPointPatterns2015, pp. 243-244].
 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
@@ -428,13 +428,13 @@ We should further note that the inhomogeneity correction assumes that the proces
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells increases from one side to another [ME needs a reference]. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns pp. 246-247][prokevsova2006statistics].
+In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated,  e.g. when a gradient of cells increases from one side to another [ME needs a reference]. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns2015 pp. 246-247] [@prokevsova2006statistics].
 
-To circumvent this local scaling, we can assume that the process is subdivided into small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic [@baddeleySpatialPointPatterns pp. 246-247].
+To circumvent this local scaling, we can assume that the process is subdivided into small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic [@baddeleySpatialPointPatterns2015 pp. 246-247].
 
 #### Locally-scaled $L$-function
 
-Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns pp. 246-247].
+Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns2015 pp. 246-247].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kscaled', 'iso', bootstrap = FALSE)
@@ -464,7 +464,7 @@ All the variants assume something about the properties of the metrics and given 
 
 #### Local Indicators of Spatial Association
 
-It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns pp. 247-248].
+It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ``local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns2015 pp. 247-248].
 
 ##### Local $L$ function
 
@@ -507,7 +507,7 @@ There are inhomogeneous versions of these (e.g. `localLinhom`) that are not show
 
 ##### Functional PCA for the $n$ Curves
 
-We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function instead of a point). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsay2005principal]. We use the R package fdapace to perform functional PCA [@zhou2022fdapace]. 
+We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function instead of a point). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsayPrincipalComponentsAnalysis2005]. We use the R package fdapace to perform functional PCA [@zhouFdapaceFunctionalData2022]. 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #adapted from the fdapace vignette
@@ -567,13 +567,13 @@ p1|p2
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
 
-Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [@ramsay2005principal].
+Looking at the second plot, we see the smoothed mean curve and the individual curves that are reconstructed from the first three eigenfunctions. The first eigenfunction from the bottom right panel, $\phi_1$, is above the mean curve, which relates to the population of curves above the mean. $\phi_2$ is first above the mean curve and then lower than the mean curve. These curves are visible as well. Lastly, $\phi_3$ is curves that start low and pick up to be larger than the mean curve in the end. This is visible in e.g. the orange dashed line [@ramsayPrincipalComponentsAnalysis2005].
 
 The last plot shows the biplot of the loadings of the functional PCA. Each point is a cell from the OD mature cells with the loadings of the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. 
 
 ### Third-Order Summary Statistics
 
-So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [@baddeleySpatialPointPatterns pp. 249].
+So far we have considered first- and second-order summary statistics and local (or inhomogeneous) adaptations of them. In the second order, one considers (counts of) pairs (e.g., $K$ function). In a third-order setting, we would count triplets of points. A triplet is counted as the normalised expected value of triangles where all edges are smaller than the radius r [@baddeleySpatialPointPatterns2015 pp. 249].
 
 <!--
 $$
@@ -595,7 +595,7 @@ p
 -->
 ## Spacing
 
-So far, most approaches considered intensity and correlation as measures to assess a point pattern. Next, we will look at measures of spacing and shortest-distances to assess spatial arrangements [@baddeleySpatialPointPatterns pp. 255].
+So far, most approaches considered intensity and correlation as measures to assess a point pattern. Next, we will look at measures of spacing and shortest-distances to assess spatial arrangements [@baddeleySpatialPointPatterns2015 pp. 255].
 
 Baddeley et.al. summarises three basic distances to measure:
 
@@ -607,7 +607,7 @@ Note also that there are tests of CSR that are based on spacing, including the C
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a density for each specified $k$ for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density. Note, that these distances are "raw" nearest-neighbour distances which are not corrected for edge effects. Edge correction for the nearest neighbour distance ($k = 1$) is implemented in the function `Gest` below [@baddeleySpatialPointPatterns pp. 256, @baddeley2014package].
+Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a density for each specified $k$ for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density. Note, that these distances are "raw" nearest-neighbour distances which are not corrected for edge effects. Edge correction for the nearest neighbour distance ($k = 1$) is implemented in the function `Gest` below [@baddeleySpatialPointPatterns2015 pp. 256] [@baddeleySpatstatPackageAnalyzing2005].
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -686,7 +686,7 @@ $$
 G_{pois} \equiv F_{pois}.
 $$
 
-For a general point process, the $F$ and $G$ functions are different [@baddeleySpatialPointPatterns pp. 261-264].
+For a general point process, the $F$ and $G$ functions are different [@baddeleySpatialPointPatterns2015 pp. 261-264].
 
 ### Empty-space hazard
 
@@ -702,7 +702,7 @@ $$
 h_{pois}(r) = 2 \pi \lambda r
 $$
 
-(i.e., linear in $r$)  [@baddeleySpatialPointPatterns pp. 271-274].
+(i.e., linear in $r$)  [@baddeleySpatialPointPatterns2015 pp. 271-274].
  
 ### $J$-Function
 
@@ -714,7 +714,7 @@ $$
 J(r) = \frac{1-G(r)}{1-F(r)}.
 $$
 
-For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process  [@baddeleySpatialPointPatterns pp. 274-276].
+For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process  [@baddeleySpatialPointPatterns2015 pp. 274-276].
 
 ```{r, fig.height = 10, fig.width = 7}
 p_G <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Gest', 'rs', bootstrap = FALSE)
@@ -746,7 +746,7 @@ wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 
 ### Nearest-Neighbour Orientation
 
-Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns pp. 278-279, @baddeley2014package].
+Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns2015 pp. 278-279] [@baddeleySpatstatPackageAnalyzing2005].
 
 
 ```{r}
@@ -762,7 +762,7 @@ Note also tha the concepts of spacing are not only usable in *point* pattern ana
 
 ### Edge Corrections
 
-The same consideration about edge effects as for the $K$ (and related) functions need to be made for the spacing functions; uncorrected estimates are negatively biased estimators. The easiest approach is to draw an artificial border and consider NNs within it. Other approaches are based on sampling. Yet another approach relates to survival analysis, with the idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions similar to censored data, where the Kaplan-Meier estimator is the optimal choice  [@baddeleySpatialPointPatterns pp. 286-292].
+The same consideration about edge effects as for the $K$ (and related) functions need to be made for the spacing functions; uncorrected estimates are negatively biased estimators. The easiest approach is to draw an artificial border and consider NNs within it. Other approaches are based on sampling. Yet another approach relates to survival analysis, with the idea is that a circle of a point to grows homogeneously with increasing radius until it hits the frame of the window and "dies". This gives survival distributions similar to censored data, where the Kaplan-Meier estimator is the optimal choice  [@baddeleySpatialPointPatterns2015 pp. 286-292].
 
 # Continuous Marks
 
@@ -781,7 +781,7 @@ sub <- spe[, spe$sample_id == '0.01']
 ```
 
 
-In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or  continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@baddeleySpatialPointPatterns pp. 637, @moffitt2018molecular]. This is a typical numerical mark for points in a biological dataset.
+In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or  continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@baddeleySpatialPointPatterns2015 pp. 637] [@moffittMolecularSpatialFunctional2018]. This is a typical numerical mark for points in a biological dataset.
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
@@ -800,7 +800,7 @@ plot(pp)
 
 Here we see spatial distribution of the counts of the three genes Slc18a2, Esr1 and Pgr. The size of the circles indicates the counts of the transcripts at that spot. [ME: is this true?] Since there are really a lot of points, we can't easily distinguish general patterns of count distributions.
 
-We can investigate the distribution of the marks against the spatial location of the points and against each other. This is done with the function `pairs` from `spatstat`. It generates a scatterplot of the counts of the marks (in our case the three genes) against each other and against the $x$ and $y$ coordinates. We can add a non-linear smoothing curve to make the general trends a bit more obvious [@baddeleySpatialPointPatterns pp.641].
+We can investigate the distribution of the marks against the spatial location of the points and against each other. This is done with the function `pairs` from `spatstat`. It generates a scatterplot of the counts of the marks (in our case the three genes) against each other and against the $x$ and $y$ coordinates. We can add a non-linear smoothing curve to make the general trends a bit more obvious [@baddeleySpatialPointPatterns2015 pp.641].
 
 ```{r}
 pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
@@ -817,7 +817,7 @@ plot(ppsmooth)
 From the estimated intensity plot, we can see that the expression of the marker genes is clearly inhomogeneous. [MR: what does it mean that marker gene expression is inhomogeneous .. I thought inhomogeneity had to do with the location of points?!]
 -->
 
-NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwidth for Gaussian kernel smoothing [@baddeleySpatialPointPatterns pp. 642]. 
+NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwidth for Gaussian kernel smoothing [@baddeleySpatialPointPatterns2015 pp. 642]. 
 
 ```{r}
 plot(nnmark(pp))
@@ -847,7 +847,7 @@ As in the discrete case, summary functions assume that the point process is stat
 The mark correlation function measures the dependence between two marks for two points at distance $r$. It is applicable to stationary point processes with marks. It is not a correlation in the classical sense, since it cannot take negative values [MR: was this a typo? is this correct?]. Instead, a value of 1 indicates no correlation between the marks [MR: does this mean that negative correlation is not allowed? Or, would it appear as 'less than 1'?]. The generalized mark correlation function is given by:
 
 $$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$
-where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value [MR: what are $u$ and $v$ in the formula above?]. For continuous non-negative marks, the canonical choice for $f$ is typically  $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns pp. 644-645].
+where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value [MR: what are $u$ and $v$ in the formula above?]. For continuous non-negative marks, the canonical choice for $f$ is typically  $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns2015 pp. 644-645].
 
 ```{r}
 plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'markcorr', edgecorr = 'iso', continuous = TRUE)
@@ -864,7 +864,7 @@ where:
 
 $$ C_f(r) = E \left[ \sum_{x \in X} f(m(u), m(x)) 1\{0 < ||u - x|| \le r\} \;  \big| \; u \in X \right], $$ 
 
-is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$, we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f(.,.)$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M_1, M_2)$ where $M_1, M_2$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point [@baddeleySpatialPointPatterns pp. 646-647].
+is equivalent to the unnormalized mark-weighted $K$-function. For every point $u$, we sum the euclidean distance $||u - x||$ of all other points $x$ that are within a distance $r$. This sum is weighted by the function $f(.,.)$ of the marks of $u$ and $x$. The function is standardized by the expected value of $f(M_1, M_2)$ where $M_1, M_2$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point [@baddeleySpatialPointPatterns2015 pp. 646-647].
 
 In the scenario of random labeling, so where the labels or in this case marks are distributed randomly, the mark-weighted $K$-function corresponds to the standard Ripley's $K$-function.    
 
@@ -874,7 +874,7 @@ Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we wei
 plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'Kmark', edgecorr = 'iso', continuous = TRUE, f = function(m1,m2){m1*m2})
 ```
 
-It is important to note that the theoretical value of the $K$-function is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues [@baddeleySpatialPointPatterns pp. 647].
+It is important to note that the theoretical value of the $K$-function is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues [@baddeleySpatialPointPatterns2015 pp. 647].
 
 Here we will compare the $L$-functions weighted by the mark of the gene Esr1 and the unmarked $L$-function. 
 

@@ -1,3 +1,8 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
 # Irregular Lattices
 
 ## Dependencies
@@ -11,23 +16,23 @@ source("utils.R")
 theme_set(theme_minimal())
 ```
 
-Until now we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of indvidual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (the representation of spot based spatial tanscriptomics data) the sample areas in an irregular lattice can have different sizes and are not reugularly distributed over the sample space.
+Until now, we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of individual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (e.g., spot-based spatial transcriptomics data), the sample areas in an irregular lattice can have different sizes and are not necessarily regularly distributed over the sample space.
 
-For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.
+For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package [@mosesVoyagerExploratorySinglecell2023]. The `voyager` package also provides wrapper functions around the package `spdep` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object.
 
 ```{r}
 (sfe <- HeNSCLCData())
 
 # Empty cells
 colData(sfe)$is_empty <- colData(sfe)$nCounts < 1
-# Select negative control probes
-neg_inds <- str_detect(rownames(sfe), "^NegPrb")
-# Number of negative control probes
-sum(neg_inds)
+# Select, sum negative control probes
+(neg_inds <- str_detect(rownames(sfe), "^NegPrb")) %>% sum
+
+
 colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
 # Remove low quality cells
-(sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1])
-# Calculate count stats
+sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
+# Re-calculate stats
 rowData(sfe)$means <- rowMeans(counts(sfe))
 rowData(sfe)$vars <- rowVars(counts(sfe))
 rowData(sfe)$is_neg <- neg_inds
@@ -37,42 +42,40 @@ sfe <- logNormCounts(sfe)
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
 
-In this vignette we will show the metrics related to two marker genes, KRT17 which is a marker of basal cells and TAGLN which is a marker of smooth muscle cells. 
+In this vignette, we will show the metrics related to two marker genes: KRT17 (basal cells) and TAGLN (smooth muscle cells).
 
 ```{r}
 plotSpatialFeature(sfe, c("KRT17"),
-                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+                   colGeometryName = "centroids", 
+                   ncol = 2, scattermore = TRUE) + 
   theme_void()
 
 plotSpatialFeature(sfe, c("TAGLN"),
-                   colGeometryName = "centroids", ncol = 2, scattermore = TRUE) + 
+                   colGeometryName = "centroids", 
+                   ncol = 2, scattermore = TRUE) + 
   theme_void()
 ```
 
 ## Irregular lattice and neighbourhood matrix
 
-In general a spatial autocorrelation measure has the follwing elements a function $f(x_i, x_j)$ of the values at locations $x_i$ and $x_j$ and a weights matrix $w_{ij}$. The function $f$ relates the values $x_i$ and $x_j$ and the weights matrix $w_{ij}$ relates the locations of $x_i$ and $x_j$. If $x_i$ and $x_j$ are not neighbours the element of the weights matrix is 0. The general the spatial autocorrelation has the of a double sum over all locations $\sum_i \sum_j f(x_i,x_j) w_{ij}$.
+In general, a spatial autocorrelation measure has the following elements: a function, $f(x_i, x_j)$, of the values of interest at locations $i$ and $j$ and a neighbourhood or weight matrix, $w_{ij}$. The function $f$ relates the measured values $x_i$ and $x_j$ and the neighbourhood matrix $w_{ij}$ builds in the spatial relationship between location $i$ and $j$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
 
-The analysis techniques rely on the a neighborhood matrix, which is a matrix that indicates which cells are neighbors. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice it can be more complicated as the reconstruction of the cells is often not perfect.
+<!-- Such analysis techniques rely on a neighborhood matrix, a matrix that indicates which cells are neighbors [MR: how is the neighbourhood matrix related to the weights matrix?]. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice, it can be more complicated as the reconstruction of the cells is often not perfect [MR: what does it mean that the reconstruction is often not perfect?]. -->
 
 ## Neighbourhood matrix
 
-One of the challenges when working with irregular lattice data is the construction of a neighbourhood graph. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours. The segmentation of individual cells in notoriously difficult and often the segmentation is not perfect. Therefore we cannot simply rely on neighbours based on the segementation results and the construction of contiguitiy based neighbours is therefore not ideal, also as it would neglect the influence of more distant neighbours.s
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
 
-References for the construction of the neighbourhood matrix:
-* https://r-spatial.github.io/spdep/articles/nb.html
-* https://r-spatial.org/book/14-Areal.html
-* https://pachterlab.github.io/voyager/articles/vig4_cosmx.html#data-normalization
-* Getis, Arthur. 2009. “Spatial Weights Matrices.” Geogr. Anal. 41 (4): 404–10.
-* Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
+Segmentation of individual cells is challenging [@wangCellSegmentationImage2019], therefore construction of contiguity-based neighbours based on individual cell segmentation assumes perfect segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
 
-In the following we will use the k-nearest neighbours approach from `voyager` which relies on `spdep`. The approach and the number $k$ is somewhat arbritary.
+In the following, we will use a k-nearest neighbours approach from `voyager` that relies on the `spdep` package. The approach and in particular the number $k$ is somewhat arbritary.
 
-> Thought: if we assume non perfect segmentation we could basically calculate the same statistics also on point pattern derived datasets. We would also use a k-nearest neighbours approach in a "point pattern" dataset. The centroids of the cells as a proxy for the spatial location.
 
-> Is there a good methods to dermine a good neighbourhood matrix?
+<!-- > Thought: if we assume non perfect segmentation we could basically calculate the same statistics also on point pattern derived datasets. We would also use a k-nearest neighbours approach in a "point pattern" dataset. The centroids of the cells as a proxy for the spatial location. -->
 
-> Point pattern as a "event based" dataset, lattice data an "observation" based dataset.
+<!-- > Is there a good methods to dermine a good neighbourhood matrix? -->
+
+<!-- > Point pattern as a "event based" dataset, lattice data an "observation" based dataset. -->
 
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
@@ -82,15 +85,17 @@ colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
 
 # Global Methods
 
-Global methods give us an overview over the entire study are. The gobal measures summarize the spatial distribution of the cells in a single value. The most common global measures are the Moran's I and Geary's C coefficients. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
+Global methods give us an overview over the entire field of view and summarize the spatial distribution of the cells (for a given measurement such as gene expression) in a single value. The most common global measures are Moran's I and Geary's C coefficients; these coefficients are a function of the weight matrix and the variables of interest.
+
+In general, a global spatial autocorrelation measure has the form of a double sum over all locations $$\sum_i \sum_j f(x_i,x_j) w_{ij} .$$
 
 ## Global Moran's I coefficient
 
-The global Moran's I coefficient is a measure of spatial autocorrelation. It is defined as
+The global Moran's I [@moranNotesContinuousStochastic1950] coefficient is a measure of spatial autocorrelation, defined as:
 
-$$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j - \hat{y})}{\sum_i (y_i - \hat{y})^2}$$
+$$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_i (x_i - \bar{x})^2}, $$
 
-where $y_i$ is the value of the variable of interest for location $i$, $\hat{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation.
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\hat{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than indicates spatial auto-correlation. Negative values indicate negative auto-correlation.
 
 ### Implementation using `voyager`
 
@@ -100,7 +105,11 @@ calculateMoransI(sfe,
     colGraphName = "knn5",
     exprs_values = "logcounts"
 )
+```
 
+We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the P-value. 
+
+```{r}
 sfe <- runUnivariate(sfe,
                      features = c("KRT17", "TAGLN"),
                      colGraphName = "knn5",
@@ -111,42 +120,42 @@ sfe <- runUnivariate(sfe,
 res <- rowData(sfe)[c("KRT17", "TAGLN"),]
 #value of the metric
 res$moran.mc_statistic_sample01
-#p-value
+#P-value
 res$moran.mc_p.value_sample01
 ```
 
-### Implementation using `spdep`
+<!-- [MR: do we need both implementations? Is one preferred?] -->
 
-```{r}
-#create nearest neighbours weights 
-weights_neighbourhoods <- colGraph(sfe, "knn5")
-spdep::moran.test(x = logcounts(sfe)["KRT17",],
-                  listw = weights_neighbourhoods,
-                  randomisation = TRUE)
-spdep::moran.test(x = logcounts(sfe)["TAGLN",],
-                  listw = weights_neighbourhoods,
-                  randomisation = TRUE)
-```
+<!-- ### Implementation using `spdep` -->
 
-We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the p-value. The function is part of the `spdep` package.
+<!-- ```{r} -->
+<!-- #create nearest neighbours weights  -->
+<!-- weights_neighbourhoods <- colGraph(sfe, "knn5") -->
+<!-- spdep::moran.test(x = logcounts(sfe)["KRT17",], -->
+<!--                   listw = weights_neighbourhoods, -->
+<!--                   randomisation = TRUE) -->
+<!-- spdep::moran.test(x = logcounts(sfe)["TAGLN",], -->
+<!--                   listw = weights_neighbourhoods, -->
+<!--                   randomisation = TRUE) -->
+<!-- ``` -->
 
-```{r}
-spdep::moran.mc(x = logcounts(sfe)["KRT17",],
-                listw = weights_neighbourhoods,
-                nsim = 200)
-```
 
-We can see both genes have a positive Moran's I coefficient and a highly significant p-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate clustering of similar like values. It is important to note that this could be both at the high or low end of the values. Negative values indicate clustering of alternating values, i.e. gives a measure of spatial heterogeneity. It is also important to note that the result is dependent on the neighbourhood matrix. Different neighbourhood matrices will give different results. To compare Moran's I coefficients between different values we need to use the same neighbourhood matrix. Otherwise, we would have to rely on standardized $z$-scores.
+<!-- ```{r} -->
+<!-- spdep::moran.mc(x = logcounts(sfe)["KRT17",], -->
+<!--                 listw = weights_neighbourhoods, -->
+<!--                 nsim = 200) -->
+<!-- ``` -->
 
-## Global's Geary's coefficient
+We can see both genes have a positive Moran's I coefficient and a highly significant P-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate that areas with similar values are clustered. It is important to note that this could be both at the high or low end of the values of interest. Negative values indicate clustering of alternating values, i.e., gives a measure of spatial heterogeneity. Moreover, one should note that the result is dependent on the neighbourhood matrix. Different neighbourhood matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same neighbourhood matrix.
 
-Geary's $C$ is a different measure of global autocorrelation and is very closely related to Moran's $I$. Howver, it focuses on spatial dissimilarity. Geary's $C$ is defined by
+## Global's Geary's C coefficient
+
+Geary's $C$ [@gearyContiguityRatioStatistical1954] is a different measure of global autocorrelation and is very closely related to Moran's $I$. However, it focuses on spatial dissimilarity. Geary's $C$ is defined by
 
 $$
-C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
+C = \frac{(n-1) \sum_i \sum_j w_{ij}(x_i-x_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(x_i-\bar{x})^2}
 $$
-
- where $n$ is the number of locations, $i,j$ are different locations, $y_i$ is the value of the variable of interest for location $i$, $\bar{y}$ is the mean of $y_i$ and $w_{ij}$ is the spatial weight between locations $i$ and $j$.  The interpretation is inversely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\hat{x}$ is the mean of all $x$, $w_{ij}$ is the spatial weight between the locations of $i$ and $j$ and $n$ the total numer of locations. The interpretation is opposite to Moran's $I$: a value smaller than $1$ indicates positive auto-correlation whereas a value greater than $1$ represents negative auto-correlation.
 
 
 ### Implementation using `voyager`
@@ -160,35 +169,69 @@ sfe <- runUnivariate(sfe,
 res <- rowData(sfe)[c("KRT17", "TAGLN"),]
 #value of the metric
 res$geary.mc_statistic_sample01
-#p-value
+#P-value
 res$geary.mc_p.value_sample01
 ```
 
+<!-- ### Implementation using `spdep` -->
+
+<!-- ```{r} -->
+<!-- #create nearest neighbours weights  -->
+<!-- weights_neighbourhoods <- colGraph(sfe, "knn5") -->
+<!-- spdep::geary.test(x = logcounts(sfe)["KRT17",], -->
+<!--                   listw = weights_neighbourhoods, -->
+<!--                   randomisation = TRUE) -->
+<!-- spdep::geary.test(x = logcounts(sfe)["TAGLN",], -->
+<!--                   listw = weights_neighbourhoods, -->
+<!--                   randomisation = TRUE) -->
+<!-- ``` -->
+
+Again, the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
+
+## Global Getis-Ord $G$ statistic
+
+The global $G$ [@getisAnalysisSpatialAssociation1992] statistic is a generalisation of the local version (see below) and summarises the contributions of all pairs of values $(x_i, x_j)$ in the dataset. Formally that is
+
+
+$$
+G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_{j=1}^n x_i x_j}, \text{s.t } j \neq i
+$$
+
+The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the datapoints whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather consider both. 
+
+It is recommended to use binary weights for this calculation. We will use the `spdep` package directly to calculate the global $G$ statistic.
+
 ### Implementation using `spdep`
 
 ```{r}
-#create nearest neighbours weights 
-weights_neighbourhoods <- colGraph(sfe, "knn5")
-spdep::geary.test(x = logcounts(sfe)["KRT17",],
-                  listw = weights_neighbourhoods,
-                  randomisation = TRUE)
-spdep::geary.test(x = logcounts(sfe)["TAGLN",],
-                  listw = weights_neighbourhoods,
-                  randomisation = TRUE)
+# Get the weight matrix from sfe object
+weights_neighbourhoods_binary <- colGraph(sfe)
+# Change it to binary weights
+weights_neighbourhoods_binary$style <- "B" 
+# Calculate the global G statistic
+spdep::globalG.test(x = counts(sfe)["KRT17",], 
+                    listw = weights_neighbourhoods_binary)
 ```
 
-Again the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
+<!-- ```{r} -->
+<!-- sfe <- runUnivariate(sfe, -->
+<!--                      features = c("KRT17", "TAGLN"), -->
+<!--                      colGraphName = "knn5", -->
+<!--                      type = "globalG.test") -->
+<!-- ``` -->
+
 
 # Local measures
 
-Unlike global measures, that give as an overview over the entire study are local measures give us information about the statistic at each location, i.e. cell. There exist local analogs of Moran's I and Geary's C for which  the gobal statistc counterpart can be seen as weighted sum of its respective local statistic. These coefficients are based on the spatial weights matrix and the values of the variable of interest.
+Unlike global measures that give an overview over the entire field of view, local measures report information about the statistic at each location (cell). There exist local analogs of Moran's I and Geary's C for which the global statistic can be represented as a weighted sum of the local statistics. As above, the local coefficients are based on both the spatial weights matrix and the values of the measurement of interest.
 
 ## Local Moran's I coefficient
 
-The local Moran's I coefficient is a measure of spatial autocorrelation on each location of interest. It is defined as
+The local Moran's I coefficient is a measure of spatial autocorrelation on each location of interest. It is defined as:
 
 $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
-where the idex $i$ refers to the location for which the measure is calculated. The interpratation is analog to the gobal Moran's I. The value of $I_i$ is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Smaller values indicate negative auto-correlation. It is important to note that, like for the global counterpart, the value of local Moran's I could be a result from both the high or low end of the values. Since we measure a great number of locations at the same time, we need to correct for multiple testing. We use the Benjamini-Hochberg procedure to correct for multiple testing.
+where the index $i$ refers to the location for which the measure is calculated. The interpretation is analogous to the global Moran's I where a value of $I_i$ higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation; smaller values indicate negative auto-correlation. It is important to note that, as for the global counterpart, the value of local Moran's I could be a result from both the high or low end of the values. Since we measure and test a large number of locations simultaneously, we need to correct for multiple testing (e.g., using the Benjamini-Hochberg procedure).
+
 
 ### Implementation using `voyager`
 
@@ -204,89 +247,91 @@ plotLocalResult(sfe, "localmoran",
                 colGeometryName = "centroids")
 ```
 
-### Implementation using `spdep`
+<!-- ### Implementation using `spdep` -->
 
-> TODO: change this impelemntation to work with gene instead of cell counts
+<!-- > TODO: change this impelemntation to work with gene instead of cell counts -->
 
-```{r}
-# TODO: add weights matrix, add which sf feature to extract for plotting
+<!-- [MR: TODO] -->
 
-#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
-localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods,
-                          type){
-  
-  if (type == 'expression'){
-    #extract the gene counts
-    x <- logcounts(sfe)[var,]
-  }
-  else if (type == 'feature'){
-    #extract the cell counts
-    x <- sfe[[var]]
-  }
-  else{
-    stop('type must be either "gene" or "cell"')
-  }
-  
-  loc <- do.call(fun, args = list(x= x, listw = weights_neighbourhoods))
-  #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
-  if(fun %in% c('localG')){
-    loc <- attr(loc, 'internals')
-    #extract the effect size
-    locEffect <- loc[,1]
-    #extract the p-value and adjust for multiple testing
-    p.val.adj <- loc[,5] |> p.adjust("BH")
-  }
-  else if(fun == 'localC_perm'){
-    p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
-    locEffect <- loc
-  }
-  else if (fun == 'LOSH'){
-    locEffect <- loc[,1]
-    p.val.adj <- c()
-  }
-  else{
-    #extract the effect size
-    locEffect <- loc[,1]
-    #extract the p-value and adjust for multiple testing
-    p.val.adj <- loc[,5] |> p.adjust("BH")
-  }
-  
-  #convert into a plain sf object for plotting
-  sf <- colGeometries(sfe)$cellSeg
-  
-  sf$locEffect <- locEffect
-  sf$p.val.adj <- p.val.adj
-  
-  return(tm_shape(sf) + tm_fill(col = plotvar))
-  
-  # p <- ggplot() + 
-  #   geom_sf(data = sf, aes(fill = plotvar)) +
-  #   scale_y_continuous(breaks = 34:36)
-  # return(p)
-  
-}
+<!-- ```{r} -->
+<!-- # TODO: add weights matrix, add which sf feature to extract for plotting -->
 
-```
+<!-- #calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot P-values -->
+<!-- localplotCell <- function(sfe, var, fun, plotvar, weights_neighbourhoods, -->
+<!--                           type){ -->
 
-```{r}
-#| fig-width: 15
-#| fig-height: 10
-p <- localplotCell(sfe, 'KRT17', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression')
-q <- localplotCell(sfe, 'TAGLN', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression')
+<!--   if (type == 'expression'){ -->
+<!--     #extract the gene counts -->
+<!--     x <- logcounts(sfe)[var,] -->
+<!--   } -->
+<!--   else if (type == 'feature'){ -->
+<!--     #extract the cell counts -->
+<!--     x <- sfe[[var]] -->
+<!--   } -->
+<!--   else{ -->
+<!--     stop('type must be either "gene" or "cell"') -->
+<!--   } -->
 
-tmap_arrange(p,q)
-```
+<!--   loc <- do.call(fun, args = list(x= x, listw = weights_neighbourhoods)) -->
+<!--   #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing -->
+<!--   if(fun %in% c('localG', 'localC')){ -->
+<!--     loc <- attr(loc, 'internals') -->
+<!--     #extract the effect size -->
+<!--     locEffect <- loc[,1] -->
+<!--     #extract the P-value and adjust for multiple testing -->
+<!--     p.val.adj <- loc[,5] |> p.adjust("BH") -->
+<!--   } -->
+<!--   else if(fun == 'localC_perm'){ -->
+<!--     p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))'] -->
+<!--     locEffect <- loc -->
+<!--   } -->
+<!--   else if (fun == 'LOSH'){ -->
+<!--     locEffect <- loc[,1] -->
+<!--     p.val.adj <- c() -->
+<!--   } -->
+<!--   else{ -->
+<!--     #extract the effect size -->
+<!--     locEffect <- loc[,1] -->
+<!--     #extract the P-value and adjust for multiple testing -->
+<!--     p.val.adj <- loc[,5] |> p.adjust("BH") -->
+<!--   } -->
 
+<!--   #convert into a plain sf object for plotting -->
+<!--   sf <- colGeometries(sfe)$cellSeg -->
+
+
+<!--   sf$locEffect <- locEffect -->
+<!--   sf$p.val.adj <- p.val.adj -->
+
+<!--   return(tm_shape(sf) + tm_fill(col = plotvar)) -->
+
+<!--   # p <- ggplot() +  -->
+<!--   #   geom_sf(data = sf, aes(fill = plotvar)) + -->
+<!--   #   scale_y_continuous(breaks = 34:36) -->
+<!--   # return(p) -->
+
+<!-- } -->
+
+<!-- ``` -->
+
+<!-- ```{r} -->
+<!-- #| fig-width: 15 -->
+<!-- #| fig-height: 10 -->
+<!-- p <- localplotCell(sfe, 'KRT17', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression') -->
+<!-- q <- localplotCell(sfe, 'TAGLN', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, type = 'expression') -->
+
+<!-- tmap_arrange(p,q) -->
+<!-- ``` -->
 
 ## Local Geary's C coefficient
 
-Similar to local Moran's I there is a local Geary's C coefficient. It is defined as
+Similar to local Moran's I, there is a local Geary's C [@anselinLocalIndicatorsSpatial1995] coefficient. It is defined as
 
-$$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2$$
+$$C_i = \sum_{j=1}^n w_{ij}(x_i-x_j)^2$$
 
-The interpretation is analog to the global Geary's C. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation.
+The interpretation is analogous to the global Geary's C (value less than $1$ indicates positive auto-correlation, a value greater than $1$ highlights negative auto-correlation).
 
-In this example we will not plot the local Gear's C coefficient for gene expression but for features that are associated with the individual cells, e.g. the number oc counts or the number of genes expressed. We will use the `colDataUnivariate` function to calculate the local Geary's C coefficient for these features.
+In this example, we will not plot the local Geary's C coefficient for gene expression but for features that are associated with an individual cell, e.g., the number of counts or the number of genes expressed. For this, the `colDataUnivariate` function is used to calculate the local Geary's C coefficient for such features.
 
 ### Implementation using `voyager`
 
@@ -295,41 +340,47 @@ In this example we will not plot the local Gear's C coefficient for gene express
 #| fig-height: 10
 sfe <- runUnivariate(sfe,
                      features = c("KRT17", "TAGLN"),
-                     type = "localmoran")
+                     type = "localC")
 
-plotLocalResult(sfe, "localmoran",
+plotLocalResult(sfe, "localC",
                 features = c("KRT17", "TAGLN"), ncol = 2,
                 colGeometryName = "centroids")
 ```
 
-### Implementation using `spdep`
+<!-- [MR: again, do we need both implementations?] -->
 
-The same is possible using  `spdep`
+<!-- ### Implementation using `spdep` -->
 
-```{r}
-#| fig-width: 15
-#| fig-height: 10
+<!-- The same is possible using  `spdep` -->
 
-p <- localplotCell(sfe, var = 'KRT17', fun = 'localmoran',
-                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'expression')
-q <- localplotCell(sfe, var = 'TAGLN', fun = 'localmoran',
-                   plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'expression')
+<!-- ```{r} -->
+<!-- #| fig-width: 15 -->
+<!-- #| fig-height: 10 -->
 
-tmap_arrange(p,q)
-```
+<!-- p <- localplotCell(sfe, var = 'KRT17', fun = 'localC', -->
+<!--                    plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, -->
+<!--                    type = 'expression') -->
+<!-- q <- localplotCell(sfe, var = 'TAGLN', fun = 'localC', -->
+<!--                    plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods, -->
+<!--                    type = 'expression') -->
+
+<!-- tmap_arrange(p,q) -->
+<!-- ``` -->
+
+<!-- [MR: again, do we need both implementations?] -->
 
 ## Local Getis-Ord statistic
 
-The local Getis-Ord $G_i$ statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$. 
+The local Getis-Ord $G_i$ [@ordLocalSpatialAutocorrelation1995; @getisAnalysisSpatialAssociation1992] statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$, according to:
 
 $$
-G_i(d) = \frac{\sum_{j=1}^n w_{ij}(d)x_j}{\sum_{j=1}^n x_j}, \text{s.t } j \neq i 
+G_i(d) = \frac{\sum_{j \neq i } w_{ij}(d)x_j}{\sum_{j \neq i} x_j}.
 $$
 
-There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. Importantly, $G_i(d)$ is scale-invariant but not location-invariant. That means, the subdivision into the $n$ subregions matters for the computation of the local statistic.
- 
+There is a variant of this statistic, $G_i^*(d)$, which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. 
+
+<!-- Importantly, $G_i(d)$ is scale-invariant but not location-invariant, meaning that the subdivision into the $n$ subregions matters for the computation of the local statistic [MR: what does "matters" mean in this sentence?]. -->
+
 ### Implementation using `voyager`
 
 ```{r}
@@ -338,63 +389,93 @@ There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ e
 
 sfe <- runUnivariate(sfe,
                      features = c("KRT17", "TAGLN"),
+                     #include_self = TRUE, # this would specify G_i^*(d)
                      type = "localG")
 
 plotLocalResult(sfe, "localG",
                 features = c("KRT17", "TAGLN"), ncol = 2,
                 colGeometryName = "centroids")
 ```
- 
-### Implementation using `spdep`
+
+<!-- ### Implementation using `spdep` -->
+
+<!-- ```{r} -->
+<!-- #| fig-width: 15 -->
+<!-- #| fig-height: 10 -->
+
+<!-- p <- localplotCell(sfe, var = 'KRT17', fun = 'localG', plotvar = 'locEffect', -->
+<!--                    weights_neighbourhoods = weights_neighbourhoods, -->
+<!--                    type = 'expression') -->
+<!-- q <- localplotCell(sfe, var = 'TAGLN', fun = 'localG', plotvar = 'locEffect', -->
+<!--                    weights_neighbourhoods = weights_neighbourhoods, -->
+<!--                    type = 'expression') -->
+<!-- tmap_arrange(p,q) -->
+<!-- ``` -->
+
+The results above gives an estimate of the local Getis-Ord statistic for each cell, but no siginificance value. This can be done by using a permutation approach. As this computationally very intensive we will show it on a subregion of the tissue.
 
 ```{r}
-#| fig-width: 15
+#| fig-width: 25
 #| fig-height: 10
 
-p <- localplotCell(sfe, var = 'KRT17', fun = 'localG', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'expression')
-q <- localplotCell(sfe, var = 'TAGLN', fun = 'localG', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'expression')
-tmap_arrange(p,q)
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
+sfe_sub <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+
+# run localG with permutation test
+sfe_sub <- runUnivariate(sfe_sub,
+                     features = "KRT17",
+                     #include_self = TRUE, # this would specify G_i^*(d)
+                     type = "localG_perm")
+
+p1 <- plotLocalResult(sfe_sub, "localG_perm",
+                features = "KRT17",
+                colGeometryName = "centroids")
+
+p2 <- plotLocalResult(sfe_sub, "localG_perm",
+                features = "KRT17",
+                attribute = "-log10p_adj Sim",
+                colGeometryName = "centroids")
+
+p1 | p2
 ```
 
-It is important to only consider sifnificant results. Postive values indicate clustering of high values, i.e. hot spots, negative values indicate clustering of low values, i.e. cold spots. The method does not detect outlier values because unlike in local Moran's I there is no cross-product between $i$ and $j$. But unlike local Moran'I we know the type of interaction (high-high or low-low) between $i$ and $j$.
+Positive values indicate clustering of high values, i.e., hot spots, and negative values indicate clustering of low values, i.e., cold spots. The method does not detect outlier values because, unlike in local Moran's I, there is no cross-product between $i$ and $j$. But unlike local Moran's I, we know the type of interaction exists (high-high or low-low) between $i$ and $j$.
 
 ## Local spatial heterosceadiscity (LOSH)
 
-The local spatial heteroscedasticity (LOSH) is a measure of spatial autocorrelation that is based on the variance of the local neighbourhood. Unlike the other measures, this method does not assume homosceadistic variance over the whole tissue region. LOSH is defined as
+The local spatial heteroscedasticity (LOSH) is a measure of spatial autocorrelation that is based on the variance of the local neighbourhood. Unlike the other measures, this method does not assume homoscedastic variance over the whole tissue region. LOSH is defined as:
 
-$$H_i(d) = \frac{\sum_j w_{ij}(d)|e_j(d)|^a}{\sum_j w_{ij}(d)}$$
+$$H_i(d) = \frac{\sum_j w_{ij}(d)|e_j(d)|^a}{\sum_j w_{ij}(d)},$$
 
-where $e_j(d) = x_j - \bar{x}_i(d), j \in N(i,d)$ are the local residuals that are substracted from the local mean. The variable $a$ handles the interpretation of the residuals. If $a=1$, the residuals are interpreted as absolute deviations from the local mean. If $a=2$, the residuals are interpreted as deviations from the local variance.
+where $e_j(d) = x_j - \bar{x}_i(d), j \in N(i,d)$ are the local residuals that are subtracted from the local mean. The power $a$ modulates the interpretation of the residuals ($a=1$: residuals are interpreted as absolute deviations from the local mean; $a=2$: residuals are interpreted as deviations from the local variance).
 
-The LOSH should be interpreted in the combination with local Getis-Ord $G_i^*$ statistic. The $G_i^*$ quantifies the local mean of the variable of interest, while $H_i$ quantifies the local variance. This table provided by Ord and Getis (2012) summarizes the interpretation of the combination of $G_i^*$ and $H_i$.
+The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ statistic. The $G_i^*$ quantifies the local mean of the variable of interest, while $H_i$ quantifies the local variance. This table provided by Ord and Getis [@ordLocalSpatialHeteroscedasticity2012] summarizes the interpretation of the combination of $G_i^*$ and $H_i$.
 
 |                     | high $H_i$                                                                    | low $H_i$                                                                                                                      |
 |---------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
 | large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
 | small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                                                                           |
 
-### Implementation using `spded`
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
 
-p <- localplotCell(sfe, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'feature')
-q <- localplotCell(sfe, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect',
-                   weights_neighbourhoods = weights_neighbourhoods,
-                   type = 'feature')
-tmap_arrange(p,q)
+# run localG with permutation test
+sfe_sub <- runUnivariate(sfe_sub,
+                     features = "KRT17",
+                     type = "LOSH")
+
+
+plotLocalResult(sfe_sub, "LOSH",
+                features = "KRT17",
+                colGeometryName = "centroids")
+
 ```
 
 ## A note of caution
 
-The locals methods presented above should be interpreted with care as we face the problem of multiple testing when calculating the local measure for each cell. Also the p-values calculated are pseudo p-value sand are calculated for each neighbor separately. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. There can be true contagion where clustering is the result of spatial interaction and apparent contagion where clustering is the cause of spatial heterogeneity, e.g. local similarity is created by different spatial structures.
+The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression  of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement. 
 
 # Appendix
 

@@ -332,7 +332,7 @@ plotCrossAll(pp_sel, "Kcross.inhom", "iso")
 
 The diagonal of the cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
 
-It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns, 5.7.4, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. Furthermore, the estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns, p. 605].
+It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns, p. 605].
 
 In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
 
@@ -367,7 +367,7 @@ p_epen_od + p_epend_micro
 Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line, there is indication of clustering while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of clustering between Ependymal and OD Mature cells while there is indication of repulsion between Ependymal and Microglia cells.
 
 ### Cross L-function 
-Alternatively the L cross function with similar interpreation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns].
+Alternatively the L cross function with similar interpretation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns, pp. 596ff].
 
 ```{r}
 #| echo: false
@@ -594,7 +594,7 @@ plotEnvCross(pp_sel, fun = "Kcross.inhom",
              "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
 
-We have indication that the independence-of-components assumption should not be rejected. Therefore, we assume that Ependymal and OD Mature cells are independent.
+We have indication that the independence-of-components assumption should not be rejected. Therefore, we conclude that Ependymal and OD Mature cells are independent.
 
 # Assuming stationarity of the total pattern
 
@@ -612,7 +612,7 @@ Let's look at the homogeneous cross K-function.
 plotCrossAll(pp_sel, "Kcross", "iso")
 ```
 
-The result is different from the previous analysis. The Ependymal cells now appear to be clustered. This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and the interpretation of the results.
+The result is different from the previous analysis. The Ependymal cells now appear to be clustered. This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and research question. The interpretation of the results should always be done with the assumption of stationarity or inhomogeneity in mind and should be reported in an analysis.
 
 ## Session info
 

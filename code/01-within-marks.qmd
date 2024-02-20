@@ -22,7 +22,14 @@ source("utils.R")
 spe <- readRDS("../data/spe.rds")
 
 #subset the data to only look at sample ID 0.01, 0.06 and 0.26
-zstack_list <- list("-0.29", "0.01", "0.06")
+# list("-0.29", "0.01", "0.06")
+#zstack_list <- list("-0.04", '-0.09', '-0.14', '-0.19', '-0.24', '-0.29', '0.01', '0.06', '0.11', '0.16', '0.21', "0.26")
+
+#define the Z-stacks that you want to compare
+zstack_list <- list("-0.09", "0.01", "0.21")
+
+#define the celltype that you want to compare across the stacks - hereby we assume independence across the z-stacks which is an assumption that can be challenged
+celltype_ls <- "OD Mature"
 
 selectZstacks <- function(zstack, spe){
   sub <- spe[, spe$sample_id == zstack]
@@ -43,13 +50,13 @@ In point pattern analysis we assume that the patterns we observe are a realisati
 
 When considering a pattern with $m$ multiple types, as we do in the [@moffitt2018molecular] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process and thus depend on each other. In the multivariate framework we assume that the types stem from independent point processes and therefore we can consider dependencies of one type alone. Whether or not the underlying point processes are independent depends on the biological question. If we analyse two celltypes in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider the point processes as independent [@baddeleySpatialPointPatterns, pp. 565].
 
-In the following we will often compare the distribution of ependymal cells across different z-slices of the same tissue. We assume these slices to be enough far away to be considered independent. Therefore, we are in a multivariate setting. Sometimes, we show examples of methods for one celltype in a slice. This would correspond to a univariate setting.
+In the following we will often compare the distribution of mature oligodendrocytes (OD mature cells) across different z-slices of the same tissue. We assume these slices to be enough far away to be considered independent. Therefore, we are in a multivariate setting. Sometimes, we show examples of methods for one celltype in a slice. This would correspond to a univariate setting.
 
 ### Observation Windows
 
 The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inference on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns, pp. 144-145].
 
-There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within a the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns, pp. 144-145].
+There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns, pp. 144-145].
 
 In both cases it is important to understand the direction of the bias. If the unknown window is estimated to be smaller than the true window, we underestimate the window. This then again leads to an overestimation of the density of points and to other characteristics of the pattern. Therefore, an underestimation of the window size is more concerning than a slight overestimation [@baddeleySpatialPointPatterns, pp. 144-145].
 
@@ -73,9 +80,13 @@ separateMarks <- function(pp){
 pp_ls <- lapply(pp, separateMarks)
 ```
 
-```{r, fig.width=12, fig.height=12, cache=FALSE}
+```{r, fig.width=12, fig.height=6, cache=FALSE, message= FALSE}
+par(mfrow=c(1,3))
 #Plot the marks separately 
-plot(pp_ls[['0.01']], main = 'Point Pattern Marks Separated', nrows = 2)
+lapply(zstack_list, function(zstack){
+  plot(pp_ls[[zstack]][[celltype_ls]], main = zstack, legend = FALSE)
+})
+dev.off()
 ```
 
 
@@ -117,7 +128,7 @@ A point process is called isotropic, if its statistical properties are invariant
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window [@baddeleySpatialPointPatterns, pp. 218]. This means it is stationary in all statistical properties, first-order properties (intensity) and second-order properties (e.g. correlation).
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns, pp. 218].
 
 #### Correlation stationarity / Second-order stationarity
 
@@ -166,7 +177,7 @@ As the interpretation of the permutation test is highly dependent on the quadrat
 
 ### Intensity
 
-Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first moment property because it is related to the expected number of points . More formally the average intensity of a point process is defined as:
+Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first order property because it is related to the expected number of points . More formally the average intensity of a point process is defined as:
 
 $$
 \bar{\lambda} = \frac{n(x)}{|W|}
@@ -196,9 +207,9 @@ intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
 In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns, pp. 168].
 
 ```{r, fig.width=8, fig.height=8}
-pp_sel <-  subset(pp_ls[['0.01']]$Inhibitory, drop = TRUE)
+pp_sel <-  subset(pp_ls[['0.01']]$`OD Mature`, drop = TRUE)
 Dens <- density(pp_sel, sigma = 100)
-plot(Dens, main = 'Kernel Density (Inhibitory cells)')
+plot(Dens, main = 'Kernel Density (OD Mature cells)')
 ```
 
 #### Quadrat Counting
@@ -261,7 +272,7 @@ The standardisation makes it possible to compare point patterns with different o
 
 #### Edge effects and their corrections for spatial metrics
 
-Edge effects describe the phenomenon that entire point process is not observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [@baddeleySpatialPointPatterns, pp. 213].
+Edge effects describe the phenomenon that not the entire point process is observed, but rather only the part within the window $W$. This means the value of various statistics could be biased along the edges [@baddeleySpatialPointPatterns, pp. 213].
 
 There are many corrections for edge effects that are briefly listed here [@baddeleySpatialPointPatterns, pp. 214-219]:
 
@@ -287,13 +298,13 @@ $$
 
 ### Pair Correlation function
 
-We have seen above that the $K$-function is cumulative. That is, the contributions of all distances smaller equal to $r$ are considered. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$ [@baddeleySpatialPointPatterns, pp. 225], according to:
+We have seen above that the $K$-function is cumulative. That is, the contributions of all distances smaller equal to $r$ are considered. An alternative is to take the derivative of the $K$-function in order to obtain contributions of distances between points equal to $r$, according to:
 
 $$
 g(r) = \frac{K'(r)}{2\pi r},
 $$
 
-where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius.
+where $g(r)$ is the derivative of the $K$ function (so interactions at exactly $r$) divided by the probability of a poisson process at this radius [@baddeleySpatialPointPatterns, pp. 225].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
@@ -354,7 +365,6 @@ plotMetric <- function(plot_by, pp, celltype = NULL, x, fun, edgecorr, bootstrap
   return(p)
 }
 
-celltype_ls <- "Ependymal"
 p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
 p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
 p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
@@ -606,7 +616,7 @@ Note also that there are tests of CSR that are based on spacing, including the C
 
 ### Nearest Neighbour approaches
 
-Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a density for each specified $k$ for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density [@baddeleySpatialPointPatterns pp. 256]. Note, that these distances are "raw" nearest-neighbour distances which are not corrected for edge effects. Edge correction for the nearest neighbour distance ($k = 1$) is implemented in the function `Gest` below.
+Nearest neighbour (NN) methods are based on the notion of "nearness". In particular, we introduce `nndist` from `spatstat`, a method to calculate the distances until $k$ NN are found. This function returns a density for each specified $k$ for the $k$ neighbour distances. We can for instance collapse the $k$ curves into a mean curve per point pattern. This information of the mean nearest neighbour distance (MMND) can be summarised as a density. Note, that these distances are "raw" nearest-neighbour distances which are not corrected for edge effects. Edge correction for the nearest neighbour distance ($k = 1$) is implemented in the function `Gest` below [@baddeleySpatialPointPatterns pp. 256, @baddeley2014package].
 
 ```{r, cache=FALSE}
 nndistance <- function(pp, nk){
@@ -873,11 +883,12 @@ Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we wei
 plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'Kmark', edgecorr = 'iso', continuous = TRUE, f = function(m1,m2){m1*m2})
 ```
 
-It is important to note that theoretical value is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues.
+It is important to note that the theoretical value of the $K$-function is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues [@baddeleySpatialPointPatterns pp. 647].
 
-Here we will compare the $L$-functions weighted by the mark of the gene Esr1 and the unmarked $L$-function [@baddeleySpatialPointPatterns pp. 646-647]. 
+Here we will compare the $L$-functions weighted by the mark of the gene Esr1 and the unmarked $L$-function. 
 
 ```{r}
+ppEsr1 <- subset(pp, select = 'Esr1')
 L.Esr1L <- Kmark(ppEsr1, function(m1,m2) {m1*m2}, returnL = TRUE)
 Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
 plot(eval.fv(L.Esr1L - Lest.ppEsr1))
@@ -891,13 +902,6 @@ We note that the difference between $L$-function weighted by the expression of E
 In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be discrete (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
 
 # Appendix
-
-## Sources
-
-[1] Baddeley, A., Rubak, E., & Turner, R. (2015). Spatial point patterns: methodology and applications with R. CRC press.
-
-[2] Ramsay JO, Silverman BW (2005). Functional Data Analysis. 2nd edition. Springer-Verlag,
-New York.
 
 ## Session info
 

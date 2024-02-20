@@ -1,12 +1,3 @@
----
-output: html_document
-format:
-  html:
-    code-fold: true
-    code-summary: "Show the code"
-editor_options: 
-  chunk_output_type: console
----
 # Discrete Marks
 
 ## Dependencies

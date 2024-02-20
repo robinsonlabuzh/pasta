@@ -1343,18 +1343,6 @@
       ],
       "Hash": "63534894354af6b2587b7aa518a5193a"
     },
-    "dbscan": {
-      "Package": "dbscan",
-      "Version": "1.1-11",
-      "Source": "Repository",
-      "Repository": "RSPM",
-      "Requirements": [
-        "Rcpp",
-        "graphics",
-        "stats"
-      ],
-      "Hash": "1363f02b54d086ace5af19f590697f90"
-    },
     "deldir": {
       "Package": "deldir",
       "Version": "1.0-9",

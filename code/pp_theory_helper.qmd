@@ -1,0 +1,224 @@
+## Dependencies
+
+```{r, cache=FALSE}
+source("utils.R")
+```
+
+## Setup
+
+```{r, cache=FALSE}
+#| label: load-data
+spe <- readRDS("../data/spe.rds")
+
+#subset the data to only look at sample ID 0.01, 0.06 and 0.26
+# list("-0.29", "0.01", "0.06")
+#zstack_list <- list("-0.04", '-0.09', '-0.14', '-0.19', '-0.24', '-0.29', '0.01', '0.06', '0.11', '0.16', '0.21', "0.26")
+
+#define the Z-stacks that you want to compare
+zstack_list <- list("-0.09", "0.01", "0.21")
+
+#define the celltype that you want to compare across the stacks - hereby we assume independence across the z-stacks which is an assumption that can be challenged
+celltype_ls <- "OD Mature"
+
+selectZstacks <- function(zstack, spe){
+  sub <- spe[, spe$sample_id == zstack]
+  pp <- .ppp(sub, marks = "cluster_id")
+  return(pp)
+}
+pp_ls <- lapply(zstack_list, selectZstacks, spe)
+names(pp_ls) <- zstack_list
+```
+
+The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns2015]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts discribed in the book [@baddeleySpatstatPackageAnalyzing2005]. This chapter relies heavily on both publications.
+
+## Concepts and Definitions of Point Processes
+
+### Point Process
+
+In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
+
+When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process and thus depend on each other. In the multivariate framework we assume that the types stem from independent point processes and therefore we can consider dependencies of one type alone. Whether or not the underlying point processes are independent depends on the biological question. If we analyse two celltypes in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider the point processes as independent [@baddeleySpatialPointPatterns2015, pp. 565].
+
+### Observation Windows
+
+The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inference on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 144-145].
+
+There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use more conservative methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns2015, pp. 144-145].
+
+In both cases it is important to understand the direction of the bias. If the unknown window is estimated to be smaller than the true window, we underestimate the window. This then again leads to an overestimation of the density of points and to other characteristics of the pattern. Therefore, an underestimation of the window size is more concerning than a slight overestimation [@baddeleySpatialPointPatterns2015, pp. 144-145].
+
+```{r}
+setRiprasWindows <- function(pp){
+  Window(pp) <- ripras(pp)
+  marks(pp) <- factor(marks(pp))
+  return(pp)
+}
+#the entire point patterns with the ripras windows
+pp <- lapply(pp_ls, setRiprasWindows)
+
+separateMarks <- function(pp){
+  #split the multitype point process into several single type processes
+  ppls <- split(pp)
+  return (ppls)
+}
+#the point patterns separated by their marks
+pp_ls <- lapply(pp, separateMarks)
+```
+
+### Complete Spatial Randomness
+
+Complete spatial randomness (CSR) is often used as the null model for various point patterns, and is the result of a Poisson process. A completely spatial random process is characterised by two properties, homogeneity and independence, as discussed below [@baddeleySpatialPointPatterns2015, pp. 132].
+
+#### Homogeneity
+
+"Homogeneity [...] means that the expected number of points falling in a region B should be proportional to its area |B|"  [@baddeleySpatialPointPatterns2015, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns2015, pp. 132-133]. :
+
+$$
+\mathbb{E}[X\cap B] = \lambda |B|.
+\label{eq:expected_number_points}
+$$
+
+#### Independence
+
+Independence implies that in two (non-overlapping) regions $A$ and $B$, the number of points $n(X\cap A)$ and $n(X\cap B)$ are independent random variables. In other words, the number of points in region $A$ does not affect the number of points in region $B$. In addition, the number of points, $N = n(X\cap B)$, follows a Poisson distribution:
+
+$$
+\mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
+\label{eq:poisson_process}
+$$
+where $k = \lambda |B|$ [@baddeleySpatialPointPatterns2015, pp. 133].
+
+### Inhomogeneous Poisson Process
+
+A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns2015, pp. 138]. 
+
+$$
+\mu = \int_{B} \lambda(u) du.
+\label{eq:expected_number_inhomogeneous}
+$$
+
+### Isotropy
+
+A point process is called isotropic, if its statistical properties are invariant to rotations; a CSR process is both stationary and isotropic [@baddeleySpatialPointPatterns2015, pp. 147].
+
+### Stationarity
+
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space" [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218]. Not all metrics assume stationarity in its full sense. Inhomogeneous metrics only assume second-order / correlation stationarity. That means while the intensity function can vary spatially (first-order stationarity is not given), the estimates of correlation functions (e.g. the inhomogeneous K-function) should be the same in parts of the window [@baddeleySpatialPointPatterns2015, pp. 689].
+
+### Local scaling
+
+If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns2015, pp. 246-247].
+
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Furthermore, the outcome of the permutation test depends heavily on the choice of the quadrats. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns2015, pp. 689-693].
+
+```{r, warning=FALSE, eval = FALSE}
+permutation_test <- function(pp, mark, split, minpoints) {
+  pp_sel <-  subset(pp, marks %in% mark, drop = TRUE)
+  
+  rho_est <- rhohat(unmark(pp_sel), "x", method="tr")
+  lambda <- predict(rho_est)
+
+  tesselation <- quantess(unmark(pp_sel), "x", 3)
+  tesselation_split <- nestsplit(pp_sel, tesselation, ny=split)
+  
+  plot(tesselation_split, main = mark)
+  
+  tesselation_split$inten <- factor(as.integer(tesselation_split$f1) <= 1, labels=c("Hi","Lo"))
+  
+  res.scaled <- studpermu.test(tesselation_split, pts ~ inten, summaryfunction=Kscaled,
+                 minpoints = minpoints)
+  
+  res.inhom <- studpermu.test(tesselation_split, pts ~ inten, summaryfunction=Kinhom,
+                 lambda=lambda, minpoints = minpoints)
+  
+  #p-value of the local-scaling test
+  print(paste0(mark,' local scaling test ', res.scaled$p.value))
+  
+  #p-value of the inhomogeneity test
+  print(paste0(mark,' inhomogeneity test ', res.inhom$p.value))
+}
+lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp[['0.01']], x, split = 3, minpoints = 10))
+```
+
+The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
+
+For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. [ME: Does this make sense? Or is this just an artifact?] 
+
+As the interpretation of the permutation test is highly dependent on the quadrats, the results should be interpreted with care. Both inhomogeneous and locally scaled versions of the summary functions have support and both offer interesting insights into the spatial pattern. Therefore, we will compare all versions and show what the choice of metrics means for their interpretation.
+
+### Intensity
+
+Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first order property because it is related to the expected number of points . More formally the average intensity of a point process is defined as:
+
+$$
+\bar{\lambda} = \frac{n(x)}{|W|}
+\label{eq:average_intensity}
+$$
+
+As this is an average over the entire window, it only really makes sense for a homogeneous point process [@baddeleySpatialPointPatterns2015, pp. 157-160]
+
+#### Estimating Intensity
+
+For a homogeneous point process, the intensity can be estimated in a simplistic way: summing the individual intensities of the marks [@baddeleySpatialPointPatterns2015, pp. 161].
+
+```{r, cache=FALSE}
+intensityPointProcess <- function(pp,mark) if(mark) intensity(pp) else sum(intensity(pp))
+
+intensityPointProcess(pp_ls[['0.01']], mark = FALSE) %>% round(6)
+```
+
+Otherwise, we can compute the intensity for each mark individually.
+
+```{r, cache=FALSE}
+intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
+```
+
+#### Kernel Estimation
+
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns2015, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
+
+```{r, fig.width=8, fig.height=8}
+pp_sel <-  subset(pp_ls[['0.01']]$`OD Mature`, drop = TRUE)
+Dens <- density(pp_sel, sigma = 100)
+plot(Dens, main = 'Kernel Density (OD Mature cells)')
+```
+
+#### Quadrat Counting
+
+In quadrat counting, all points falling into a given quadrat are counted. This gives an overview on the characteristics of the point pattern, such as correlation stationarity [@baddeleySpatialPointPatterns2015, pp. 163].
+
+```{r, fig.width=12, fig.height=12, cache=FALSE, eval=FALSE}
+Q5 <- quadratcount(pp_ls[['0.01']], nx=8, ny=8)
+plot(unmark(pp[['0.01']]), main='Unmarked Point Pattern Quadrats')
+plot(Q5, col='black', add=TRUE)
+```
+
+Under independence assumptions, the quadrat counts can be used for testing homogeneity, i.e., if the  points are distributed evenly across the quadrats [@baddeleySpatialPointPatterns2015, pp. 164-165].
+
+```{r, cache=FALSE}
+val <- quadrat.test(pp_ls[['0.01']]$`OD Mature`, 5, alternative="regular", method="MonteCarlo")
+val
+```
+
+A p-value of `r val$p.value` indicates that the null hypothesis of irregularity can not be rejected strongly. Thus, the point pattern of oligodendrocyts is strongly irregular.
+
+Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types [@bullerAreasSpatialSegregation2020].
+
+```{r}
+# select marks
+selection <- c('OD Mature', 'Ependymal', 'Microglia')
+pp_sel <-  subset(pp[['0.01']], marks %in% selection, drop = TRUE)
+
+f1 <- pValuesHotspotMarks(pp_sel)
+
+# Plot significant p-values
+plot(f1$p, main = "Significant difference\n to Poisson process alpha = 0.05")
+```
+
+### Testing for CSR
+
+Whether or not a point process is completely spatially random (CSR) depends on two characteristics: points need to be distributed homogeneously and they have to be independent of each other (see definitions above). There are various ways to test for CSR, here we show the use-case of the clark-evans test [@baddeleySpatialPointPatterns2015, pp. 165-166].
+
+```{r, cache=FALSE}
+clarkevans.test(pp_ls[['0.01']]$`OD Mature`)
+```

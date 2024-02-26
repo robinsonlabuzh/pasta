@@ -244,9 +244,9 @@ $$
 K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j})|u \in X^{i}],
 $$
 
-where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595].
+where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns2015, pp. 151-152] 
 
-First, we plot an overview over the cross K function for the different types.
+First, we plot an overview over the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
 
 ```{r}
 #| echo: true
@@ -312,7 +312,7 @@ plotCrossAll(pp_sel, "Kcross.inhom", "iso")
 
 The diagonal of the imhomogeneous cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
 
-It is important to remember that the ihomogeneous cross K-function assumes that the multitype process is correlation stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns2015, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
+In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
 In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
 

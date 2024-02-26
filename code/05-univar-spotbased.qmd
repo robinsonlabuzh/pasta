@@ -32,76 +32,21 @@ sfe_tissue <- scater::logNormCounts(sfe_tissue)
 colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
 ```
 
-Given this data from McKellar et al. we choose two genes to analyse henceforth, namels `Mdk`and `Ncl`[7]. 
+Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ and _Ncl_ [@mckellarLargescaleIntegrationSinglecell2021]. 
 
-# Regular Lattice Data
+{{< embed theory_reg_lattice.qmd >}}
 
-Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [1].
+{{< embed univar_theory_lattice.qmd >}}
 
-The lattice is composed of individual spatial units
+# Examples
 
-$$
-D = \{A_1, A_2,...,A_n\}
-$$
-where these units are not supposed to overlap
-
-$$
-A_i \cap A_j = \emptyset \forall i \neq j
-$$
-
-The data is then a random variable of the spatial unit along the lattice
-
-$$
-Y_i = Y(A_i)
-$$
-
---> need to find the papers mentioned here!!
-
-A lot of lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship has to be modelled with e.g. a spatial weigth matrix $W$. There are a lot of ways to define a spatial weigth matrix $W$. An intuitive way is from Cliff and Ord (1981) and Upton and Fingleton (1985). Here, the units that are adjacent are specified with a one and the ones that are not adjacent with a zero (inary coniguity matrix) [1].
-
-$$
-w_{ij} = \begin{cases}
-1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\
-0 \text{ otw}
-\end{cases}
-$$
-
-other options to specify the weight matrix $W$ are mentioned in [1]. 
-
-# Univariate Data
-
-## Global Measures for Univariate Data
-
-Global measures are values across an entire field of view. This gives e.g. one number per field of view.
-
-A common analysis to do with lattice data (and point pattern data) is to check for spatial correlation. This is a second-order property of the form (Getis 1991)
-
-$$
-\sum_i \sum_j = w_{ij}U_{ij}
-$$
-
-where $w_{ij}$ is the weight matrix and $U_{ij}$ a dissimilarity measure. [1]
+## Global Methods
 
 ### Global Moran's I coefficient
-
-A common dissimilarity measure is Morans $I$. It is defined by [1]
-
-$$
-I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(y_i - \hat{y})(y_j - \hat{y})}{\sum_i (y_i - \hat{y})^2}
-$$
-
-Under the null $I$ takes the value $-1/(n-1)$ in expectation. This value is close to $0$ for large $n$. A value higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation. Negative values indicate negative auto-correlation, but this is not so easy to interpret [1]. The implementation below is a Monte Carlo simulation approach to define a null distribution to test against. 
 
 #### Implementation using `VOYAGER`
 
 ```{r, eval = TRUE}
-# taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
-# plotSpatialFeature(sfe_tissue, features = "nCounts",
-#                    colGeometryName = "spotPoly",
-#                    annotGeometryName = "myofiber_simplified",
-#                    aes_use = "color", linewidth = 0.5, fill = NA,
-#                    annot_aes = list(fill = "area"))
-
 sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
                                 colGraphName = "visium", nsim = 1000,
                                 type = "moran.mc")
@@ -115,33 +60,9 @@ res$moran.mc_p.value_Vis5A
 plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
 ```
 
-#### Implementation using `spdep`
-
-```{r}
-#create nearest neighbours weights 
-weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
-
-sfe_tissue[rowData(sfe_tissue)[,'symbol'] == 'Myh2',]
-
-spdep::moran.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods, randomisation = FALSE)
-
-spdep::moran.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, randomisation = FALSE)
-```
-
 The number of genes per spot shows a Moran's $I$ of $\sim 0.38$ which indicates auto-correlation. The number of counts per spot shows a Moran's $I$ of $\sim 0.53$. 
 
-
 ### Global Geary's C coefficient
-
-Another measure of spatial auto-correlation is Geary's $C$. It is very closely related to Moran's $I$. Geary's $C$ is defined by:
-
-$$
-C = \frac{(n-1) \sum_i \sum_j w_{ij}(y_i-y_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(y_i-\bar{y})^2}
-$$
-
-The interpretation is inveresely to Moran's $I$. A value less than $1$ indicates positive auto-correlation, a value more than $1$ negative auto-correlation. (https://pachterlab.github.io/voyager/articles/visium_10x.html)
-
-The testing works similarly to Moran's $I$, just the objective function changes in the Monte Carlo estimation
 
 #### Implementation using `VOYAGER`
 
@@ -158,206 +79,78 @@ res$geary.mc_statistic_Vis5A
 res$geary.mc_p.value_Vis5A
 ```
 
-#### Implementation using `spdep`
-
-```{r}
-spdep::geary.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods, randomisation = TRUE)
-
-spdep::geary.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods, randomisation = TRUE)
-```
-
 The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation. 
 
-https://onlinelibrary.wiley.com/doi/full/10.1111/gean.12164
-
 ### Global Getis-Ord $G$ statistic
-
-The global $G$ statistic is a generalisation of the local version (see below) and summarises the contributions of all pairs of values $(x_i, x_j)$ in teh dataset. Formally that is,
-
-$$
-G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_{j=1}^n x_i x_j}, \text{s.t } j \neq i
-$$
-
-The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the datapoints whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather considering both approaches. 
 
 --> weights should be binarised for this test - how to do this?
 
 ```{r}
+weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
+
 spdep::globalG.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods)
 spdep::globalG.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods)
 ```
-
-[5]
 
 ## Local Measures for Univariate Data
 
 ### Local Moran's I coefficient
 
-Often a global measure is not enough. One number determining e.g. the spatial autocorrelation over an entire tissue slice might not be reflective of tissue heterogeneity. Therefore, local indicators of spatial associations have been developed [2]. For each sampling location we calculate as follows (https://onlinelibrary.wiley.com/doi/epdf/10.1111/j.1538-4632.1995.tb00338.x) (formula from ?localmoran)
-
-$$
-I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})
-$$
-
-Since we are calculating several local statistics potentially from the same observations, problems of multiple testing arise. We correct for this issue with standard adjustments, such as Benjamini Hochberg correction (https://rss.onlinelibrary.wiley.com/doi/10.1111/j.2517-6161.1995.tb02031.x). The problem of false positives due to multiple testing is discussed in great detail in [2].
-
-Implementation with `spdep` 
+#### Implementation using `Voyager` 
 
 ```{r}
-#calculate local Moran's I and then correct for multiple testing using Benjamini-Hochberg correction if you want to plot p-values
-localplot <- function(sfe, var, fun, plotvar, weights_neighbourhoods){
-  loc <- do.call(fun, args = list(x=sfe[[var]], listw = weights_neighbourhoods))
-  #why so ever, 'localG' has a different return structure than 'localmoran'. Thus, this conditional with different indexing
-  if(fun %in% c('localG')){
-    loc <- attr(loc, 'internals')
-    #extract the effect size
-    locEffect <- loc[,1]
-    #extract the p-value and adjust for multiple testing
-    p.val.adj <- loc[,5] |> p.adjust("BH")
-  }
-  else if(fun == 'localC_perm'){
-    p.val.adj <- attr(loc, 'pseudo-p')[,'Pr(z != E(Ci))']
-    locEffect <- loc
-  }
-  else if (fun == 'LOSH'){
-    locEffect <- loc[,1]
-    p.val.adj <- c()
-  }
-  else{
-    #extract the effect size
-    locEffect <- loc[,1]
-    #extract the p-value and adjust for multiple testing
-    p.val.adj <- loc[,5] |> p.adjust("BH")
-  }
-  
-  #convert into a plain sf object for plotting
-  sf <- colGeometries(sfe)$spotPoly
-  
-  sf$locEffect <- locEffect
-  sf$p.val.adj <- p.val.adj
-  
-  return(tm_shape(sf) + tm_fill(col = plotvar))
-}
-
-p <- localplot(sfe_tissue, 'nCounts', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplot(sfe_tissue, 'nGenes', fun = 'localmoran', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-
-tmap_arrange(p,q)
-```
-
-#### Implementation with `Voyager` 
-
-```{r, eval = FALSE}
-sfe_tissue <- colDataUnivariate(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"))
+sfe_tissue <- colDataUnivariate(sfe_tissue, type = "localmoran", features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), ncol = 2,
                 colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+                diverge_center = 0)
 ```
 
 ### Local Geary's C coefficient
 
-Geary's C can be calculated for local interactions as well. 
-
-$$
-C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2
-$$
-
-The interpretation is the same as for local Moran's $I$ [6].
+#### Implementation using `Voyager` 
 
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localC_perm', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localC_perm', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-
-tmap_arrange(p,q)
-```
-
-#### Implementation with `Voyager` 
-
-```{r, eval = FALSE}
 sfe_tissue <- colDataUnivariate(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), ncol = 2,
                 colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+                diverge_center = 0)
 ```
 
 ### Local Getis-Ord $G_i$ coefficient
 
-The local Getis-Ord $G_i$ statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$. 
+#### Implementation using `Voyager` 
 
-$$
-G_i(d) = \frac{\sum_{j=1}^n w_{ij}(d)x_j}{\sum_{j=1}^n x_j}, \text{s.t } j \neq i 
-$$
-
-There is a variant of this statistic, $G_i^*(d)$ which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. Importantly, $G_i(d)$ is scale-invariant but not location-invariant. That means, the subdivision into the $n$ subregions matterns for the computation of the local statistic [5].
- 
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'localG', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'localG', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-
-tmap_arrange(p,q)
-```
-
-#### Implementation with `Voyager` 
-
-```{r, eval = FALSE}
-sfe_tissue <- colDataUnivariate(sfe_tissue, "localG", features = c("nCounts", "nGenes"))
+sfe_tissue <- colDataUnivariate(sfe_tissue, 
+                                "localG",
+                                features = c("nCounts", "nGenes"))
 
 plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
                 colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
+                diverge_center = 0)
 ```
 
 ### Local Spatial Heteroscedasticity (LOSH)
 
-The univariate methods described above assume homoscedastic variance so that the variance is uniform over the sampling area [4]. In the context of tumour-immune infiltration we could have regions where the mean infiltration is the same but the variability depends on the specific pathology. Therefore, a new statistic was introduced, local spatial heteroscedasticity (LOSH). The aim of LOSH is similar to the local $G$ statistic, where we compared means, to now compare variances. The aim is to compare homogeienity and heterogeneity of groups in space. This statistic is especially interesting in combination with the local $G$ statistic, giving an overview on the mean-variance relationship of the sample [4].
-
-LOSH is defined formally as follows:
-
-$$
-H_i(d) = \frac{\sum_j w_{ij}(d)|e_j(d)|^a}{\sum_j w_{ij}(d)}
-$$
-
-where $e_j(d) = x_j - \bar{x}_j(d), j\in N(i,d)$ are the local residuals [4].
-
-Ord and Getis provide a very nice table for the interpretation of the mean and variance relationship provided by $G_i$ and $H_i$. 
-
-The LOSH should be interpreted in the combination with local Getis-Ord $G_i^*$ statistic. The $G_i^*$ quantifies the local mean of the variable of interest, while $H_i$ quantifies the local variance. This table provided by Ord and Getis (2012) summarizes the interpretation of the combination of $G_i^*$ and $H_i$.
-
-|                     | high $H_i$                                                                    | low $H_i$                                                                                                                      |
-|---------------------|-------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------|
-| large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
-| small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                     
-
+#### Implementation using `Voyager` 
+                  
 ```{r}
-p <- localplot(sfe_tissue, var = 'nCounts', fun = 'LOSH', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
-q <- localplot(sfe_tissue, var = 'nGenes', fun = 'LOSH', plotvar = 'locEffect', weights_neighbourhoods = weights_neighbourhoods)
+#| eval: false
+# run localG with permutation test
+sfe_sub <- colDataUnivariate(sfe_tissue,
+                     features = c("Mdk"),
+                     type = "LOSH")
 
-tmap_arrange(p,q)
+
+plotLocalResult(sfe_tissue, "LOSH",
+                features = "Mdk",
+                colGeometryName = "centroids")
 ```
-
-## VOYAGER
-
-There is a very nice resource explaining in detail the available methods for lattice data (amongst others) (https://pachterlab.github.io/voyager/index.html). We will summarise complement these approaches in this chapter 
 
 # Appendix
 
-## Sources
-
-[1] Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
-
-[2] Pebesma, E., & Bivand, R. (2023). Spatial data science: With applications in R. CRC Press.
-
-[3] Lee, S. I. (2001). Developing a bivariate spatial association measure: an integration of Pearson's r and Moran's I. Journal of geographical systems, 3, 369-385.
-
-[4] Ord, J. K., & Getis, A. (2012). Local spatial heteroscedasticity (LOSH). The Annals of Regional Science, 48, 529-539.
-
-[5] Getis, A., & Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. Geographical analysis, 24(3), 189-206.
-
-[6] Anselin, L. (1995). Local indicators of spatial association—LISA. Geographical analysis, 27(2), 93-115.
-
-[7] McKellar, D. W., Walter, L. D., Song, L. T., Mantri, M., Wang, M. F., De Vlaminck, I., & Cosgrove, B. D. (2021). Large-scale integration of single-cell transcriptomic data captures transitional progenitor states in mouse skeletal muscle regeneration. Communications biology, 4(1), 1280.
 ## Session info
 
 ```{r}

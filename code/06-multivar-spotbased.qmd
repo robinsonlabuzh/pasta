@@ -34,124 +34,157 @@ colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
 weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
 ```
 
-Given this data from McKellar et al. we choose two genes to analyse henceforth, namels `Mdk`and `Ncl`[7]. 
+Given this data from McKellar et al. we choose two genes to analyse henceforth, named `Mdk`and `Ncl`[7]. 
 
-# Regular Lattice Data
 
-Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [1].
+```{r}
+MdK <- "ENSMUSG00000027239"
+NcI <- "ENSMUSG00000026234"
+```
 
-The lattice is composed of individual spatial units
+{{< embed theory_reg_lattice.qmd >}}
 
-$$
-D = \{A_1, A_2,...,A_n\}
-$$
-where these units are not supposed to overlap
+{{< embed multivar_theory_lattice.qmd >}}
 
-$$
-A_i \cap A_j = \emptyset \forall i \neq j
-$$
+# Examples 
 
-The data is then a random variable of the spatial unit along the lattice
+## Global Measures for Bivariate Data
 
-$$
-Y_i = Y(A_i)
-$$
+### Global Bivariate Moran's I
 
---> need to find the papers mentioned here!!
+### Implementation using `spded`
 
-A lot of lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship has to be modelled with e.g. a spatial weigth matrix $W$. There are a lot of ways to define a spatial weigth matrix $W$. An intuitive way is from Cliff and Ord (1981) and Upton and Fingleton (1985). Here, the units that are adjacent are specified with a one and the ones that are not adjacent with a zero (inary coniguity matrix) [1].
+```{r}
+res_xy <- spdep::moran_bv(x = logcounts(sfe_tissue)[MdK,],
+         y = logcounts(sfe_tissue)[NcI,],
+         listw =  colGraph(sfe_tissue, "visium"),
+         nsim = 499)
+boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
+plot(res_xy)
+```
 
-$$
-w_{ij} = \begin{cases}
-1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\
-0 \text{ otw}
-\end{cases}
-$$
+From the result of the global measure, the overall spatial autocorrelation of the two genes is not significant.
 
-other options to specify the weight matrix $W$ are mentioned in [1]. 
+### Global Bivariate Lee's L
 
-# Bi- and Multivariate Data
+#### Implementation using `voyager`
 
-So far, we have considered methods for univariate data, so where we looked at the change of one variable in several contexts. Spatial methods for bi- and multivariate data exist as well and will be discussed in the following.
+```{r}
+res_lee <- calculateBivariate(sfe_tissue, type = "lee.mc", 
+                   feature1 = MdK, feature2 = NcI,
+                   nsim = 499)
+res_lee$lee.mc_statistic
+res_lee$ lee.mc_p.value
+```
+
+The interpretation of the result is not straightforward, as identical patterns do not have a value of 1 but have a value depending on their spatial arrangement. In general positive values indicate spatial co-occurrence while negative values indicate spatial segregation of the pattern of variables of $x$ and $y$ [@leeDevelopingBivariateSpatial2001]. 
+
+## Local Measures for Bivariate Data
+
+### Bivariate Lee's L
+
+##### Implementation using `voyager`
+
+```{r}
+sfe_tissue <- runBivariate(sfe_tissue, type = "locallee",
+                    feature1 = MdK, feature2 = NcI)
+
+plotLocalResult(sfe_tissue, "locallee", 
+                features = localResultFeatures(sfe_tissue, "locallee"),
+                ncol = 2, divergent = TRUE, diverge_center = 0,
+                colGeometryName = "spotPoly") 
+  
+```
+
+
+<!-- ### Implementation using `spdep` -->
+
+<!-- ```{r} -->
+<!-- loc <- lee(x = logcounts(sfe)["KRT17",], -->
+<!--            y = logcounts(sfe)["TAGLN",], -->
+<!--            n = length(logcounts(sfe)["TAGLN",]), -->
+<!--            listw = weights_neighbourhoods) -->
+
+<!-- #convert into a plain sf object for plotting -->
+<!-- sf <- colGeometries(sfe)$cellSeg -->
+
+<!-- sf$locEffect <- loc$localL -->
+
+<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
+<!-- ``` -->
+
+<!-- [MR: do we need both implementations?] -->
+
 
 ## Local Measures for Multivariate Data
 
-### Bivariate Lee's $L$
-
-The implementation in the package `spdep` is as follows:
-
-$$
-L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}}
-$$
-(https://r-spatial.github.io/spdep/reference/lee.htmlls)
-
-Lee's $L$ is a bivariate measure that combines non-spatial Pearson Correlation with spatial autocorrelation via Moran's $I$ [3]. Instead of looking at the auto-correlation of one signle variable we can now assess the spatial dependence of two variables.
-
-```{r}
-loc <- lee(x = sfe_tissue$nCounts, y = sfe_tissue$nGenes, n = length(sfe_tissue$nCounts), listw = weights_neighbourhoods)
-
-#convert into a plain sf object for plotting
-sf <- colGeometries(sfe_tissue)$spotPoly
-
-sf$locEffect <- loc$localL
-
-tm_shape(sf) + tm_fill(col = 'locEffect')  
-```
-
-#### Implementation with `Voyager` 
-
-```{r, eval=FALSE}
-sfe_tissue <- runBivariate(sfe_tissue, "locallee", swap_rownames = "symbol",
-                           feature1 = c('nGenes', 'nCounts'))
-
-plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0, image_id = "lowres", maxcell = 5e4)
-```
-
 ### Multivariate local Geary's C
 
-Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. It is defined as
+Here we use the marker genes used in the original paper that study apoptosis [@heHighplexImagingRNA2022, Supplementary Table 1] in a subset of the tissue, as the computation is very intensive.
 
-$$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2$$
-
-and can be generalized to $k$ parameters by expanding 
-
-$$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
-
-where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. Compared to bivariates Lee it means that we use more than two variables.
-
-```{r, eval=TRUE}
+```{r}
 hvgs <- getTopHVGs(sfe_tissue, fdr.threshold = 0.01)
 
+# Subset of the tissue
 sfe_tissue <- runMultivariate(sfe_tissue, type = "localC_multi",
-                    subset_row = hvgs,
-                    dest = "colData")
+                    subset_row = hvgs)
 
-#plotSpatialFeature(sfe_tissue,"localC_multi", colGeometryName = "spotPoly", image_id = NULL)
+# Local C mutli is stored in colData so this is a workaround to plot it
+plotSpatialFeature(sfe_tissue, "localC_multi")
 ```
 
-## VOYAGER
+We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple values but the exact combination is not known. For further details, see [@anselinLocalIndicatorMultivariate2019].
 
-There is a very nice resource explaining in detail the available methods for lattice data (amongst others) (https://pachterlab.github.io/voyager/index.html). We will summarise complement these approaches in this chapter 
+[MR: this makes me question how we should present this. SG: Good question, it comes very close to spatial clustering here, maybe we can show this as a preview for other methods that we do not discuss.. From the @anselinLocalIndicatorMultivariate2019 publication: "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014)."]
 
-# Appendix
+```{r}
+sfe_tissue <- runMultivariate(sfe_tissue, type = "localC_perm_multi",
+                    subset_row = hvgs,
+                    nsim = 100)
 
-## Sources
+# stored as spatially reduced dim; plot it in this way
+spatialReducedDim(sfe_tissue, "localC_perm_multi",  c(1, 11))
+```
 
-[1] Zuur, A. F., Ieno, E. N., Smith, G. M., Saveliev, A. A., Mukharamova, S. S., & Zuur, A. F. (2007). Analysis and modelling of lattice data. Analysing Ecological Data, 321-339.
+<!-- ```{r} -->
+<!-- loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])), -->
+<!--        listw = weights_neighbourhoods, nsim = 1) -->
 
-[2] Pebesma, E., & Bivand, R. (2023). Spatial data science: With applications in R. CRC Press.
+<!-- #convert into a plain sf object for plotting -->
+<!-- sf <- colGeometries(sfe)$cellSeg -->
 
-[3] Lee, S. I. (2001). Developing a bivariate spatial association measure: an integration of Pearson's r and Moran's I. Journal of geographical systems, 3, 369-385.
+<!-- sf$locEffect <- loc -->
 
-[4] Ord, J. K., & Getis, A. (2012). Local spatial heteroscedasticity (LOSH). The Annals of Regional Science, 48, 529-539.
+<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
+<!-- ``` -->
 
-[5] Getis, A., & Ord, J. K. (1992). The analysis of spatial association by use of distance statistics. Geographical analysis, 24(3), 189-206.
+It would be interesting to do this not only on the cell level, but also on the *domain* level.
 
-[6] Anselin, L. (1995). Local indicators of spatial association—LISA. Geographical analysis, 27(2), 93-115.
+## Local Neighbor Match Test
 
-[7] McKellar, D. W., Walter, L. D., Song, L. T., Mantri, M., Wang, M. F., De Vlaminck, I., & Cosgrove, B. D. (2021). Large-scale integration of single-cell transcriptomic data captures transitional progenitor states in mouse skeletal muscle regeneration. Communications biology, 4(1), 1280.
+This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
+
+[MR: how are the KNNs calculated in the attribute space?]
+
+```{r}
+sf <- colGeometries(sfe_tissue)$spotPoly
+sf <- cbind(sf,  t(as.matrix(logcounts(sfe_tissue)[hvgs,])))
+
+nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
+
+sf$Probability <- nbr_test$Probability
+sf$Cardinality <- nbr_test$Cardinality
+
+tm_shape(sf) + tm_fill(col = 'Probability')  
+tm_shape(sf) + tm_fill(col = 'Cardinality')  
+```
+
+Cardinality is a measure of how many neighbours of each cell are in common. Some regions show high cardinality with low probability. On the cellular level, this might not be very informative and lead to regions with high similarity. We only see very few cells with a cardinality greater than 0. In addition, as the number of dimensions increase, the empty space between observations also increases; this is known as the empty space problem. 
+
+Again, this analysis should probably be performed on a structure level instead of a single cell level.  
+
+[MR: should we do the analysis at the structure/domain level then?]
+
 ## Session info
 
 ```{r}

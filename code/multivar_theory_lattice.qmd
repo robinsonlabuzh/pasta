@@ -1,0 +1,49 @@
+---
+title: "Theory -- Multivariate lattice based analysis"
+---
+
+
+## Global Measures for Bivariate Data
+
+### Global Bivariate Moran's I
+
+For two continous observation the global bivariate Moran's I is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
+
+$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
+
+where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
+
+The global bivariate Moran's I is a measure of autocorrelation of the variables $x$ and $y$ with the spatial lag of $y$. Therefore the result might overestimate the spatial autocorrelation of the variables due to the inherent (non-spatial) correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
+
+### Global Bivariate Lee's L
+
+Lee’s L is a bivariate measure that combines non-spatial pearson correlation with spatial autocorrelation via Moran’s I [@leeDevelopingBivariateSpatial2001]. This enables us to asses the spatial dependence of two continuous variables in a single measure. The measure is defined as
+
+$$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}},$$
+
+where $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$, $x$ and $y$ the two variables and $\bar{x}$ and $\bar{y}$ their means. 
+
+## Local Measures for Bivariate Data
+
+### Bivariate Lee's L
+
+Similar to the global variant of Lee's L the local variant [@leeDevelopingBivariateSpatial2001] is defined as 
+
+$$L_i(x,y) = \frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}},$$
+Local Lee's L is a measure of spatial co-expression, when the variables of interest are gene expression measurements and can also be a metric of co-localization. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation. 
+
+This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on bivariate Moran's I and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
+
+## Local Measures for Multivariate Data
+
+### Multivariate local Geary's C
+
+Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. [@anselinLocalIndicatorMultivariate2019] defines it as
+
+$$C_i = \sum_{j=1}^n w_{ij}(z_i-z_j)^2,$$
+
+and can be generalized to $k$ parameters by expanding 
+
+$$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
+
+where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretaing the mixture of similarity in the geographic space and similarity in the attribute space. 

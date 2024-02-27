@@ -1,0 +1,23 @@
+---
+title: "Theory -- Regular lattices"
+---
+
+Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [@zuurAnalysingEcologicalData2007].
+
+The lattice is composed of individual spatial units
+
+$$D = \{A_1, A_2,...,A_n\}$$
+
+where these units are not supposed to overlap
+
+$$A_i \cap A_j = \emptyset \forall i \neq j$$
+
+The data is then a random variable of the spatial unit along the lattice
+
+$$Y_i = Y(A_i)$$
+
+Most lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship has to be modelled with e.g. a spatial weigth matrix $W$. There are a lot of ways to define a spatial weigth matrix $W$. Here, the units that are adjacent are specified with a one and the ones that are not adjacent with a zero (binary coniguity matrix)
+
+$$w_{ij} = \begin{cases} 1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\ 0 \text{ otw} \end{cases}$$
+
+other options to specify the weight matrix $W$ are mentioned in [@zuurAnalysingEcologicalData2007]. 

@@ -32,11 +32,11 @@ website:
         file: 00-home.qmd
       - text: "Setup"
         file: 00-setup.qmd
-      - sidebar:imagebased
+      - sidebar:cellbased
       - sidebar:spotbased
   sidebar:
-    - id: imagebased 
-      title: "Image-based Analysis"
+    - id: cellbased 
+      title: "Cell-based Analysis"
       style: "docked"
       background: light
       collapse-level: 3
@@ -45,16 +45,16 @@ website:
         - text: "Univariate Methods"
         - text: "---"
         - text: "Univariate Point Pattern Methods"
-          file: 01-within-marks.qmd
-        - text: "Univariate Lattice Methods"
-          file: 02-univar-irregular-lattices.qmd
+          file: 01-cell-univar-point.qmd
+        - text: "Univariate Lattice Methods for Cells"
+          file: 02-cell-univar-lattice.qmd
         - text: "---"
         - text: "Multivariate Methods"
         - text: "---"
         - text: "Multivariate Point Pattern Methods"
-          file: 03-between-marks.qmd
-        - text: "Multivariate Lattice Methods"
-          file: 04-multivar-irregular-lattices.qmd
+          file: 03-cell-multivar-point.qmd
+        - text: "Multivariate Lattice Methods for Cells"
+          file: 04-cell-multivar-lattice.qmd
           
     - id: spotbased
       title: "Spot-based Analysis"
@@ -63,6 +63,6 @@ website:
       collapse-level: 2
       contents: 
         - text: "Univariate Lattice Methods for Spots"
-          file: 05-univar-spotbased.qmd
+          file: 05-spot-univar-lattice.qmd
         - text: "Multivariate Lattice Methods for Spots"
-          file: 06-multivar-spotbased.qmd
+          file: 06-spot-multivar-lattice.qmd

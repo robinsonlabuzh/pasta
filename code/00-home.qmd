@@ -1,5 +1,5 @@
 ![](../misc/overview_brain_tech.png)
-<p><small> An overview showcasing various data modalities obtained from different spatial transcriptomics technologies (Images adapted from [1], [2]). </small></p>
+<p><small> An overview showcasing various data modalities obtained from different spatial transcriptomics technologies (Images adapted from [@MERFISHSpatialProfiling], [@SpatialGeneExpression]). </small></p>
 
 This vignette provides an overview of exploratory data analysis techniques tailored to the data modalities arising from the two primary spatial transcriptomic technologies: image-based methods (e.g., MERFISH, CosMx, Xenium) and spot-based approaches (e.g., Visium).
 
@@ -10,8 +10,3 @@ In contrast, spot-based methods, not yet achieving subcellular resolution, produ
 # Disclaimer
 
 This site is still under development. Sources might be inconsistent or missing. All information should be considered preliminary and subject to change. The information presented here is for internal (Department of Molecular Life Sciences, University of Zurich) use only and is not intended for any other purpose.
-
-# Sources
-- [1] MERFISH Spatial Profiling Technology. UrL: https://vizgen.com/technology/ (visited on 01/08/2024).
-- [2] Spatial Gene Expression for FFPE - Official 10x Genomics Support. UrL: https://www.10xgenomics.com/support/spatial-gene-
-expression-ffpe (visited on 01/08/2024).

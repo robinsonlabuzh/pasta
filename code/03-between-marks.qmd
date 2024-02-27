@@ -1,21 +1,6 @@
 # Discrete Marks
 
-## Dependencies
-
-```{r}
-#| label: load-libs
-#| message: false
-#| warning: false
-#| results: hide
-source("utils.R")
-```
-
-## Setup
-
-```{r}
-#| label: load-data 1
-spe <- readRDS("../data/spe.rds")
-```
+{{< include pp_theory_helper.qmd >}}
 
 # Multitype point process
 
@@ -33,7 +18,7 @@ A pattern with multiple type of points, e.g. cell types, can be seen in differen
 - random labeling: each point is assigned a type at random independently of its location
 - independence of components:  the points of different types are independent of each other.
 
-Apart from CSRI is is also important for the analysis if we can assume stationarity, i.e. the distribution of the points is the same everywhere in the window.
+Apart from CSRI is is also important for the analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
 
 For simplicity, we will focus on three cell types of our point pattern: Ependymal, OD Mature and Microglia. This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the pattern.
 
@@ -69,7 +54,7 @@ To get the overall intensity the individual intensities can be summed up. Assumi
 sum(intensity(pp)) == intensity(unmark(pp))
 ```
 
-The stationarity assumption is not appropriate in all cases. To assess stationarity visually, we can plot the kernel density estimates per type.
+The stationarity assumption is not appropriate in all cases. To assess first-order stationarity visually, we can plot the kernel density estimates per type.
 
 ```{r}
 #| fig-width: 7.5
@@ -259,9 +244,9 @@ $$
 K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j})|u \in X^{i}],
 $$
 
-where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595].
+where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns2015, pp. 151-152] 
 
-First, we plot an overview over the cross K function for the different types.
+First, we plot an overview over the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
 
 ```{r}
 #| echo: true
@@ -325,9 +310,9 @@ plotCrossAll(pp_sel, "Kcross.inhom", "iso")
 
 <!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
 
-The diagonal of the cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
+The diagonal of the imhomogeneous cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the types are independent, they are also uncorrelated.
 
-It is important to remember that the cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns2015, pp. 151-152] . In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
+In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
 In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
 
@@ -451,7 +436,7 @@ The cross G-function is the cumulative distribution function of the distance fro
 
 $$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u}).$$
 
-If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary.
+If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying. Then we only assume correlation stationarity.
 
 There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$ [@baddeleySpatialPointPatterns2015, p. 597 ff].
 
@@ -486,7 +471,7 @@ The dot functions are useful summary statistics to analyse the dependence of one
 
 ## Summary function within and between types
 
-In our original dataset, we have a large number of different marks. We picked three OD mature, Ependymal and Microglia for illustrative purposes. An alternative to looking at all cross summary function combinations, it is possible to compare between and within types [@baddeleySpatialPointPatterns2015].
+In our original dataset, we have a large number of different marks. We picked three: OD mature, Ependymal and Microglia for illustrative purposes. An alternative to looking at all cross summary function combinations, it is possible to compare between and within types [@baddeleySpatialPointPatterns2015].
 
 ### Mark equality function
 
@@ -593,7 +578,7 @@ We have indication that the independence-of-components assumption should not be 
 
 # Assuming stationarity of the total pattern
 
-As outlined above, the cross correlation and spacing functions assume stationarity, which is not given in our dataset, when we look at the different patterns individually. However, using the total (unmarked) pattern, we could assume stationarity. 
+As outlined above, the homogeneous cross correlation and spacing functions assume stationarity, whereas the inhomogeneous functions only assume correlation stationarity. First-order stationarity is not given in our dataset, when we look at the different patterns individually. However, using the total (unmarked) pattern, we could assume first-order stationarity, since the intensity is the same across the pattern.
 
 ```{r}
 plot(density(unmark(pp)))

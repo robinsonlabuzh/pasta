@@ -34,9 +34,9 @@ colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
 
 Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ and _Ncl_ [@mckellarLargescaleIntegrationSinglecell2021]. 
 
-{{< embed theory_reg_lattice.qmd >}}
+{{< include theory/02-theory-reg-lattice.qmd >}}
 
-{{< embed univar_theory_lattice.qmd >}}
+{{< include theory/04-theory-univar-lattice.qmd >}}
 
 # Examples
 

@@ -1,6 +1,6 @@
 # Discrete Marks
 
-{{< include pp_theory_helper.qmd >}}
+{{< include theory/01-theory-point.qmd >}}
 
 # Multitype point process
 

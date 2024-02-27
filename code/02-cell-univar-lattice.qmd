@@ -52,7 +52,7 @@ plotSpatialFeature(sfe, c("TAGLN"),
 ```
 
 
-{{< embed theory_irreg_lattice.qmd >}}
+{{< include theory/03-theory-irreg-lattice.qmd >}}
 
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
@@ -61,7 +61,7 @@ colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
 ```
 
 
-{{< embed univar_theory_lattice.qmd >}}
+{{< include theory/04-theory-univar-lattice.qmd >}}
 
 
 # Examples

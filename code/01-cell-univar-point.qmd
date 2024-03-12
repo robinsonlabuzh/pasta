@@ -15,6 +15,18 @@ lapply(zstack_list, function(zstack){
   plot(pp_ls[[zstack]][[celltype_ls]], main = zstack, legend = FALSE)
 })
 dev.off()
+
+pls <- lapply(zstack_list, function(zstack){
+  pp_sel <- pp_ls[[zstack]][[celltype_ls]]
+  p <- pp_sel |> as.data.frame() |> 
+  ggplot(aes(x = x, y = y, alpha = 0.3)) +
+  geom_point() +
+  theme_minimal() +
+  coord_fixed() +
+  ggtitle(zstack)
+  return(p)
+})
+wrap_plots(pls, guides = 'collect')
 ```
 
 ## Correlation
@@ -113,18 +125,13 @@ plotMetric <- function(plot_by, pp, celltype = NULL, x, fun, edgecorr, bootstrap
   #calculate the metric and store as dataframe
   res_df <- metricResToDF(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f)
   #plot the curves
-  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], col= (plot_by)))+
+  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], colour= (plot_by),  show.legend = FALSE))+
       geom_line() +
-      {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)}+
+      {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)}+
       ggtitle(paste0(fun, '-function'))+
       geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed")+
       ylab(edgecorr) +
-      # scale_color_manual(name='Point Processes',
-      #                  breaks=c('-0.29', '0.01',
-      #                           '0.06', 'Poisson'),
-      #                  values=c('-0.29'='red',
-      #                           '0.01'='dark green',
-      #                           '0.06'='blue', 'Poisson'='black'))+
+      #guides(colour = guide_legend(override.aes = list(shape = 23, size = 2))) +
       theme_light()
   
   return(p)
@@ -666,6 +673,31 @@ We note that the difference between $L$-function weighted by the expression of E
 
 In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be discrete (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
 
+# figures for draft
+
+```{r, eval = FALSE}
+pls <- lapply(zstack_list, function(zstack){
+  pp_sel <- pp_ls[[zstack]][[celltype_ls]]
+  p <- pp_sel |> as.data.frame() |> 
+  ggplot(aes(x = x, y = y)) +
+  geom_point(color = "black", alpha = 0.3) +
+  theme_light() +
+  coord_fixed() +
+  ggtitle(zstack) + 
+  theme(legend.position = 'none')
+  return(p)
+})
+
+p1 <- wrap_plots(pls, guides = 'collect', nrow = 3)
+p_K_homo <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kest', 'iso', bootstrap = TRUE)
+p_K_inhomo <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
+p_K_scaled <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kscaled', 'iso', bootstrap = FALSE)
+
+p2 <- wrap_plots(list(p_K_homo, p_K_inhomo, p_K_scaled), nrow = 3, guides = 'collect')
+p_total <- p1|p2
+
+ggsave('pp_example.pdf', plot = p_total, width = 8, height = 8)
+```
 # Appendix
 
 ## Session info

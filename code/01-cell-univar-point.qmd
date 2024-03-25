@@ -265,7 +265,8 @@ p <- ggplot(dfm, aes(x=r, y=value, group=variable, colour=sel)) +
   scale_color_continuous(type = "viridis") +
   geom_vline(xintercept = 200) +
   theme(legend.position = "none") +
-  theme_light()
+  theme_light() +
+  ggtitle("LISA curves of slice 0.01")
 
 ppdf <- as.data.frame(pp[['0.01']]) %>% filter(marks=="OD Mature")
 ppdf$sel <- get_sel$sel # assume they are in same order
@@ -274,7 +275,8 @@ q <- ggplot(ppdf, aes(x=x, y=y, colour=sel)) +
   geom_point() +
   scale_color_continuous(type = "viridis") +
   theme(legend.position = "none") +
-  theme_light()
+  theme_light()+
+  ggtitle("Points coloured by LISA value at r ~ 200")
 ```
 
 
@@ -327,11 +329,12 @@ fpca_pc_df <- as.data.frame(fpca_obj$xiEst) %>%
   rename(PC1 = V1, PC2 = V2, PC3 = V3)
 fpca_pc_df$sel <- get_sel$sel # assume they are in same order
 
-ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) + 
+p_biplot <- ggplot(fpca_pc_df, aes(x=PC1, y=PC2, col = sel)) + 
   scale_color_continuous(type = "viridis") +
   geom_point() +
   theme_light() +
-  ggtitle("Biplot of the LISA L curves of the OD mature cells")
+  ggtitle("Biplot of the LISA L curves")
+p_biplot
 
 p1 <- ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC1)) + 
   scale_color_continuous(type = "viridis") +
@@ -344,6 +347,16 @@ p2 <- ggplot(ppdf, aes(x=x, y=y, colour = fpca_pc_df$PC2)) +
   geom_point()
 
 p1|p2
+```
+
+```{r, include=FALSE}
+#assemble plots for paper
+p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
+p_local <- wrap_plots(list(p,p_biplot), nrow = 2, guides = 'collect')
+L_plot <- wrap_plots(list(p_L, p_local), nrow = 2, heights = c(1, 2))
+```
+
+```{r, fig.height=5, fig.width=10}
 ```
 
 Here, we see the functional PCA for the OD mature cells. The Design plot tells us that we have a very dense dataset over the entire support [MR: do we need the 'Design plot'? it doesn't show much]. The mean curve displays the mean trend over all $n$ LISA $L$-curves (which is itself similar to the locally-scaled $L$-function). The scree plot indicates that the first eigenfunction explains more than $80 \%$ of the variance. The eigenfunction curves in the bottom right panel indicate the deviation from the mean curve.
@@ -693,10 +706,10 @@ p_K_homo <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kest', 'iso',
 p_K_inhomo <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
 p_K_scaled <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kscaled', 'iso', bootstrap = FALSE)
 
-p2 <- wrap_plots(list(p_K_homo, p_K_inhomo, p_K_scaled), nrow = 3, guides = 'collect')
-p_total <- p1|p2
+p2 <- wrap_plots(list(p_K_homo, p_K_inhomo, p_K_scaled), ncol = 3, guides = 'collect')
+p_total <- wrap_plots(list(p1, L_plot), ncol = 2) + plot_annotation(tag_levels = 'A')
 
-ggsave('pp_example.pdf', plot = p_total, width = 8, height = 8)
+ggsave('pp_example.pdf', plot = p_total, width = 8, height = 9)
 ```
 # Appendix
 

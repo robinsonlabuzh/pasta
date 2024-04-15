@@ -42,7 +42,7 @@ suppressPackageStartupMessages({
     } else stop("'marks' should be in ",
       "'rownames(.)' or 'names(colData(.))'")
   }
-  ppp(xy[, 1], xy[, 2], window = w, marks = m)
+  ppp(xy[, 1], xy[, 2], window = w, marks = factor(m))
 }
 
 

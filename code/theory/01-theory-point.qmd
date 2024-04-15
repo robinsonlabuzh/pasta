@@ -50,7 +50,6 @@ In both cases it is important to understand the direction of the bias. If the un
 ```{r}
 setRiprasWindows <- function(pp){
   Window(pp) <- ripras(pp)
-  marks(pp) <- factor(marks(pp))
   return(pp)
 }
 #the entire point patterns with the ripras windows

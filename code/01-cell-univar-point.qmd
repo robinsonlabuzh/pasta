@@ -86,57 +86,6 @@ where the derivative of the $K$ function divided by the probability of a Poisson
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
 #| warning: false
-
-#PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
-#POST: result of the metric
-metricRes <- function(plot_by, pp, celltype, fun, bootstrap, continuous, f){
-  if(continuous){
-    pp <- subset(pp, select = plot_by)
-  }
-  else{
-    pp_sel <- pp[[plot_by]]
-    pp <- subset(pp_sel, marks == celltype)
-  }
-  if(bootstrap){
-    metric.res <- lohboot(pp, fun = fun, f = f)
-  }
-  else{
-    metric.res <- do.call(fun, args = list(X=pp, f=f))
-  }
-  metric.res$type <- celltype
-  metric.res$plot_by <- plot_by
-  return(metric.res)
-}
-
-#PRE: celltypes, function to calculation and edge correction method
-#POST: dataframe of 
-metricResToDF <- function(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f){
-  lapply(plot_by, function(u) {
-    metricRes(u, fun = fun, pp = pp, celltype = celltype, bootstrap, continuous, f)  %>%
-      as.data.frame()
-  }) %>% bind_rows
-}
-
-# [MR: try to write the above a little more compactly]
-
-#PRE: Celltypes of interest, function to analyse, edge correction to perform
-#POST: plot of the metric
-plotMetric <- function(plot_by, pp, celltype = NULL, x, fun, edgecorr, bootstrap = FALSE, continuous = FALSE, f = NULL){
-  #calculate the metric and store as dataframe
-  res_df <- metricResToDF(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f)
-  #plot the curves
-  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], colour= (plot_by),  show.legend = FALSE))+
-      geom_line(size=1) +
-      {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)}+
-      ggtitle(paste0(fun, '-function'))+
-      geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed", size=1)+
-      ylab(edgecorr) +
-      #guides(colour = guide_legend(override.aes = list(shape = 23, size = 2))) +
-      theme_light()
-  
-  return(p)
-}
-
 p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
 p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
 p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
@@ -296,13 +245,6 @@ p2 <- ggplot(ppdf, aes(x=x, y=y, colour = res$scores[,2])) +
 
 ```{r, fig.height=5, fig.width=10}
 p1|p2
-```
-
-```{r, include=FALSE}
-#assemble plots for paper
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
-p_local <- wrap_plots(list(p,p_biplot), nrow = 2, guides = 'collect')
-L_plot <- wrap_plots(list(p_L, p_local), nrow = 2, heights = c(1, 2))
 ```
 
 Here, we have performed a functional PCA for the OD mature cells. 
@@ -495,7 +437,7 @@ lapply(pp, function(x){rose(nnorient(x))})
 
 The two plots are complementary and show which are the preferred orientations of the point patterns. Furthermore, they show whether or not the assumption of isotropy (no change in the statistical properties of a point pattern after rotations) is justified or not [@baddeleySpatialPointPatterns2015 pp. 236]. Isotropy is an assumption that a lot of spatial metrics make and in our example we note, that the point patterns are in fact anisotropic. An option for analysising anisotropic point patterns is to not calculate the metric on the actual point pattern but rather calculating it on the fry plot of the point pattern. This generalises e.g. Ripley's $K$ function from circles to arbitrary shapes [@baddeleySpatialPointPatterns2015 pp. 239 ff.].
 
-Note also tha the concepts of spacing are not only usable in *point* pattern analysis but also more broadly in other spatial contexts (e.g., spacing between shapes instead of points).
+Note also that the concepts of spacing are not only usable in *point* pattern analysis but also more broadly in other spatial contexts (e.g., spacing between shapes instead of points).
 
 ### Edge Corrections
 
@@ -513,14 +455,14 @@ pp <- pp[['0.01']]
 sub <- spe[, spe$sample_id == '0.01']
 ```
 
-In `spatstat`, a `mark` can basically take any value, discrete (as we have seen above) or continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@baddeleySpatialPointPatterns2015 pp. 637] [@moffittMolecularSpatialFunctional2018]. This is a typical numerical mark for points in a biological dataset.
+In `spatstat`, a `mark` can basically take any value, discrete (e.g. cell types, as we have seen above) or continuous (e.g., gene expression). In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@baddeleySpatialPointPatterns2015 pp. 637] [@moffittMolecularSpatialFunctional2018]. This is a typical numerical mark for points in a biological dataset.
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
 genes <- c('Slc18a2', 'Esr1', 'Pgr')
 gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
   data.frame %>% set_rownames(NULL)
-# gene expression to marks [ME: is it really expression?]
+# gene expression to marks
 marks(pp) <- gex
 ```
 
@@ -530,7 +472,7 @@ marks(pp) <- gex
 plot(pp)
 ```
 
-Here we see spatial distribution of the counts of the three genes Slc18a2, Esr1 and Pgr. The size of the circles indicates the counts of the transcripts at that spot. \[ME: is this true?\] Since there are really a lot of points, we can't easily distinguish general patterns of count distributions.
+Here we see spatial distribution of the counts of the three genes Slc18a2, Esr1 and Pgr. The size of the circles indicates the counts of the transcripts at that spot. Since there are really a lot of points, we can't easily distinguish general patterns of count distributions.
 
 We can investigate the distribution of the marks against the spatial location of the points and against each other. This is done with the function `pairs` from `spatstat`. It generates a scatterplot of the counts of the marks (in our case the three genes) against each other and against the $x$ and $y$ coordinates. We can add a non-linear smoothing curve to make the general trends a bit more obvious [@baddeleySpatialPointPatterns2015 pp.641].
 
@@ -538,15 +480,7 @@ We can investigate the distribution of the marks against the spatial location of
 pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
 ```
 
-We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of Esr1 and Pgr are positively associated, indicating a dependence of these two marks. <!--
-The `Smooth` command uses cross-validation to select the smoothing bandwidth of the Gaussian kernel. This estimated kernel can be used for visual inspection of the dataset.
-
-```{r}
-ppsmooth <- Smooth(pp, bw.smoothppp)
-plot(ppsmooth)
-```
-From the estimated intensity plot, we can see that the expression of the marker genes is clearly inhomogeneous. [MR: what does it mean that marker gene expression is inhomogeneous .. I thought inhomogeneity had to do with the location of points?!]
--->
+We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of Esr1 and Pgr are positively associated, indicating a dependence of these two marks. 
 
 NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwidth for Gaussian kernel smoothing [@baddeleySpatialPointPatterns2015 pp. 642].
 
@@ -554,19 +488,7 @@ NN interpolations uses the nearest mark to measure the intensity at each spatial
 plot(nnmark(pp))
 ```
 
-We see that there is e.g. a clear spatial structure in the expression of e.g. `Esr1`. It shows a half moon shape. <!--
-We can use the average value of neighbouring points to predict the expression of a gene at each point. We can then plot the actual marks versus the fitted values to detect anomalies. For example, `Esr1` shows a clear half moon shape in the middle of the image, where the actual values are much higher than the fitted. This gives further indication of structure in the gene expression.[MR: I don't really understand the interpretation here.]
-
-
-```{r}
-mfit <- Smooth(pp, bw.smoothppp, at="points")
-res <- marks(pp) - mfit
-
-plot(setmarks(pp, res))
-```
-
-[MR: I don't really have a good intuition of what these plots mean, but I think the plots are anyways hard to interpret. The scale is a bit weird .. I think the point size has some meaning, but that's really hard to see. Colours would be better, but I'm not even sure these plots tell us much interesting. Also, since we are taking differences between values and a smooth fit, the scale of the data becomes important; are we on a "good" scale?]
--->
+We see that there is e.g. a clear spatial structure in the expression of e.g. `Esr1`. It shows a half moon shape. 
 
 ## Summary functions for continuous marks
 
@@ -618,37 +540,6 @@ We note that the difference between $L$-function weighted by the expression of E
 # Summary
 
 In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be discrete (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
-
-# figures for draft
-
-```{r, eval = FALSE}
-pls <- lapply(zstack_list, function(zstack){
-  pp_sel <- pp_ls[[zstack]][[celltype_ls]]
-  p <- pp_sel |> as.data.frame() |> 
-  ggplot(aes(x = x, y = y)) +
-  geom_point(color = "black", alpha = 0.3, size=0.75) +
-  theme_light() +
-  coord_fixed() +
-  ggtitle(paste0(zstack, ', (N = ',npoints(pp_sel), ')')) + 
-  theme(legend.position = 'none')
-  if(zstack == '0.01'){
-    p <- pp_sel |> as.data.frame() |> 
-    ggplot(aes(x = x, y = y, col = fpca_pc_df$PC1)) +
-    scale_color_continuous(type = "viridis") +
-    geom_point(size=0.75) +
-    theme_light() +
-    coord_fixed() +
-    ggtitle(paste0(zstack, ', (N = ',npoints(pp_sel), ')')) + 
-    theme(legend.position = 'none')
-  }
-  return(p)
-})
-
-p1 <- wrap_plots(pls, guides = 'collect', nrow = 3)
-p_total <- wrap_plots(list(p1, L_plot), ncol = 2) + plot_annotation(tag_levels = 'A')
-
-ggsave('pp_example.pdf', plot = p_total, width = 8, height = 9)
-```
 
 # Appendix
 

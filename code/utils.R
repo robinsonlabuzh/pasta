@@ -180,9 +180,59 @@ plotFpca <- function(dat, res, colourby) {
   scores_df <- res$scores %>% as.data.frame()
   # plot fCPA results - assumes same order of fPCA results and input data
   p <- ggplot(scores_df, aes(scores_df[, 1], scores_df[, 2], colour = (dat[[colourby]]))) +
-    scale_color_continuous(type = "viridis") +
-    geom_point() +
+    scale_color_continuous(type = "viridis", name = colourby) +
+    geom_point(size=0.75) +
     coord_equal() +
     theme_light()
+  return(p)
+}
+
+#PRE: list of point pattern, corresponding celltypes of interest, functions to evaluate
+#POST: result of the metric
+metricRes <- function(plot_by, pp, celltype, fun, bootstrap, continuous, f){
+  if(continuous){
+    pp <- subset(pp, select = plot_by)
+  }
+  else{
+    pp_sel <- pp[[plot_by]]
+    pp <- subset(pp_sel, marks == celltype)
+  }
+  if(bootstrap){
+    metric.res <- lohboot(pp, fun = fun, f = f)
+  }
+  else{
+    metric.res <- do.call(fun, args = list(X=pp, f=f))
+  }
+  metric.res$type <- celltype
+  metric.res$plot_by <- plot_by
+  return(metric.res)
+}
+
+#PRE: celltypes, function to calculation and edge correction method
+#POST: dataframe of 
+metricResToDF <- function(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f){
+  lapply(plot_by, function(u) {
+    metricRes(u, fun = fun, pp = pp, celltype = celltype, bootstrap, continuous, f)  %>%
+      as.data.frame()
+  }) %>% bind_rows
+}
+
+# [MR: try to write the above a little more compactly]
+
+#PRE: Celltypes of interest, function to analyse, edge correction to perform
+#POST: plot of the metric
+plotMetric <- function(plot_by, pp, celltype = NULL, x, fun, edgecorr, bootstrap = FALSE, continuous = FALSE, f = NULL){
+  #calculate the metric and store as dataframe
+  res_df <- metricResToDF(plot_by, celltype, pp, fun, edgecorr, bootstrap, continuous, f)
+  #plot the curves
+  p <- ggplot(res_df, aes(x=.data[[x]], y=.data[[edgecorr]], colour= (plot_by),  show.legend = FALSE))+
+    geom_line(size=1) +
+    {if(bootstrap)geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25, show.legend = FALSE)}+
+    ggtitle(paste0(fun, '-function'))+
+    geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed", size=1)+
+    ylab(edgecorr) +
+    #guides(colour = guide_legend(override.aes = list(shape = 23, size = 2))) +
+    theme_light()
+  
   return(p)
 }

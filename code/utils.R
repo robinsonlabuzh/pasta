@@ -181,7 +181,7 @@ plotFpca <- function(dat, res, colourby) {
   # plot fCPA results - assumes same order of fPCA results and input data
   p <- ggplot(scores_df, aes(scores_df[, 1], scores_df[, 2], colour = (dat[[colourby]]))) +
     scale_color_continuous(type = "viridis", name = colourby) +
-    geom_point(size=0.75) +
+    geom_point(size=1) +
     coord_equal() +
     theme_light()
   return(p)

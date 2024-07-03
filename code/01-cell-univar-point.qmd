@@ -87,9 +87,17 @@ where the derivative of the $K$ function divided by the probability of a Poisson
 #| message: false
 #| warning: false
 p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
+p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = FALSE)
 p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
+
+
+res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', r_seq=seq(0, 500, length.out = 100), by = c('Animal_ID','sample_id'))
+
+res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotMetricPerFov(res, correction = "iso", x = "r", image_id = 'sample_id', ID = 'sample_id')
 ```
+
+\
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
 p_homo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')

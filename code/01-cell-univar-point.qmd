@@ -37,7 +37,7 @@ Correlation, or more generally covariance, represents a second-order summary sta
 
 #### Empirical Ripley's $K$
 
-With Ripley's $K$ we measure "the average number of r-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204]. This number is still dependent on the size of the observation window so we can normalise it by the number of points $n$ and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [@baddeleySpatialPointPatterns2015, pp. 204; @ripleyModellingSpatialPatterns1977; @ripleySecondOrderAnalysisStationary1976a]:
+With Ripley's $K$ we measure "the average number of $r$-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204]. This number is still dependent on the size of the observation window so we can normalise it by the number of points $n$ and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [@baddeleySpatialPointPatterns2015, pp. 204; @ripleyModellingSpatialPatterns1977; @ripleySecondOrderAnalysisStationary1976a]:
 
 $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\} e_{ij}(r)
@@ -133,7 +133,7 @@ Interestingly, the curves for the inhomogeneous functions of slices -0.09 and 0.
 
 #### Locally-scaled $K$-function
 
-In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat. In a biological sample, this assumption is easily violated, e.g. when a gradient of cells increases from one side to another \[ME needs a reference\]. The correlation structure might scale linearly with the distance [@baddeleySpatialPointPatterns2015 pp. 246-247; @prokesovaStatisticsLocallyScaled2006].
+In the inhomogeneous $K$-function approach above, we assume that the intensities can vary locally but the scale of the point process is not changed. This means that while the intensities might vary in the parts of the point pattern, the pattern in one subquadrat is not just a scaled version of another subquadrat [@baddeleySpatialPointPatterns2015 pp. 246-247; @prokesovaStatisticsLocallyScaled2006].
 
 To account for this local scaling, we can assume that the process is subdivided into small regions. In these small regions, the point process is a scaled version of a template process. This template process needs to be both stationary and isotropic [@baddeleySpatialPointPatterns2015 pp. 246-247].
 
@@ -152,7 +152,7 @@ p_scaled <- wrap_plots(list(p_K, p_L), guides = 'collect')
 p_scaled
 ```
 
-We see, that in slice 0.01 oligodendrocytes are far from the poisson process line, indicating strong association. The other two slices show a less strong association.
+We see, that in slice 0.01 oligodendrocytes are far from the poisson process line, indicating a strong association. The other two slices show a less strong association.
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
 p <- wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect') + plot_annotation(tag_levels = 'A')
@@ -164,11 +164,9 @@ In the plot above we see all variants of the correlation metrics. The assumption
 
 Deciding whether a pattern is homogeneous or inhomogeneous depends on the biological question. We provide some recommendations in the "Getting started" vignettes.
 
-All the variants assume something about the properties of the metrics and give valuable insights.
-
 #### Local Indicators of Spatial Association
 
-It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute \`\`local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns2015 pp. 247-248].
+It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute \`local\` contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns2015 pp. 247-248].
 
 ##### Local $L$ function
 
@@ -215,16 +213,19 @@ There are inhomogeneous versions of these (e.g. `localLinhom`) that are not show
 We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsayPrincipalComponentsAnalysis2005]. We use the `R` package `refund` to perform functional PCA [@xiaoFastCovarianceEstimation2016].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
+#normalise the data
+df_fdob <- asinh(df %>% as.matrix / 50) %>% as.data.frame()
 # extract the functional response matrix
-mat <- df %>%
-   select(!c(r,theo))
+mat <- df_fdob %>%
+   select(!c(r,theo)) %>%
+  t()
 # create a dataframe as required by pffr
-dat <- data.frame(ID = colnames(mat))
-dat$Y <- t(mat)
+dat <- data.frame(ID = rownames(mat))
+dat$Y <- mat 
 dat$sel <- get_sel$sel
 
 # perform functional PCA
-res <- functionalPCA(dat = dat, r = df$r |> unique(), knots = 30, pve = 0.99)
+res <- functionalPCA(dat = dat, r = df_fdob$r |> unique(), knots = 30, pve = 0.99)
 # plot a biplot
 p_biplot <- plotFpca(dat = dat, res = res, colourby = 'sel')
 p_biplot <- p_biplot + 
@@ -254,7 +255,7 @@ p1|p2
 
 Here, we have performed a functional PCA for the OD mature cells.
 
-The biplot shows the distribution of the first two loadings of the functional PCA. Each point is a cell from the OD mature cells with the loadings of the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations.
+The biplot shows the distribution of the first two loadings of the functional PCA. Each point is a cell from the OD mature cells with the loadings of the first two principal components plotted. The points are coloured as they were in the plots of the LISA $L$-curves. The first principal component clearly separates the two populations. In the last plot we project the loadings of the fPCs back onto the biological slices and find the same separation.
 
 ### Third-Order Summary Statistics
 

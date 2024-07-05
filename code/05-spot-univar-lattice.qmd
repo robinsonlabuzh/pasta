@@ -19,135 +19,148 @@ theme_set(theme_light())
 #spe_vis <- readRDS("../data/spe_spot.rds")
 #spe_vis
 
-sfe <- SFEData::McKellarMuscleData(dataset = "full")
+sfe_full <- SFEData::McKellarMuscleData(dataset = "full")
 
-sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
-sfe
-sfe_tissue <- sfe[,colData(sfe)$in_tissue]
-sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
+sfe_full <- mirrorImg(sfe_full, sample_id = "Vis5A", image_id = "lowres")
+sfe <- sfe_full[,colData(sfe_full)$in_tissue]
+sfe <- sfe[rowSums(counts(sfe)) > 0,]
 
 #perform normalisation 
-sfe_tissue <- scater::logNormCounts(sfe_tissue)
+sfe <- scater::logNormCounts(sfe)
 
-colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
+colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 ```
 
-Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ and _Ncl_ [@mckellarLargescaleIntegrationSinglecell2021]. 
+Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ (ENSMUSG00000027239) and _Ncl_ (ENSMUSG00000026234) [@mckellarLargescaleIntegrationSinglecell2021]. 
+
+Here we set the arguments for the examples below.
+
+```{r}
+features <- c("ENSMUSG00000027239", "ENSMUSG00000026234") # MdK, Ncl
+colGraphName <- "visium"
+colGeometryName <- "spotPoly"
+```
+
+```{r}
+rowData(sfe)[rowData(sfe)$symbol == features,]
+```
+
+
 
 {{< include theory/02-theory-reg-lattice.qmd >}}
 
 {{< include theory/04-theory-univar-lattice.qmd >}}
 
-# Examples
+<!-- # Examples -->
 
-## Global Methods
+<!-- ## Global Methods -->
 
-### Global Moran's I coefficient
+<!-- ### Global Moran's I coefficient -->
 
-#### Implementation using `VOYAGER`
+<!-- #### Implementation using `VOYAGER` -->
 
-```{r, eval = TRUE}
-sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
-                                colGraphName = "visium", nsim = 1000,
-                                type = "moran.mc")
+<!-- ```{r, eval = TRUE} -->
+<!-- sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"),  -->
+<!--                                 colGraphName = "visium", nsim = 1000, -->
+<!--                                 type = "moran.mc") -->
 
-res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
-#value of the metric
-res$moran.mc_statistic_Vis5A
-#p-value
-res$moran.mc_p.value_Vis5A
+<!-- res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),] -->
+<!-- #value of the metric -->
+<!-- res$moran.mc_statistic_Vis5A -->
+<!-- #p-value -->
+<!-- res$moran.mc_p.value_Vis5A -->
 
-plotMoranMC(sfe_tissue, c("nCounts", "nGenes"))
-```
+<!-- plotMoranMC(sfe_tissue, c("nCounts", "nGenes")) -->
+<!-- ``` -->
 
-The number of genes per spot shows a Moran's $I$ of $\sim 0.38$ which indicates auto-correlation. The number of counts per spot shows a Moran's $I$ of $\sim 0.53$. 
+<!-- The number of genes per spot shows a Moran's $I$ of $\sim 0.38$ which indicates auto-correlation. The number of counts per spot shows a Moran's $I$ of $\sim 0.53$.  -->
 
-### Global Geary's C coefficient
+<!-- ### Global Geary's C coefficient -->
 
-#### Implementation using `VOYAGER`
+<!-- #### Implementation using `VOYAGER` -->
 
-```{r}
-# taken from https://pachterlab.github.io/voyager/articles/visium_10x.html
-sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"), 
-                                colGraphName = "visium", nsim = 1000,
-                                type = "geary.mc")
+<!-- ```{r} -->
+<!-- # taken from https://pachterlab.github.io/voyager/articles/visium_10x.html -->
+<!-- sfe_tissue <-  colDataUnivariate(sfe_tissue, features = c("nCounts", "nGenes"),  -->
+<!--                                 colGraphName = "visium", nsim = 1000, -->
+<!--                                 type = "geary.mc") -->
 
-res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),]
-#value of the metric
-res$geary.mc_statistic_Vis5A
-#p-value
-res$geary.mc_p.value_Vis5A
-```
+<!-- res <- colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),] -->
+<!-- #value of the metric -->
+<!-- res$geary.mc_statistic_Vis5A -->
+<!-- #p-value -->
+<!-- res$geary.mc_p.value_Vis5A -->
+<!-- ``` -->
 
-The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation. 
+<!-- The Geary's $C$ statistic gives a value of $0.47$ for the number of counts and $0.61$ for the number of genes. The interpretation is that both features show positive auto correlation.  -->
 
-### Global Getis-Ord $G$ statistic
+<!-- ### Global Getis-Ord $G$ statistic -->
 
---> weights should be binarised for this test - how to do this?
+<!-- weights should be binarised for this test - how to do this? -->
 
-```{r}
-weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
+<!-- ```{r} -->
+<!-- weights_neighbourhoods <- colGraph(sfe_tissue, "visium") -->
 
-spdep::globalG.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods)
-spdep::globalG.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods)
-```
+<!-- spdep::globalG.test(x = sfe_tissue$nGenes, listw = weights_neighbourhoods) -->
+<!-- spdep::globalG.test(x = sfe_tissue$nCounts, listw = weights_neighbourhoods) -->
+<!-- ``` -->
 
-## Local Measures for Univariate Data
+<!-- ## Local Measures for Univariate Data -->
 
-### Local Moran's I coefficient
+<!-- ### Local Moran's I coefficient -->
 
-#### Implementation using `Voyager` 
+<!-- #### Implementation using `Voyager`  -->
 
-```{r}
-sfe_tissue <- colDataUnivariate(sfe_tissue, type = "localmoran", features = c("nCounts", "nGenes"))
+<!-- ```{r} -->
+<!-- sfe_tissue <- colDataUnivariate(sfe_tissue, type = "localmoran", features = c("nCounts", "nGenes")) -->
 
-plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0)
-```
+<!-- plotLocalResult(sfe_tissue, "localmoran", features = c("nCounts", "nGenes"), ncol = 2, -->
+<!--                 colGeometryName = "spotPoly", divergent = TRUE,  -->
+<!--                 diverge_center = 0) -->
+<!-- ``` -->
 
-### Local Geary's C coefficient
+<!-- ### Local Geary's C coefficient -->
 
-#### Implementation using `Voyager` 
+<!-- #### Implementation using `Voyager`  -->
 
-```{r}
-sfe_tissue <- colDataUnivariate(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"))
+<!-- ```{r} -->
+<!-- sfe_tissue <- colDataUnivariate(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes")) -->
 
-plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0)
-```
+<!-- plotLocalResult(sfe_tissue, "localC_perm", features = c("nCounts", "nGenes"), ncol = 2, -->
+<!--                 colGeometryName = "spotPoly", divergent = TRUE,  -->
+<!--                 diverge_center = 0) -->
+<!-- ``` -->
 
-### Local Getis-Ord $G_i$ coefficient
+<!-- ### Local Getis-Ord $G_i$ coefficient -->
 
-#### Implementation using `Voyager` 
+<!-- #### Implementation using `Voyager`  -->
 
-```{r}
-sfe_tissue <- colDataUnivariate(sfe_tissue, 
-                                "localG",
-                                features = c("nCounts", "nGenes"))
+<!-- ```{r} -->
+<!-- sfe_tissue <- colDataUnivariate(sfe_tissue,  -->
+<!--                                 "localG", -->
+<!--                                 features = c("nCounts", "nGenes")) -->
 
-plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2,
-                colGeometryName = "spotPoly", divergent = TRUE, 
-                diverge_center = 0)
-```
+<!-- plotLocalResult(sfe_tissue, "localG", features = c("nCounts", "nGenes"), ncol = 2, -->
+<!--                 colGeometryName = "spotPoly", divergent = TRUE,  -->
+<!--                 diverge_center = 0) -->
+<!-- ``` -->
 
-### Local Spatial Heteroscedasticity (LOSH)
+<!-- ### Local Spatial Heteroscedasticity (LOSH) -->
 
-#### Implementation using `Voyager` 
-                  
-```{r}
-#| eval: false
-# run localG with permutation test
-sfe_sub <- colDataUnivariate(sfe_tissue,
-                     features = c("Mdk"),
-                     type = "LOSH")
+<!-- #### Implementation using `Voyager`  -->
+
+<!-- ```{r} -->
+<!-- #| eval: false -->
+<!-- # run localG with permutation test -->
+<!-- sfe_sub <- colDataUnivariate(sfe_tissue, -->
+<!--                      features = c("Mdk"), -->
+<!--                      type = "LOSH") -->
 
 
-plotLocalResult(sfe_tissue, "LOSH",
-                features = "Mdk",
-                colGeometryName = "centroids")
-```
+<!-- plotLocalResult(sfe_tissue, "LOSH", -->
+<!--                 features = "Mdk", -->
+<!--                 colGeometryName = "centroids") -->
+<!-- ``` -->
 
 # Appendix
 

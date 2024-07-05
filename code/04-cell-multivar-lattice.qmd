@@ -13,28 +13,34 @@ theme_set(theme_minimal())
 
 For this representation of cells, we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset, we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.
 
-```{r}
-#| message: false
-#| warning: false
-#| results: hide
 
+```{r}
 (sfe <- HeNSCLCData())
 
 # Empty cells
 colData(sfe)$is_empty <- colData(sfe)$nCounts < 1
-# Select, count negative control probes
+# Select, sum negative control probes
 (neg_inds <- str_detect(rownames(sfe), "^NegPrb")) %>% sum
+
 
 colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
 # Remove low quality cells
 sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
-# Calculate count stats
+# Re-calculate stats
 rowData(sfe)$means <- rowMeans(counts(sfe))
 rowData(sfe)$vars <- rowVars(counts(sfe))
 rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)
 ```
+
+```{r}
+#| include: false
+#| eval: false
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
+sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+```
+
 
 <!-- [MR: do these need to be recalculated?] -->
 
@@ -44,11 +50,19 @@ In this vignette, we will show the metrics related a ligand-receptor pair, CEACA
 
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 plotSpatialFeature(sfe, c("CEACAM6"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
   theme_void()
+```
 
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
 plotSpatialFeature(sfe, c("EGFR"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
@@ -57,160 +71,23 @@ plotSpatialFeature(sfe, c("EGFR"),
 
 {{< include theory/03-theory-irreg-lattice.qmd >}}
 
+
 ```{r}
 colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
                                                   dist_type = "idw", k = 5, 
                                                   style = "W")
-weights_neighbourhoods <- colGraph(sfe, "knn5")
+```
+
+Here we set the arguments for the examples below.
+
+```{r}
+features <- c("KRT17", "TAGLN")
+colGraphName <- "knn5"
+colGeometryName <- "centroids"
+segmentation <- "cellSeg"
 ```
 
 {{< include theory/05-theory-multivar-lattice.qmd >}}
-
-# Examples 
-
-## Global Measures for Bivariate Data
-
-### Global Bivariate Moran's I
-
-### Implementation using `spded`
-
-```{r}
-res_xy <- spdep::moran_bv(x = logcounts(sfe)["CEACAM6",],
-         y = logcounts(sfe)["EGFR",],
-         listw =  colGraph(sfe, "knn5"),
-         nsim = 499)
-boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
-plot(res_xy)
-```
-
-From the result of the global measure, the overall spatial autocorrelation of the two genes is not significant.
-
-### Global Bivariate Lee's L
-
-#### Implementation using `voyager`
-
-```{r}
-res_lee <- calculateBivariate(sfe, type = "lee.mc", 
-                   feature1 = "CEACAM6", feature2 = "EGFR",
-                   nsim = 499)
-res_lee$lee.mc_statistic
-res_lee$ lee.mc_p.value
-```
-
-The interpretation of the result is not straightforward, as identical patterns do not have a value of 1 but have a value depending on their spatial arrangement. In general positive values indicate spatial co-occurrence while negative values indicate spatial segregation of the pattern of variables of $x$ and $y$ [@leeDevelopingBivariateSpatial2001]. 
-
-## Local Measures for Bivariate Data
-
-### Bivariate Lee's L
-
-##### Implementation using `voyager`
-
-```{r}
-sfe <- runBivariate(sfe, type = "locallee",
-                    feature1 = "CEACAM6", feature2 = "EGFR")
-
-plotLocalResult(sfe, "locallee", 
-                features = localResultFeatures(sfe, "locallee"),
-                ncol = 2, colGeometryName = "centroids",
-                divergent = TRUE, diverge_center = 0) 
-  
-```
-
-
-<!-- ### Implementation using `spdep` -->
-
-<!-- ```{r} -->
-<!-- loc <- lee(x = logcounts(sfe)["KRT17",], -->
-<!--            y = logcounts(sfe)["TAGLN",], -->
-<!--            n = length(logcounts(sfe)["TAGLN",]), -->
-<!--            listw = weights_neighbourhoods) -->
-
-<!-- #convert into a plain sf object for plotting -->
-<!-- sf <- colGeometries(sfe)$cellSeg -->
-
-<!-- sf$locEffect <- loc$localL -->
-
-<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
-<!-- ``` -->
-
-<!-- [MR: do we need both implementations?] -->
-
-
-## Local Measures for Multivariate Data
-
-### Multivariate local Geary's C
-
-Here we use the marker genes used in the original paper that study apoptosis [@heHighplexImagingRNA2022, Supplementary Table 1] in a subset of the tissue, as the computation is very intensive.
-
-```{r}
-apoptosis_genes <- c("BAX", "BCL2", "BCL2L1", "BIRC5", "CASP3", "CASP8", "TP53")
-
-# Subset of the tissue
-bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 15800, ymin = 155200, ymax = 164200)))
-sfe_sub <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
-
-sfe_sub <- runMultivariate(sfe_sub, type = "localC_multi",
-                    subset_row = apoptosis_genes)
-
-# Local C mutli is stored in colData so this is a workaround to plot it
-plotSpatialFeature(sfe_sub, "localC_multi", colGeometryName = "centroids")
-```
-
-The plot indicates regions where the gene expression is more homogeneous (low Geary's C) and regions where the gene expression is more heterogeneous (large Geary's C value). Importantly, strong similarity in one or some variables may compensate for dissimilarity in other variables, which makes the interpretation tricky. The local Geary’s C value is not scaled.
-
-We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple values but the exact combination is not known. For further details, see [@anselinLocalIndicatorMultivariate2019].
-
-[MR: this makes me question how we should present this. SG: Good question, it comes very close to spatial clustering here, maybe we can show this as a preview for other methods that we do not discuss.. From the @anselinLocalIndicatorMultivariate2019 publication: "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014)."]
-
-```{r}
-sfe_sub <- runMultivariate(sfe_sub, type = "localC_perm_multi",
-                    subset_row = apoptosis_genes,
-                    nsim = 100)
-
-# stored as spatially reduced dim; plot it in this way
-spatialReducedDim(sfe_sub, "localC_perm_multi",  c(1, 11))
-```
-
-<!-- ```{r} -->
-<!-- loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])), -->
-<!--        listw = weights_neighbourhoods, nsim = 1) -->
-
-<!-- #convert into a plain sf object for plotting -->
-<!-- sf <- colGeometries(sfe)$cellSeg -->
-
-<!-- sf$locEffect <- loc -->
-
-<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
-<!-- ``` -->
-
-It would be interesting to do this not only on the cell level, but also on the *domain* level.
-
-## Local Neighbor Match Test
-
-This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
-
-[MR: how are the KNNs calculated in the attribute space?]
-
-```{r}
-sf <- colGeometries(sfe)$cellSeg
-sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[c(apoptosis_genes),])))
-
-nbr_test <- neighbor_match_test(sf[c(apoptosis_genes)], k = 20)
-
-sf$Probability <- nbr_test$Probability
-sf$Cardinality <- nbr_test$Cardinality
-
-tm_shape(sf) + tm_fill(col = 'Probability')  
-tm_shape(sf) + tm_fill(col = 'Cardinality')  
-```
-
-Cardinality is a measure of how many neighbours of each cell are in common. Some regions show high cardinality with low probability. On the cellular level, this might not be very informative and lead to regions with high similarity. We only see very few cells with a cardinality greater than 0. The problem might come from the imperfect segmentation of the cells, which can result in a poor reconstruction of the "geographical" tissue neighbourhood graph. In addition, as the number of dimensions increase, the empty space between observations also increases; this is known as the empty space problem. 
-
-Again, this analysis should probably be performed on a structure level instead of a single cell level.  
-
-[MR: should we do the analysis at the structure/domain level then?]
-
-# Appendix
 
 ## Session info
 

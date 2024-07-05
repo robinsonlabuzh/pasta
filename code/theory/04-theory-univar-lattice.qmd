@@ -111,6 +111,7 @@ where the index $i$ refers to the location for which the measure is calculated. 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
+
 sfe <- runUnivariate(sfe,
                      features = features,
                      type = "localmoran")
@@ -134,6 +135,9 @@ In this example, we will not plot the local Geary's C coefficient for gene expre
 #### Implementation using `Voyager`
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 sfe <- colDataUnivariate(sfe, "localC_perm", features = c("nCounts", "nGenes"))
 
 plotLocalResult(

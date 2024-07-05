@@ -1,8 +1,3 @@
----
-title: "Theory -- Multivariate lattice based analysis"
----
-
-
 ## Global Measures for Bivariate Data
 
 ### Global Bivariate Moran's I
@@ -15,6 +10,22 @@ where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the valu
 
 The global bivariate Moran's I is a measure of autocorrelation of the variables $x$ and $y$ with the spatial lag of $y$. Therefore the result might overestimate the spatial autocorrelation of the variables due to the inherent (non-spatial) correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
+#### Implementation using `spded`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+res_xy <- spdep::moran_bv(x = logcounts(sfe)[features[1],],
+         y = logcounts(sfe)[features[2],],
+         listw =  colGraph(sfe, colGraphName),
+         nsim = 499)
+boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
+plot(res_xy)
+```
+
+From the result of the global measure, the overall spatial autocorrelation of the two genes is not significant.
+
 ### Global Bivariate Lee's L
 
 Lee’s L is a bivariate measure that combines non-spatial pearson correlation with spatial autocorrelation via Moran’s I [@leeDevelopingBivariateSpatial2001]. This enables us to asses the spatial dependence of two continuous variables in a single measure. The measure is defined as
@@ -22,6 +33,18 @@ Lee’s L is a bivariate measure that combines non-spatial pearson correlation w
 $$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^nw_{ij}(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^nw_{ij}(y_i-\bar{y})^2}},$$
 
 where $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$, $x$ and $y$ the two variables and $\bar{x}$ and $\bar{y}$ their means. 
+
+#### Implementation using `voyager`
+
+```{r}
+res_lee <- calculateBivariate(sfe, type = "lee.mc", 
+                   feature1 = features[1], feature2 = features[2],
+                   colGraphName = colGraphName,
+                   nsim = 499)
+res_lee$lee.mc_statistic
+res_lee$ lee.mc_p.value
+```
+
 
 ## Local Measures for Bivariate Data
 
@@ -33,6 +56,23 @@ $$L_i(x,y) = \frac{\sum_{i=1}^n(\sum_{j=1}^nw_{ij}(x_i-\bar{x}))(\sum_{j=1}^nw_{
 Local Lee's L is a measure of spatial co-expression, when the variables of interest are gene expression measurements and can also be a metric of co-localization. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation. 
 
 This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on bivariate Moran's I and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
+
+### Bivariate Lee's L
+
+##### Implementation using `voyager`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+sfe_tissue <- runBivariate(sfe, type = "locallee",
+                    feature1 = features[1], feature2 = features[2],)
+
+plotLocalResult(sfe_tissue, "locallee", 
+                 features = localResultFeatures(sfe_tissue, "locallee"),
+                ncol = 2, divergent = TRUE, diverge_center = 0,
+                colGeometryName = colGeometryName) 
+```
 
 ## Local Measures for Multivariate Data
 
@@ -47,3 +87,66 @@ and can be generalized to $k$ parameters by expanding
 $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
 where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretaing the mixture of similarity in the geographic space and similarity in the attribute space. 
+
+### Multivariate local Geary's C
+
+Here we use the marker genes used in the original paper that study apoptosis [@heHighplexImagingRNA2022, Supplementary Table 1] in a subset of the tissue, as the computation is very intensive.
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+hvgs <- getTopHVGs(sfe, fdr.threshold = 0.01)
+
+# Subset of the tissue
+sfe_tissue <- runMultivariate(sfe, type = "localC_multi",
+                    subset_row = hvgs)
+
+# Local C mutli is stored in colData so this is a workaround to plot it
+plotSpatialFeature(sfe_tissue, "localC_multi")
+```
+
+We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple values but the exact combination is not known. For further details, see [@anselinLocalIndicatorMultivariate2019].
+
+[MR: this makes me question how we should present this. SG: Good question, it comes very close to spatial clustering here, maybe we can show this as a preview for other methods that we do not discuss.. From the @anselinLocalIndicatorMultivariate2019 publication: "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014)."]
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+sfe <- runMultivariate(sfe, type = "localC_perm_multi",
+                    subset_row = hvgs,
+                    nsim = 100)
+
+# stored as spatially reduced dim; plot it in this way
+spatialReducedDim(sfe, "localC_perm_multi",  c(1, 11))
+```
+
+## Local Neighbor Match Test
+
+This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
+
+[MR: how are the KNNs calculated in the attribute space?]
+
+```{r}
+#| warning: false
+#| fig-width: 15
+#| fig-height: 10
+
+sf <- colGeometries(sfe)[[segmentation]]
+sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[hvgs,])))
+
+nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
+
+sf$Probability <- nbr_test$Probability
+sf$Cardinality <- nbr_test$Cardinality
+
+tm_shape(sf) + tm_fill(col = 'Probability')  
+tm_shape(sf) + tm_fill(col = 'Cardinality')  
+```
+
+Cardinality is a measure of how many neighbours of each cell are in common. Some regions show high cardinality with low probability. On the cellular level, this might not be very informative and lead to regions with high similarity. We only see very few cells with a cardinality greater than 0. In addition, as the number of dimensions increase, the empty space between observations also increases; this is known as the empty space problem. 
+
+Again, this analysis should probably be performed on a structure level instead of a single cell level.  
+
+[MR: should we do the analysis at the structure/domain level then?]

@@ -49,6 +49,9 @@ sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE
 In this vignette, we will show the metrics related to two marker genes: KRT17 (basal cells) and TAGLN (smooth muscle cells).
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 

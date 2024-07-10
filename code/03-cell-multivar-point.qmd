@@ -1,3 +1,171 @@
+```{r}
+#| include: false
+.dfToppp <- function(df, marks = NULL) {
+    # is this definition of the window actually correct? Do I underestimate it?
+    pp <- spatstat.geom::as.ppp(data.frame(x = df$x, y = df$y), W = spatstat.geom::owin(c(min(df$x) - 1, max(df$x) + 1), c(min(df$y) - 1, max(df$y) + 1)))
+    # set the marks
+    spatstat.geom::marks(pp) <- factor(df[[marks]])
+    return(pp)
+}
+
+.speToDf <- function(spe) {
+    df <- data.frame(x = SpatialExperiment::spatialCoords(spe)[, 1], y = SpatialExperiment::spatialCoords(spe)[, 2])
+    df <- cbind(df, colData(spe))
+}
+
+plotMetricPerFov <- function(metric_df, theo = FALSE, correction = NULL, x = NULL, image_id = NULL) {
+    p <- ggplot(metric_df, aes(x = .data[[x]], y = .data[[correction]], group = factor(image_id), colour = factor(ID))) +
+        geom_line() +
+        facet_wrap(~ID) +
+        theme_minimal() +
+        theme(legend.position = "none") +
+        labs(title = paste0(metric_df$fun, " metric for ", unique(metric_df$selection)))
+    if (theo == TRUE){
+      p <- p + geom_line(aes(x=.data[[x]],y=theo),linetype = "dashed", color = "black")
+    }
+
+    return(p)
+}
+```
+
+
+```{r}
+#| include: false
+# extractMetric
+extractMetric <- function(df, selection, fun, marks = NULL, r_seq = NULL, by = NULL) {
+    pp <- .dfToppp(df, marks = marks)
+    meta_data <- df[, by] %>% unique()
+    pp_sub <- subset(pp, marks %in% selection, drop = TRUE)
+    # small quality control to only consider pp that have more than 100 points per
+    # fov and more than one unique mark and that each mark has more than one point
+    if (
+      spatstat.geom::npoints(pp_sub) > 2 &&
+        ((length(unique(spatstat.geom::marks(pp_sub))) > 1 && sum(table(pp_sub$marks) > 2) > 1) || 
+        length(selection) == 1)
+      ) {
+        # TODO: Here I just fix the r values in the range between 0 and 500 to have
+        # the same values to compare against in the library fda - that is not ideal
+        print("case1")
+        metric_res <- do.call(fun, args = list(X = pp_sub, r = r_seq))
+    }
+    # SG: this handles the case when we do cross functions for the same type
+    else if (spatstat.geom::npoints(pp_sub) > 2 &&
+        length(unique(selection)) == 1 && 
+        length(selection) > 1) {
+      print("case2")
+      metric_res <- do.call(fun, args = list(X = pp_sub, selection[1], selection[2], r = r_seq))
+    }
+    # SG: When there are no cells of one type this will construct a dummy metric_res similar to the case of when a non-cross function is calles in a fov where there are no cells (e.g "Ependymal cells" in fov 0.21)
+    else {
+      print("edge case")
+      metric_res <- data.frame(r = r_seq, fun = fun, theo = NA, 
+                               border = NA, trans = NA, iso = NA, 
+                               row.names = seq(1:length(r_seq)))
+      }
+
+    metric_res$image_id <- df$image_number %>% unique() 
+    metric_res <- cbind(metric_res, meta_data)
+    metric_res$npoints <- spatstat.geom::npoints(pp_sub)
+    centroid <- spatstat.geom::centroid.owin(pp_sub$window)
+    metric_res$centroidx <- centroid$x
+    metric_res$centroidy <- centroid$y
+  
+    return(metric_res)
+}
+
+calcMetricPerFov <- function(
+        spe, selection, subsetby = NULL, fun, marks = NULL,
+        r_seq = NULL, by = NULL, ncores = 1) {
+    # future::plan(multisession, gc = TRUE, workers = ncores)
+    df <- .speToDf(spe)
+    df_ls <- split(df, df[[subsetby]])
+    metric_df <- parallel::mclapply(df_ls, function(df_sub) {
+        metric_res <- extractMetric(
+            df = df_sub, selection = selection,
+            fun = fun, marks = marks, r_seq = r_seq, by = by
+        ) %>% as.data.frame()
+        return(metric_res)
+    }, mc.cores = ncores) %>% bind_rows()
+    # store metadata of the calculation in the dataframe
+    metric_df$ID <- paste0(metric_df[[by[1]]], "|", metric_df[[by[2]]])
+    metric_df$fun <- fun
+    metric_df$selection <- paste(selection, collapse = " and ")
+    return(metric_df)
+}
+```
+
+
+```{r}
+#| include: false
+# This function could be easily added to the calcMetricPerFov via a check of the length of the selection.
+calcCrossMetricPerFov <- function(spe,
+                                  selection,
+                                  subsetby = NULL,
+                                  fun,
+                                  marks = NULL,
+                                  r_seq = NULL,
+                                  by = NULL,
+                                  ncores = 1) {
+  
+  # This creates a grid with all possible 2 way combinations
+  l <- apply(expand.grid(selection, selection), 1, function(x) {
+    return(c(x[1], x[2]))
+  }) |> t()
+  
+  # calculate the metric per FOV
+  res_l <- apply(l, 1, function(x)
+    calcMetricPerFov(
+      spe,
+      x,
+      subsetby,
+      fun,
+      marks,
+      r_seq,
+      by,
+      ncores
+    ))
+  
+  # Bind the data and return
+  return(bind_rows(res_l))
+}
+```
+
+```{r}
+#| include: false
+# I think it makes sense to have this as a spearate function because it will produce a very different output from plotMetricPerFOV
+plotCrossMetricPerFov <- function(metric_df,
+                                  theo = NULL,
+                                  correction = NULL,
+                                  x = NULL,
+                                  image_id = NULL,
+                                  ID = NULL) {
+  # Find all unique samples
+  samples <- metric_df[[image_id]] |> unique()
+  
+  #  Creates a nXn plot of the cross metrics per sample
+  plotCrossFOV <- function(sub_fov, theo, correction, x, image_id) {
+    #  Apply plot metric function for each combination
+    lp <- lapply(unique(sub_fov$selection), function(sel)
+      plotMetricPerFov(sub_fov[sub_fov$selection == sel, ], theo, correction, x, image_id))
+    #  Count number of marks
+    nMarks <- length(unique(sub_fov$selection))
+    # Wraps the plot in an nXn grid
+    p <- wrap_plots(lp, ncol = sqrt(nMarks)) +
+      plot_layout(guides = "collect") &
+      theme(legend.position = 'bottom')
+    return(p)
+  }
+  
+  # Applies the function abouve to all samples
+  res_p <- lapply(samples, function(fov) {
+    sub_fov <- subset(metric_df, sample_id %in% fov)
+    return(plotCrossFOV(sub_fov, theo, correction, x, image_id))
+  })
+    
+    return(res_p)
+}
+```
+
 # Discrete Marks
 
 {{< include theory/01-theory-point.qmd >}}
@@ -27,6 +195,9 @@ marks(pp) <- factor(marks(pp))
 selection <- c('OD Mature', 'Ependymal', 'Microglia')
 
 pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
+
+spe_sel <- spe[, spe$sample_id == "0.01" &  spe$cluster_id %in% selection]
+
 ```
 
 
@@ -249,63 +420,21 @@ where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number 
 First, we plot an overview over the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
 
 ```{r}
-#| echo: true
-#| message: false
-#| results: hide
-plotCrossAll <- function(ppp, fun, edgecorr){
-  nMarks <- length(unique(marks(ppp)))
-  Fall <- alltypes(ppp, fun)
-  
-  # Create a list of ggplot objects using lapply
-  plot_list <- lapply(Fall[["fns"]], function(res) {
-    ggplot(res, aes(x = r, y = .data[[edgecorr]])) +
-      geom_line(linewidth = 1) +
-      geom_line(aes(x = r, y = theo), 
-                linetype = "dotted", linewidth = 1) +
-      geom_line() +
-      labs(title = attributes(res)$yexp) +
-      theme_minimal()
-  })
-  
-  p <- wrap_plots(plot_list, ncol = nMarks) + 
-    plot_layout(guides = "collect") & theme(legend.position='bottom')
-  return(p)
-}
-```
-
-<!-- ```{r} -->
-<!-- #| include: false -->
-<!-- #| eval: false -->
-<!-- plotCrossAll <- function(ppp, fun, edgecorr){ -->
-<!--   Fall <- alltypes(ppp, fun) -->
-<!--   df.all <- data.frame() -->
-
-<!--   for (l in Fall[["fns"]]) { -->
-<!--     attr <- paste(attributes(l)$ylab[1]) -->
-<!--     df <- data.frame(l) -->
-<!--     df$Function <- attr -->
-<!--     df$from <- strsplit(attr, split = '\"')[[1]][4] -->
-<!--     df.all <- rbind(df.all, df) -->
-<!--   } -->
-
-<!--   p <- ggplot(df.all, aes(x = r, y = iso, color = Function)) + -->
-<!--     geom_line(linewidth = 1) + -->
-<!--     geom_line(aes(x = r, y = theo),  -->
-<!--               linetype = "dotted", linewidth = 1, color = "black") + -->
-<!--     geom_line() + -->
-<!--     facet_wrap(~from) + -->
-<!--     theme_minimal() + -->
-<!--     scale_color_brewer(palette = "Set1") -->
-<!--   return(p) -->
-<!-- } -->
-
-<!-- ``` -->
-
-
-```{r}  
 #| fig-width: 15
 #| fig-height: 10
-plotCrossAll(pp_sel, "Kcross.inhom", "iso")
+
+resCross <- calcCrossMetricPerFov(
+  spe,
+  selection = c("OD Mature", "Ependymal", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'Kcross.inhom',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+
+resCross <- subset(resCross, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
 
 <!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
@@ -314,7 +443,9 @@ The diagonal of the imhomogeneous cross K-function plot shows the K-function for
 
 In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
-In this overview, we can see that there is indication that Microglia and OD Mature cells are independent of each other. The other types seem to be dependent on each other. Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
+Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function.
+
+> TODO: implement confidence bands in `spatialFDA`
 
 ```{r}
 #| echo: true
@@ -350,66 +481,22 @@ Remember that the dashed line represents the assumption of a multitype Poisson p
 Alternatively the L cross function with similar interpretation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns2015, pp. 596ff].
 
 ```{r}
-#| echo: false
-#| message: false
-#| results: hide
-p_epen_od <- plotCrossMetric(pp_sel, "Lcross.inhom", "Ependymal", "OD Mature", "iso")
-p_epend_micro <- plotCrossMetric(pp_sel, "Lcross.inhom", "Ependymal", "Microglia", "iso")
+#| fig-width: 15
+#| fig-height: 10
+
+resCross <- calcCrossMetricPerFov(
+  spe,
+  selection = c("OD Mature", "Ependymal", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'Lcross.inhom',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+
+resCross <- subset(resCross, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
-```{r}
-# fig-width: 10
-# fig-height: 10
-p_epen_od + p_epend_micro
-```
-
-<!-- ### Cross L-function: -->
-
-<!-- Similiar to the the K-function, the cross L-function can be defined for all pairs of points. -->
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- lc <- alltypes(pp_sel, Lcross) -->
-<!-- plot(lc, .-r~r) -->
-<!-- ``` -->
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- lce <- alltypes(pp_sel, Lcross, envelope = TRUE, nsim=9) -->
-<!-- plot(lce, .-r~r) -->
-
-<!-- ``` -->
-<!-- - TODO: not sure why the off-diagonal are not perfectly symmetric -->
-
-<!-- ```{r} -->
-
-<!-- lce <- lohboot(pp_sel, 'Lcross', from = "OD Mature", to = "Ependymal") -->
-<!-- lce -->
-
-<!-- edgecorr <- 'iso' -->
-
-<!-- ggplot(lce, aes(x = r, y = .data[[edgecorr]])) + -->
-<!--     geom_line(size = 1) + -->
-<!--     geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+ -->
-<!--     geom_line(aes(x = r, y = theo), linetype = "dotted", size = 1) + -->
-<!--     geom_line() + -->
-<!--     labs(title = attributes(lce)$yexp) + -->
-<!--     theme_minimal() -->
-<!-- ``` -->
-
-
-<!-- ### Cross pair-correlation function -->
-
-<!-- The cross type pair correlation is a genaralization of the pair correlation function to multitype point processes.  -->
-
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- pcfc <- alltypes(pp_sel, pcfcross) -->
-<!-- plot(pcfc) -->
-<!-- ``` -->
 
 ### Mark connection function
 
@@ -420,6 +507,65 @@ The mark connection function is the cross pair-correlation function, i.e. the ge
 #| fig-height: 10
 plotCrossAll(pp_sel, "markconnect", "iso") + 
   scale_y_continuous(limits = c(0, 1))
+```
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+plot(markconnect(pp_sel, "OD Mature", "OD Mature"))
+```
+
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+plot(alltypes(pp_sel, fun = "markconnect"))
+```
+```{r}
+calcMetricPerFov(
+  spe_sel,
+  selection = c("OD Mature", "OD Mature"),
+  subsetby = 'sample_id',
+  fun = 'markconnect',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+resCross <- calcCrossMetricPerFov(
+  spe_sel,
+  selection = c("OD Mature", "Ependymal", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'markconnect',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+
+#resCross <- subset(resCross, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+resCross <- calcCrossMetricPerFov(
+  spe,
+  selection = c("OD Mature", "Ependymal", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'markconnect',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+
+resCross <- subset(resCross, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
 
 <!-- [MR: wondering .. should these above all be put on the same scale? And, same question as above. Could we think about a more compact representation?] -->
@@ -465,6 +611,24 @@ For each K-, G- and J- function, there also exist *dot* functions, which measure
 #| fig-width: 8
 #| fig-height: 4
 plotCrossAll(pp_sel, "Kdot.inhom", "iso")
+```
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+resCross <- calcMetricPerFov(
+  spe,
+  selection = c("OD Mature", "Ependymal", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'Kdot',
+  marks = 'cluster_id',
+  r_seq = seq(0, 500, length.out = 100),
+  by = c('Animal_ID', 'sample_id')
+)
+
+resCross <- subset(resCross, sample_id %in% c('-0.09', '0.01', '0.21'))
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
 
 The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 

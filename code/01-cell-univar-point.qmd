@@ -9,6 +9,7 @@ In the following document we will often compare the distribution of mature oligo
 In our example dataset we analyse the mouse preoptic hypothalamus [@moffittMolecularSpatialFunctional2018]. This is a tissue of the mouse brain that is cut out of a bigger context. The lower boundary is the end of the tissue whereas the upper three boundaries are a technical boundary. Therefore, our example is a mixture between window sampling and the small world model. In order to decrease the bias of the tissue border, we use the Ripley-Rasson estimate of a spatial domain to estimate the sampling window [@baddeleySpatialPointPatterns2015, pp. 55; @ripleyFindingEdgePoisson1977].
 
 ```{r, fig.width=12, fig.height=6, cache=FALSE, message= FALSE}
+library('spatialFDA')
 par(mfrow=c(1,3))
 #Plot the marks separately 
 lapply(zstack_list, function(zstack){
@@ -86,21 +87,19 @@ where the derivative of the $K$ function divided by the probability of a Poisson
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 #| message: false
 #| warning: false
-p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kest', 'iso', bootstrap = TRUE)
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = FALSE)
-p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'pcf', 'border', bootstrap = TRUE)
+res_ls <- lapply(list('Kest', 'Lest', 'pcf'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+return(res)
+})
 
-
-res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', r_seq=seq(0, 500, length.out = 100), by = c('Animal_ID','sample_id'))
-
-res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
-plotMetricPerFov(res, correction = "iso", x = "r", image_id = 'sample_id', ID = 'sample_id')
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')})
 ```
 
 \
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
-p_homo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
+p_homo <- wrap_plots(p_ls, guides = 'collect')
 p_homo
 ```
 
@@ -119,13 +118,17 @@ $$
 where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an estimator of the intensity at point $x_i$. The inhomogeneity correction happens via these $\hat{\lambda}(x_i)$ per point $x_i$. The estimation of these local intensities can happen in a data-dependent manner via kernel-smoothing. As this is the same data to then calculate the metric on, this can lead to biases. However, if the local intensities are known, the inhomogeneous $K$ function is an unbiased estimator [@baddeleySpatialPointPatterns2015, pp. 242-246].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r','Kinhom', 'iso', bootstrap = TRUE)
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r', 'Linhom', 'iso', bootstrap = TRUE)
-p_g <- plotMetric(plot_by = zstack_list, pp, celltype_ls,'r', 'pcfinhom', 'border', bootstrap = TRUE)
+res_ls <- lapply(list('Kinhom', 'Linhom', 'pcfinhom'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+return(res)
+})
+
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
-p_inhomo <- wrap_plots(list(p_K,p_L,p_g), guides = 'collect')
+p_inhomo <- wrap_plots(p_ls, guides = 'collect')
 p_inhomo
 ```
 
@@ -150,13 +153,17 @@ To account for this local scaling, we can assume that the process is subdivided 
 Since the $L$-function is simply a transformation of the $K$-function, the same local scaling framework can be applied to the $L$-function [@baddeleySpatialPointPatterns2015 pp. 246-247].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
-p_K <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Kscaled', 'iso', bootstrap = FALSE)
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lscaled', 'iso', bootstrap = FALSE)
-#p_g <- plotScaledMetric(zstack_list,celltype_ls, pp_ls, 'pcfscaled', 'iso')$p
+res_ls <- lapply(list('Kscaled', 'Lscaled'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+return(res)
+})
+
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
-p_scaled <- wrap_plots(list(p_K, p_L), guides = 'collect')
+p_scaled <- wrap_plots(p_ls, guides = 'collect')
 p_scaled
 ```
 
@@ -179,7 +186,7 @@ It is worth noting that the $K$- and $L$-functions described above are summary s
 ##### Local $L$ function
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-L_odmature_lisa <- localL(pp_ls[['0.01']]$`OD Mature`)
+L_odmature_lisa <- localL(pp_ls[['0.01']]$`OD Mature`)      
 
 df <- as.data.frame(L_odmature_lisa)
 dfm <- reshape2::melt(df, "r")
@@ -234,11 +241,16 @@ dat$sel <- get_sel$sel
 
 # perform functional PCA
 res <- functionalPCA(dat = dat, r = df_fdob$r |> unique(), knots = 30, pve = 0.99)
+# extract the scores
+scores_df <- res$scores %>% as.data.frame()
 # plot a biplot
-p_biplot <- plotFpca(dat = dat, res = res, colourby = 'sel')
-p_biplot <- p_biplot + 
-  xlab('PC1') +
-  ylab('PC2')
+p_biplot <- ggplot(scores_df, aes(scores_df[, 1], scores_df[, 2], colour = (dat[['sel']]))) +
+        geom_point() +
+        coord_equal() +
+        theme_light() +
+        scale_color_continuous(type = "viridis") +
+        xlab('PC1') +
+        ylab('PC2')
 ```
 
 ```{r, fig.height=5, fig.width=10}
@@ -280,7 +292,6 @@ here m is the maximum side of the triangle
 $$
 m(a,b,c) = \max(||a-b||,||a-c||,||b-c||)
 $$
-
 ```{r, include=FALSE, eval=FALSE}
 p <- plotMetric(zstack_list, pp_ls, celltype_ls, 'r', 'Tstat', 'border', bootstrap = FALSE)
 p
@@ -406,13 +417,17 @@ $$
 For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process [@baddeleySpatialPointPatterns2015 pp. 274-276].
 
 ```{r, fig.height = 10, fig.width = 7}
-p_G <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Gest', 'rs', bootstrap = FALSE)
-p_F <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Fest', 'rs', bootstrap = FALSE)
-p_J <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Jest', 'rs', bootstrap = FALSE)
+res_ls <- lapply(list('Gest', 'Fest', 'Jest'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+return(res)
+})
+
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "rs", theo = TRUE, x = "r", image_id = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
-wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
+wrap_plots(p_ls, guides = 'collect')
 ```
 
 ### Accounting for Inhomogeneity in Spacing Functions
@@ -420,13 +435,17 @@ wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
 There are inhomogeneous variants of the spacing functions explained above
 
 ```{r}
-p_G <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Ginhom', 'bord')
-p_F <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Finhom', 'bord')
-p_J <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Jinhom', 'bord')
+res_ls <- lapply(list('Ginhom', 'Finhom', 'Jinhom'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+return(res)
+})
+
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "bord", theo = TRUE, x = "r", image_id = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
-wrap_plots(list(p_G,p_F,p_J), guides = 'collect')
+wrap_plots(p_ls, guides = 'collect')
 ```
 
 The inhomogeneous curves look very different to their homogeneous counterparts but the relative ordering is of the curves per plot is the same.
@@ -436,7 +455,9 @@ The inhomogeneous curves look very different to their homogeneous counterparts b
 Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns2015 pp. 278-279] [@baddeleySpatstatPackageAnalyzing2005].
 
 ```{r}
-p <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'phi', 'nnorient', 'bordm', bootstrap = FALSE)
+res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'nnorient', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+p <- plotMetricPerFov(res, correction = "bordm", theo = TRUE, x = "phi", image_id = 'sample_id')
 p
 ```
 
@@ -466,7 +487,6 @@ The same consideration about edge effects as for the $K$ (and related) functions
 #| label: load-data 2
 # redefine the pp here to be zstack 0.01
 pp <- pp[['0.01']]
-
 sub <- spe[, spe$sample_id == '0.01']
 ```
 
@@ -478,6 +498,7 @@ genes <- c('Slc18a2', 'Esr1', 'Pgr')
 gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
   data.frame %>% set_rownames(NULL)
 # gene expression to marks
+colData(sub) <- colData(sub) %>% cbind(gex)
 marks(pp) <- gex
 ```
 
@@ -516,7 +537,9 @@ The mark correlation function measures the dependence between two marks for two 
 $$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$ where $f(m_1,m_2)$ is a test function with two arguments (representing the two marks) and returns a non-negative value \[MR: what are $u$ and $v$ in the formula above?\]. For continuous non-negative marks, the canonical choice for $f$ is typically $f(m_1,m_2)= m_1 m_2$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns2015 pp. 644-645].
 
 ```{r}
-plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'markcorr', edgecorr = 'iso', continuous = TRUE)
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'markcorr',  marks = genes, r_seq=NULL, by = c('Animal_ID','gene'), continuous = TRUE)
+p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
+p
 ```
 
 From this plot we show that all genes show a positive correlation at small distances which decline with increasing radius $r$. The association is strongest for the Slc18a2 gene. We can calculate simulation envelopes to estimate the significance of this association. This is not shown for brevity.
@@ -536,7 +559,9 @@ In the scenario of random labeling, so where the labels or in this case marks ar
 Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we weigh each interaction between points by the product of the continuous marks of both points.
 
 ```{r}
-plotMetric(plot_by = genes,  pp = pp, x = 'r', fun = 'Kmark', edgecorr = 'iso', continuous = TRUE, f = function(m1,m2){m1*m2})
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'Kmark',  marks = genes, r_seq=NULL, by = c('Animal_ID','gene'), continuous = TRUE, f = function(m1,m2){m1*m2}) 
+p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
+p
 ```
 
 It is important to note that the theoretical value of the $K$-function is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues [@baddeleySpatialPointPatterns2015 pp. 647].

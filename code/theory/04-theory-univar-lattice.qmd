@@ -114,6 +114,7 @@ where the index $i$ refers to the location for which the measure is calculated. 
 
 sfe <- runUnivariate(sfe,
                      features = features,
+                     colGraphName = colGraphName,
                      type = "localmoran")
 
 plotLocalResult(sfe, "localmoran",
@@ -138,7 +139,9 @@ In this example, we will not plot the local Geary's C coefficient for gene expre
 #| fig-width: 15
 #| fig-height: 10
 
-sfe <- colDataUnivariate(sfe, "localC_perm", features = c("nCounts", "nGenes"))
+sfe <- colDataUnivariate(sfe, "localC_perm",
+                         features = c("nCounts", "nGenes"),
+                         colGraphName = colGraphName)
 
 plotLocalResult(
   sfe,
@@ -167,7 +170,8 @@ There is a variant of this statistic, $G_i^*(d)$, which is the same as $G_i(d)$ 
 
 sfe <- runUnivariate(sfe,
                      features = features,
-                     #include_self = TRUE, # this would specify G_i^*(d)
+                     #include_self = TRUE, # this would specify G_i^*(d),
+                     colGraphName = colGraphName,
                      type = "localG")
 
 plotLocalResult(sfe, "localG",
@@ -206,6 +210,7 @@ The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ s
 # run localG with permutation test
 sfe <- runUnivariate(sfe,
                      features = features[1],
+                     colGraphName = colGraphName,
                      type = "LOSH")
 
 

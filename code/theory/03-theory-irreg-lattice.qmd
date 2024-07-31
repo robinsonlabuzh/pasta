@@ -1,7 +1,3 @@
----
-title: "Theory -- Irregular lattices"
----
-
 ## Irregular lattice and neighbourhood matrix
 
 In general, a spatial autocorrelation measure has the following elements: a function, $f(x_i, x_j)$, of the values of interest at locations $i$ and $j$ and a neighbourhood or weight matrix, $w_{ij}$. The function $f$ relates the measured values $x_i$ and $x_j$ and the neighbourhood matrix $w_{ij}$ builds in the spatial relationship between location $i$ and $j$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
@@ -14,8 +10,53 @@ One of the challenges when working with (irregular) lattice data is the construc
 
 Segmentation of individual cells is challenging [@wangCellSegmentationImage2019], therefore construction of contiguity-based neighbours based on individual cell segmentation assumes perfect segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
 
-In the following, we will use a k-nearest neighbours approach from `voyager` that relies on the `spdep` package. The approach and in particular the number $k$ is somewhat arbritary.
+In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method.
 
+As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous.
+
+```{r}
+colGraph(sfe, "poly2nb") <-
+  findSpatialNeighbors(sfe,
+    type = "cellSeg",
+    method = "poly2nb", # wraps the spdep function with the same name
+    style = "W",
+    snap = 20 # all cells with less distance  apart are considered contiguous
+  )
+```
+
+
+```{r}
+p1 <- plotColGraph(sfe,
+  colGraphName = "poly2nb",
+  colGeometryName = "cellSeg",
+  bbox =  c(xmin = 3500, xmax = 10000, ymin = 157200, ymax = 162200)
+) + theme_void()
+```
+
+Alternatively, we can use a k-nearest neighbours approach. The the number $k$ is somewhat arbritary.
+
+```{r}
+colGraph(sfe, "knn5") <-
+  findSpatialNeighbors(sfe,
+    method = "knearneigh", # wraps the spdep function with the same name
+    k = 5,
+    zero.policy = TRUE
+  )
+```
+
+```{r}
+p2 <- plotColGraph(sfe,
+  colGraphName = "knn5",
+  colGeometryName = "cellSeg",
+  bbox = c(xmin = 3500, xmax = 10000, ymin = 157200, ymax = 162200)
+) + theme_void()
+```
+
+As we can see below, the graphs look quite distinct. On the left side, in the contiguous neigbhbour graph (neighbours in direct contact) we can notice the formation of patches, while in the knn graph isolated patches are more interconnected.
+
+```{r}
+p1 + p2
+```
 
 <!-- > Thought: if we assume non perfect segmentation we could basically calculate the same statistics also on point pattern derived datasets. We would also use a k-nearest neighbours approach in a "point pattern" dataset. The centroids of the cells as a proxy for the spatial location. -->
 

@@ -28,6 +28,7 @@ sfe <- sfe[rowSums(counts(sfe)) > 0,]
 #perform normalisation 
 sfe <- scater::logNormCounts(sfe)
 
+# construct the weight matrix using the Voyager function
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 ```
 

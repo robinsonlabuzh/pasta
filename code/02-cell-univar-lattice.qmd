@@ -35,13 +35,15 @@ rowData(sfe)$is_neg <- neg_inds
 sfe <- logNormCounts(sfe)
 ```
 
+For some examples we will show a subset of the tissue.
+
 ```{r}
-#| include: false
-#| eval: false
-bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
-sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3500, xmax = 14000, ymin = 157200, ymax = 162200)))
 ```
 
+```{r}
+sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+```
 
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
@@ -51,7 +53,6 @@ In this vignette, we will show the metrics related to two marker genes: KRT17 (b
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
-
 plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
@@ -65,12 +66,6 @@ plotSpatialFeature(sfe, c("TAGLN"),
 
 
 {{< include theory/03-theory-irreg-lattice.qmd >}}
-
-```{r}
-colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
-                                                  dist_type = "idw", k = 5, 
-                                                  style = "W")
-```
 
 Here we set the arguments for the examples below.
 

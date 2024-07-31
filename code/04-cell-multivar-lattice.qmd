@@ -36,7 +36,7 @@ sfe <- logNormCounts(sfe)
 
 ```{r}
 #| include: false
-#| eval: false
+#| eval: true
 bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
 sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
 ```
@@ -52,7 +52,6 @@ In this vignette, we will show the metrics related a ligand-receptor pair, CEACA
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
-
 plotSpatialFeature(sfe, c("CEACAM6"),
                    colGeometryName = "centroids", 
                    ncol = 2, scattermore = TRUE) + 
@@ -70,13 +69,6 @@ plotSpatialFeature(sfe, c("EGFR"),
 ```
 
 {{< include theory/03-theory-irreg-lattice.qmd >}}
-
-
-```{r}
-colGraph(sfe, "knn5") <- findSpatialNeighbors(sfe, method = "knearneigh",
-                                                  dist_type = "idw", k = 5, 
-                                                  style = "W")
-```
 
 Here we set the arguments for the examples below.
 

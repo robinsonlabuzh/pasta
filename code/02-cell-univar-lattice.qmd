@@ -48,7 +48,7 @@ sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
 
-In this vignette, we will show the metrics related to two marker genes: KRT17 (basal cells) and TAGLN (smooth muscle cells).
+In this vignette, we will show the metrics related to two marker genes: _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells).
 
 ```{r}
 #| fig-width: 15
@@ -77,11 +77,6 @@ colGeometryName <- "centroids"
 
 
 {{< include theory/04-theory-univar-lattice.qmd >}}
-
-
-## A note of caution
-
-The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression  of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement. 
 
 # Appendix
 

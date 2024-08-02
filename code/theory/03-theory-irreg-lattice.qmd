@@ -1,18 +1,10 @@
-## Irregular lattice and neighbourhood matrix
+## Spatial weight matrix
 
-In general, a spatial autocorrelation measure has the following elements: a function, $f(x_i, x_j)$, of the values of interest at locations $i$ and $j$ and a neighbourhood or weight matrix, $w_{ij}$. The function $f$ relates the measured values $x_i$ and $x_j$ and the neighbourhood matrix $w_{ij}$ builds in the spatial relationship between location $i$ and $j$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
 
-<!-- Such analysis techniques rely on a neighborhood matrix, a matrix that indicates which cells are neighbors [MR: how is the neighbourhood matrix related to the weights matrix?]. In the case of the regular lattice, the calculation of the neighborhood matrix is rather straightforward. In the case of the irregular lattice, it can be more complicated as the reconstruction of the cells is often not perfect [MR: what does it mean that the reconstruction is often not perfect?]. -->
+Segmentation of individual cells is challenging [@wangCellSegmentationImage2019] and construction of contiguity-based neighbours based on individual cell segmentation assumes very accurate segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
 
-## Neighbourhood matrix
-
-One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours, graph-based neighbours, distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
-
-Segmentation of individual cells is challenging [@wangCellSegmentationImage2019], therefore construction of contiguity-based neighbours based on individual cell segmentation assumes perfect segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
-
-In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method.
-
-As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous.
+In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous.
 
 ```{r}
 colGraph(sfe, "poly2nb") <-
@@ -55,6 +47,8 @@ p2 <- plotColGraph(sfe,
 As we can see below, the graphs look quite distinct. On the left side, in the contiguous neigbhbour graph (neighbours in direct contact) we can notice the formation of patches, while in the knn graph isolated patches are more interconnected.
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
 p1 + p2
 ```
 

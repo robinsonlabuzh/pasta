@@ -1,10 +1,12 @@
-## Global Methods
+## Global Measures
 
-Global methods give us an overview over the entire field of view and summarize the spatial distribution of the cells (for a given measurement such as gene expression) in a single value. The most common global measures are Moran's I and Geary's C coefficients; these coefficients are a function of the weight matrix and the variables of interest.
+Global methods give us an overview over the entire field-of-view and summarize the spatial autocorrelation metric to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
 
-In general, a global spatial autocorrelation measure has the form of a double sum over all locations
+In general, a global spatial autocorrelation measure has the form of a double sum over all locations $i,j$
 
-$$\sum_i \sum_j f(x_i,x_j) w_{ij}.$$
+$$\sum_i \sum_j f(x_i,x_j) w_{ij}$$
+
+where $f(x_i,x_j)$ is the measure of association between features of interest and $w_{ij}$ scales the relationship by a spatial weight as defined in the weight matrix $W$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
 
 ### Global Moran's I coefficient
 
@@ -218,3 +220,7 @@ plotLocalResult(sfe, "LOSH",
                 features = features[1],
                 colGeometryName = colGeometryName)
 ```
+
+## A note of caution
+
+The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression  of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement. 

@@ -31,7 +31,7 @@ sfe <- scater::logNormCounts(sfe)
 colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 ```
 
-Given this data from McKellar et al. we choose two genes to analyse henceforth, named `Mdk`and `Ncl`[7]. 
+Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ (ENSMUSG00000027239) and _Ncl_ (ENSMUSG00000026234) [@mckellarLargescaleIntegrationSinglecell2021]. 
 
 ```{r}
 MdK <- "ENSMUSG00000027239"

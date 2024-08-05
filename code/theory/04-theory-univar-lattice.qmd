@@ -184,7 +184,7 @@ plotLocalResult(sfe, "localG",
 
 The results above gives an estimate of the local Getis-Ord statistic for each cell, but no significance value. This can be done by using a permutation approach using the `localG_perm` argument.
 
-Positive values indicate clustering of high values, i.e., hot spots, and negative values indicate clustering of low values, i.e., cold spots. The method does not detect outlier values because, unlike in local Moran's I, there is no cross-product between $i$ and $j$. But unlike local Moran's I, we know the type of interaction exists (high-high or low-low) between $i$ and $j$.
+Positive values indicate clustering of high values, i.e., hot spots, and negative values indicate clustering of low values, i.e., cold spots. The method does not detect outlier values because, unlike in local Moran's I, there is no cross-product between $i$ and $j$. But unlike local Moran's I, we know the type of interaction (high-high or low-low) between $i$ and $j$.
 
 <!-- Importantly, $G_i(d)$ is scale-invariant but not location-invariant, meaning that the subdivision into the $n$ subregions matters for the computation of the local statistic [MR: what does "matters" mean in this sentence?]. -->
 

@@ -25,7 +25,7 @@ p1 <- plotColGraph(sfe,
 ) + theme_void()
 ```
 
-Alternatively, we can use a k-nearest neighbours approach. The the number $k$ is somewhat arbritary.
+Alternatively, we can use a k-nearest neighbours approach. The the number $k$ is somewhat arbitrary.
 
 ```{r}
 colGraph(sfe, "knn5") <-
@@ -44,7 +44,7 @@ p2 <- plotColGraph(sfe,
 ) + theme_void()
 ```
 
-As we can see below, the graphs look quite distinct. On the left side, in the contiguous neigbhbour graph (neighbours in direct contact) we can notice the formation of patches, while in the knn graph isolated patches are more interconnected.
+The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition some cells don't have any direct neighbours. In contrast, the k-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
 
 ```{r}
 #| fig-width: 15

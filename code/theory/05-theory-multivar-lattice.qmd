@@ -86,7 +86,7 @@ and can be generalized to $k$ parameters by expanding
 
 $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
-where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretaing the mixture of similarity in the geographic space and similarity in the attribute space. 
+where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretation of the mixture of similarity in the geographic space and similarity in the attribute space. 
 
 ### Multivariate local Geary's C
 

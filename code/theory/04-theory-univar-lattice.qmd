@@ -28,7 +28,7 @@ calculateMoransI(
 )
 ```
 
-We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the P-value. 
+We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the p-value. 
 
 ```{r}
 sfe <- runUnivariate(sfe,
@@ -42,11 +42,11 @@ res <- rowData(sfe)[features,]
 res
 #value of the metric
 res[,7]
-#P-value
+#p-value
 res[,9]
 ```
 
-We can see both genes have a positive Moran's I coefficient and a highly significant P-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate that areas with similar values are clustered. It is important to note that this could be both at the high or low end of the values of interest. Negative values indicate clustering of alternating values, i.e., gives a measure of spatial heterogeneity. Moreover, one should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same weight matrix.
+We can see both genes have a positive Moran's I coefficient and a highly significant p-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate that areas with similar values are clustered. It is important to note that this could be both at the high or low end of the values of interest. Negative values indicate clustering of alternating values, i.e., gives a measure of spatial heterogeneity. Moreover, one should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same weight matrix.
 
 ### Global's Geary's C coefficient
 
@@ -69,7 +69,7 @@ res <- rowData(sfe)[features,]
 res
 #value of the metric
 res[,7]
-#P-value
+#p-value
 res[,9]
 ```
 

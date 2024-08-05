@@ -126,7 +126,7 @@ out$tablaZ %>%
 
 In this table we see that most Ependymal cells are very clustered, while Microglia are more evenly distributed. Further we see that it is less likely to find a Ependymal cells next to a OD mature cells than by chance. 
 
-OD Mature cells show this interesting characteristic that they are clustered in some parts of the tissue and more evenly distributed in other parts of the tissue This characteristic is not visible in the table. The statistic also considers only the nearest neighbour and ignores neighbours that are further away. 
+OD Mature cells show this interesting characteristic that they are clustered in some parts of the tissue and more evenly distributed in other parts of the tissue. This characteristic is not visible in the table. The statistic also considers only the nearest neighbour and ignores neighbours that are further away. 
 
 ## Summary functions for pairs of types
 
@@ -164,11 +164,11 @@ plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_
 
 <!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
 
-The diagonal of the imhomogeneous cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the processes of the types are independent, we assume that they are also uncorrelated.
+The diagonal of the inhomogeneous cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the processes of the types are independent, we assume that they are also uncorrelated.
 
 In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
-Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate further calculate the inhomogeneous cross K-function. Note that this functionality is not yet implemented in `spatialFDA`.
+Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross K-function. Note that the option to calculate confidence intervals is not yet implemented in `spatialFDA`.
 
 ```{r}
 #| include: true

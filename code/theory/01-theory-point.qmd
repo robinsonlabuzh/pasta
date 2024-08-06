@@ -33,11 +33,11 @@ The theory of spatial point patterns is discussed in great detail in [@baddeleyS
 
 In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a Poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
 
-When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process. In the multivariate framework we assume that the types stem from distinct point processes and therefore we can consider dependencies of one type alone. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a celltype in two slices of the same tissue we can have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
+When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process. In the multivariate framework we assume that the types stem from distinct point processes and therefore we can consider dependencies of one type alone. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we can have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
 
 ### Observation Windows
 
-The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. In the analysis we try to make inferences on the entire point process based on the observed window. An example could be different small microscopy windows through which a big tissue slice is observed. The windows would be samples of the bigger point process. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
+The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
 There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns2015, pp. 144-145; @ripleyFindingEdgePoisson1977].
 
@@ -73,12 +73,7 @@ $$
 
 #### Independence
 
-Independence implies that in two (non-overlapping) regions $A$ and $B$, the number of points $n(X\cap A)$ and $n(X\cap B)$ are independent random variables. In other words, the number of points in region $A$ does not affect the number of points in region $B$. In addition, the number of points, $N = n(X\cap B)$, follows a Poisson distribution:
-
-$$
-\mathbb{P}[N=k] = e^{-\mu}\frac{\mu^k}{k!}\\
-\label{eq:poisson_process}
-$$ where $k = \lambda |B|$ [@baddeleySpatialPointPatterns2015, pp. 133].
+Independence implies that in two (non-overlapping) regions $A$ and $B$, the number of points $n(X\cap A)$ and $n(X\cap B)$ are independent random variables. In other words, the number of points in region $A$ does not affect the number of points in region $B$. [@baddeleySpatialPointPatterns2015, pp. 133].
 
 ### Inhomogeneous Poisson Process
 
@@ -95,13 +90,13 @@ A point process is called isotropic, if its statistical properties are invariant
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space." [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218]. Not all metrics assume stationarity in its full sense. Inhomogeneous metrics only assume second-order / correlation stationarity. That means while the intensity function can vary spatially (first-order stationarity is not given), the estimates of correlation functions (e.g. the inhomogeneous K-function) should be the same in parts of the window [@baddeleySpatialPointPatterns2015, pp. 689].
+"A point process is called stationary if, when we view the process through a window W , its statistical properties do not depend on the location of the window in two-dimensional space." [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218]. Not all metrics assume stationarity in its full sense. Inhomogeneous metrics only assume second-order / correlation stationarity. That means while the intensity function can vary spatially (first-order stationarity is not given), the estimates of correlation functions (e.g. the inhomogeneous K-function) should be the same in parts of the window [@baddeleySpatialPointPatterns2015, pp. 689 ff.].
 
 ### Local scaling
 
-If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in small subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns2015, pp. 246-247].
+If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric can be applicable. This means in subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns2015, pp. 246-247].
 
-We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable. Therefore, the interpretation can be difficult [@baddeleySpatialPointPatterns2015, pp. 689-693].
+We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable [@baddeleySpatialPointPatterns2015, pp. 689-693].
 
 ```{r, warning=FALSE, eval = FALSE}
 permutation_test <- function(pp, mark, split, minpoints) {
@@ -140,14 +135,14 @@ As the interpretation of the permutation test is highly dependent on the quadrat
 
 ### Intensity
 
-Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events recorded. The intensity represents a first order property because it is related to the expected number of points. More formally the average intensity of a point process is defined as:
+Intensity is the expected density of points per unit area. It can be interpreted as the rate of occurrence or the abundance of events. The intensity represents a first order property because it is related to the expected number of points. More formally the average intensity of a point process is defined as:
 
 $$
 \bar{\lambda} = \frac{n(x)}{|W|}
 \label{eq:average_intensity}
 $$
 
-As this is an average over the entire window, it only really makes sense for a homogeneous point process [@baddeleySpatialPointPatterns2015, pp. 157-160]
+As this is an average over the entire window, it is a good estimate for a homogeneous point process [@baddeleySpatialPointPatterns2015, pp. 157-160]
 
 #### Estimating Intensity
 
@@ -167,7 +162,7 @@ intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
 
 #### Kernel Estimation
 
-In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There are a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns2015, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There is a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns2015, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
 
 ```{r, fig.width=8, fig.height=8}
 pp_sel <-  subset(pp_ls[['0.01']]$`OD Mature`, drop = TRUE)

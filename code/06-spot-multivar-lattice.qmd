@@ -19,171 +19,35 @@ theme_set(theme_light())
 #spe_vis <- readRDS("../data/spe_spot.rds")
 #spe_vis
 
-sfe <- SFEData::McKellarMuscleData(dataset = "full")
+sfe_full <- SFEData::McKellarMuscleData(dataset = "full")
 
-sfe <- mirrorImg(sfe, sample_id = "Vis5A", image_id = "lowres")
-sfe
-sfe_tissue <- sfe[,colData(sfe)$in_tissue]
-sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0,]
+sfe_full <- mirrorImg(sfe_full, sample_id = "Vis5A", image_id = "lowres")
+sfe <- sfe_full[,colData(sfe_full)$in_tissue]
+sfe <- sfe[rowSums(counts(sfe)) > 0,]
 
 #perform normalisation 
-sfe_tissue <- scater::logNormCounts(sfe_tissue)
+sfe <- scater::logNormCounts(sfe)
 
-colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
-
-weights_neighbourhoods <- colGraph(sfe_tissue, "visium")
+colGraph(sfe, "visium") <- findVisiumGraph(sfe)
 ```
 
-Given this data from McKellar et al. we choose two genes to analyse henceforth, named `Mdk`and `Ncl`[7]. 
-
+Given this data from McKellar et al. we choose two genes to analyse henceforth, named _Mdk_ (ENSMUSG00000027239) and _Ncl_ (ENSMUSG00000026234) [@mckellarLargescaleIntegrationSinglecell2021]. 
 
 ```{r}
 MdK <- "ENSMUSG00000027239"
 NcI <- "ENSMUSG00000026234"
 ```
 
+```{r}
+features <- c("ENSMUSG00000027239", "ENSMUSG00000026234") # MdK, Ncl
+colGraphName <- "visium"
+colGeometryName <- "spotPoly"
+segmentation <- "spotPoly"
+```
+
 {{< include theory/02-theory-reg-lattice.qmd >}}
 
 {{< include theory/05-theory-multivar-lattice.qmd >}}
-
-# Examples 
-
-## Global Measures for Bivariate Data
-
-### Global Bivariate Moran's I
-
-### Implementation using `spded`
-
-```{r}
-res_xy <- spdep::moran_bv(x = logcounts(sfe_tissue)[MdK,],
-         y = logcounts(sfe_tissue)[NcI,],
-         listw =  colGraph(sfe_tissue, "visium"),
-         nsim = 499)
-boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
-plot(res_xy)
-```
-
-From the result of the global measure, the overall spatial autocorrelation of the two genes is not significant.
-
-### Global Bivariate Lee's L
-
-#### Implementation using `voyager`
-
-```{r}
-res_lee <- calculateBivariate(sfe_tissue, type = "lee.mc", 
-                   feature1 = MdK, feature2 = NcI,
-                   nsim = 499)
-res_lee$lee.mc_statistic
-res_lee$ lee.mc_p.value
-```
-
-The interpretation of the result is not straightforward, as identical patterns do not have a value of 1 but have a value depending on their spatial arrangement. In general positive values indicate spatial co-occurrence while negative values indicate spatial segregation of the pattern of variables of $x$ and $y$ [@leeDevelopingBivariateSpatial2001]. 
-
-## Local Measures for Bivariate Data
-
-### Bivariate Lee's L
-
-##### Implementation using `voyager`
-
-```{r}
-sfe_tissue <- runBivariate(sfe_tissue, type = "locallee",
-                    feature1 = MdK, feature2 = NcI)
-
-plotLocalResult(sfe_tissue, "locallee", 
-                features = localResultFeatures(sfe_tissue, "locallee"),
-                ncol = 2, divergent = TRUE, diverge_center = 0,
-                colGeometryName = "spotPoly") 
-  
-```
-
-
-<!-- ### Implementation using `spdep` -->
-
-<!-- ```{r} -->
-<!-- loc <- lee(x = logcounts(sfe)["KRT17",], -->
-<!--            y = logcounts(sfe)["TAGLN",], -->
-<!--            n = length(logcounts(sfe)["TAGLN",]), -->
-<!--            listw = weights_neighbourhoods) -->
-
-<!-- #convert into a plain sf object for plotting -->
-<!-- sf <- colGeometries(sfe)$cellSeg -->
-
-<!-- sf$locEffect <- loc$localL -->
-
-<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
-<!-- ``` -->
-
-<!-- [MR: do we need both implementations?] -->
-
-
-## Local Measures for Multivariate Data
-
-### Multivariate local Geary's C
-
-Here we use the marker genes used in the original paper that study apoptosis [@heHighplexImagingRNA2022, Supplementary Table 1] in a subset of the tissue, as the computation is very intensive.
-
-```{r}
-hvgs <- getTopHVGs(sfe_tissue, fdr.threshold = 0.01)
-
-# Subset of the tissue
-sfe_tissue <- runMultivariate(sfe_tissue, type = "localC_multi",
-                    subset_row = hvgs)
-
-# Local C mutli is stored in colData so this is a workaround to plot it
-plotSpatialFeature(sfe_tissue, "localC_multi")
-```
-
-We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple values but the exact combination is not known. For further details, see [@anselinLocalIndicatorMultivariate2019].
-
-[MR: this makes me question how we should present this. SG: Good question, it comes very close to spatial clustering here, maybe we can show this as a preview for other methods that we do not discuss.. From the @anselinLocalIndicatorMultivariate2019 publication: "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014)."]
-
-```{r}
-sfe_tissue <- runMultivariate(sfe_tissue, type = "localC_perm_multi",
-                    subset_row = hvgs,
-                    nsim = 100)
-
-# stored as spatially reduced dim; plot it in this way
-spatialReducedDim(sfe_tissue, "localC_perm_multi",  c(1, 11))
-```
-
-<!-- ```{r} -->
-<!-- loc <- localC_perm(x = t(as.matrix(logcounts(sfe)[c("KRT17", "TAGLN"),])), -->
-<!--        listw = weights_neighbourhoods, nsim = 1) -->
-
-<!-- #convert into a plain sf object for plotting -->
-<!-- sf <- colGeometries(sfe)$cellSeg -->
-
-<!-- sf$locEffect <- loc -->
-
-<!-- tm_shape(sf) + tm_fill(col = 'locEffect')   -->
-<!-- ``` -->
-
-It would be interesting to do this not only on the cell level, but also on the *domain* level.
-
-## Local Neighbor Match Test
-
-This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space).
-
-[MR: how are the KNNs calculated in the attribute space?]
-
-```{r}
-sf <- colGeometries(sfe_tissue)$spotPoly
-sf <- cbind(sf,  t(as.matrix(logcounts(sfe_tissue)[hvgs,])))
-
-nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
-
-sf$Probability <- nbr_test$Probability
-sf$Cardinality <- nbr_test$Cardinality
-
-tm_shape(sf) + tm_fill(col = 'Probability')  
-tm_shape(sf) + tm_fill(col = 'Cardinality')  
-```
-
-Cardinality is a measure of how many neighbours of each cell are in common. Some regions show high cardinality with low probability. On the cellular level, this might not be very informative and lead to regions with high similarity. We only see very few cells with a cardinality greater than 0. In addition, as the number of dimensions increase, the empty space between observations also increases; this is known as the empty space problem. 
-
-Again, this analysis should probably be performed on a structure level instead of a single cell level.  
-
-[MR: should we do the analysis at the structure/domain level then?]
 
 ## Session info
 

@@ -1,6 +1,4 @@
----
-title: "Theory -- Regular lattices"
----
+## Regular lattice and neighbourhood matrix
 
 Spot based data is collected along a regular spaced grid where all sample areas have the same size. Such a grid is also called a regular lattice. In more rigorous terms the data $Y$ is the product of a random process but the sampling locations are fixed along a lattice $D$. The lattice $D$ does not have to regular but in the scope of spot based data it is. The main difference of this type of data in comparison to point patterns is, that the locations of the data are then not results of a stochastic process but rather due to a defined sampling strategy [@zuurAnalysingEcologicalData2007].
 
@@ -20,4 +18,6 @@ Most lattice data analysis technique build on the concept of neighbours. Therefo
 
 $$w_{ij} = \begin{cases} 1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\ 0 \text{ otw} \end{cases}$$
 
-other options to specify the weight matrix $W$ are mentioned in [@zuurAnalysingEcologicalData2007]. 
+other options to specify the weight matrix $W$ are mentioned in @zuurAnalysingEcologicalData2007. 
+
+`Voyager` has a special function for the construction of the weight matrix in Visium data `findVisiumGraph`.

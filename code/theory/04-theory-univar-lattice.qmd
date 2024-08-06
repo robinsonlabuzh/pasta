@@ -1,14 +1,12 @@
----
-title: "Theory -- Univariate lattice based analysis"
----
+## Global Measures
 
-## Global Methods
+Global methods give us an overview over the entire field-of-view and summarize the spatial autocorrelation metric to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
 
-Global methods give us an overview over the entire field of view and summarize the spatial distribution of the cells (for a given measurement such as gene expression) in a single value. The most common global measures are Moran's I and Geary's C coefficients; these coefficients are a function of the weight matrix and the variables of interest.
+In general, a global spatial autocorrelation measure has the form of a double sum over all locations $i,j$
 
-In general, a global spatial autocorrelation measure has the form of a double sum over all locations
+$$\sum_i \sum_j f(x_i,x_j) w_{ij}$$
 
-$$\sum_i \sum_j f(x_i,x_j) w_{ij}.$$
+where $f(x_i,x_j)$ is the measure of association between features of interest and $w_{ij}$ scales the relationship by a spatial weight as defined in the weight matrix $W$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023].
 
 ### Global Moran's I coefficient
 
@@ -18,6 +16,38 @@ $$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(x_i - \bar{x})(x_j
 
 where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\hat{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than indicates spatial auto-correlation. Negative values indicate negative auto-correlation.
 
+#### Implementation using `voyager`
+
+
+```{r}
+calculateMoransI(
+  sfe,
+  features = features,
+  colGraphName = colGraphName,
+  exprs_values = "logcounts"
+)
+```
+
+We can also use the `moran.mc` function to calculate the Moran's I coefficient. This function uses a Monte Carlo simulation to calculate the p-value. 
+
+```{r}
+sfe <- runUnivariate(sfe,
+                     features = features,
+                     colGraphName = colGraphName,
+                     exprs_values = "logcounts",
+                     type = "moran.mc",
+                     nsim = 200)
+
+res <- rowData(sfe)[features,]
+res
+#value of the metric
+res[,7]
+#p-value
+res[,9]
+```
+
+We can see both genes have a positive Moran's I coefficient and a highly significant p-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0. Positive and significant values indicate that areas with similar values are clustered. It is important to note that this could be both at the high or low end of the values of interest. Negative values indicate clustering of alternating values, i.e., gives a measure of spatial heterogeneity. Moreover, one should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same weight matrix.
+
 ### Global's Geary's C coefficient
 
 Geary's $C$ [@gearyContiguityRatioStatistical1954] is a different measure of global autocorrelation and is very closely related to Moran's $I$. However, it focuses on spatial dissimilarity. Geary's $C$ is defined by
@@ -25,6 +55,25 @@ Geary's $C$ [@gearyContiguityRatioStatistical1954] is a different measure of glo
 $$C = \frac{(n-1) \sum_i \sum_j w_{ij}(x_i-x_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(x_i-\bar{x})^2}$$
 
 where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\hat{x}$ is the mean of all $x$, $w_{ij}$ is the spatial weight between the locations of $i$ and $j$ and $n$ the total numer of locations. The interpretation is opposite to Moran's $I$: a value smaller than $1$ indicates positive auto-correlation whereas a value greater than $1$ represents negative auto-correlation.
+
+#### Implementation using `voyager`
+
+```{r}
+sfe <- runUnivariate(sfe,
+                     features = features,
+                     colGraphName = colGraphName,
+                     nsim = 200,
+                     type = "geary.mc")
+
+res <- rowData(sfe)[features,]
+res
+#value of the metric
+res[,7]
+#p-value
+res[,9]
+```
+
+Again, the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
 
 ### Global Getis-Ord $G$ statistic
 
@@ -36,6 +85,16 @@ $$G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_
 The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the datapoints whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather consider both. 
 
 It is recommended to use binary weights for this calculation. We will use the `spdep` package directly to calculate the global $G$ statistic.
+
+```{r}
+# Get the weight matrix from sfe object
+weights_neighbourhoods_binary <- colGraph(sfe, colGraphName)
+# Change it to binary weights
+weights_neighbourhoods_binary$style <- "B" 
+# Calculate the global G statistic
+spdep::globalG.test(x = counts(sfe)[features[1],], 
+                    listw = weights_neighbourhoods_binary)
+```
 
 ## Local measures
 
@@ -49,6 +108,23 @@ $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{
 
 where the index $i$ refers to the location for which the measure is calculated. The interpretation is analogous to the global Moran's I where a value of $I_i$ higher than $\mathbb{E}(I) = -1/(n-1)$ indicates spatial auto-correlation; smaller values indicate negative auto-correlation. It is important to note that, as for the global counterpart, the value of local Moran's I could be a result from both the high or low end of the values. Since we measure and test a large number of locations simultaneously, we need to correct for multiple testing (e.g., using the Benjamini-Hochberg procedure).
 
+#### Implementation using `voyager`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+sfe <- runUnivariate(sfe,
+                     features = features,
+                     colGraphName = colGraphName,
+                     type = "localmoran")
+
+plotLocalResult(sfe, "localmoran",
+                features = features, ncol = 2,
+                colGeometryName = colGeometryName)
+```
+
+
 ### Local Geary's C coefficient
 
 Similar to local Moran's I, there is a local Geary's C [@anselinLocalIndicatorsSpatial1995] coefficient. It is defined as
@@ -59,6 +135,27 @@ The interpretation is analogous to the global Geary's C (value less than $1$ ind
 
 In this example, we will not plot the local Geary's C coefficient for gene expression but for features that are associated with an individual cell, e.g., the number of counts or the number of genes expressed. For this, the `colDataUnivariate` function is used to calculate the local Geary's C coefficient for such features.
 
+#### Implementation using `Voyager`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+sfe <- colDataUnivariate(sfe, "localC_perm",
+                         features = c("nCounts", "nGenes"),
+                         colGraphName = colGraphName)
+
+plotLocalResult(
+  sfe,
+  "localC_perm",
+  features = c("nCounts", "nGenes"),
+  ncol = 2,
+  colGeometryName = colGeometryName,
+  divergent = TRUE,
+  diverge_center = 0
+)
+```
+
 ### Local Getis-Ord statistic
 
 The local Getis-Ord $G_i$ [@ordLocalSpatialAutocorrelation1995; @getisAnalysisSpatialAssociation1992] statistic quantifies the weighted concentration of points within a radius $d$ and in a local region $i$, according to:
@@ -66,6 +163,28 @@ The local Getis-Ord $G_i$ [@ordLocalSpatialAutocorrelation1995; @getisAnalysisSp
 $$G_i(d) = \frac{\sum_{j \neq i } w_{ij}(d)x_j}{\sum_{j \neq i} x_j}$$
 
 There is a variant of this statistic, $G_i^*(d)$, which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term. 
+
+#### Implementation using `voyager`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+sfe <- runUnivariate(sfe,
+                     features = features,
+                     #include_self = TRUE, # this would specify G_i^*(d),
+                     colGraphName = colGraphName,
+                     type = "localG")
+
+plotLocalResult(sfe, "localG",
+                features = features,
+                ncol = 2,
+                colGeometryName = colGeometryName)
+```
+
+The results above gives an estimate of the local Getis-Ord statistic for each cell, but no significance value. This can be done by using a permutation approach using the `localG_perm` argument.
+
+Positive values indicate clustering of high values, i.e., hot spots, and negative values indicate clustering of low values, i.e., cold spots. The method does not detect outlier values because, unlike in local Moran's I, there is no cross-product between $i$ and $j$. But unlike local Moran's I, we know the type of interaction (high-high or low-low) between $i$ and $j$.
 
 <!-- Importantly, $G_i(d)$ is scale-invariant but not location-invariant, meaning that the subdivision into the $n$ subregions matters for the computation of the local statistic [MR: what does "matters" mean in this sentence?]. -->
 
@@ -84,3 +203,24 @@ The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ s
 | large $\|G_i^*\|$   | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
 | small $ \|G_i^*\| $ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                                                                           |
 
+#### Implementation using `Voyager`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+# run localG with permutation test
+sfe <- runUnivariate(sfe,
+                     features = features[1],
+                     colGraphName = colGraphName,
+                     type = "LOSH")
+
+
+plotLocalResult(sfe, "LOSH",
+                features = features[1],
+                colGeometryName = colGeometryName)
+```
+
+## A note of caution
+
+The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression  of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement. 

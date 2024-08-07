@@ -31,7 +31,7 @@ The theory of spatial point patterns is discussed in great detail in [@baddeleyS
 
 ### Point Process
 
-In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. E.g. the pattern can be said to be created by a Poisson point process and thus is evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
+In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. For example, if a pattern is created by a Poisson point process it will be evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
 
 When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process. In the multivariate framework we assume that the types stem from distinct point processes and therefore we can consider dependencies of one type alone. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we can have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
 
@@ -39,7 +39,7 @@ When considering a pattern with $m$ multiple types, as we do in the [@moffittMol
 
 The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
-There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial domain [@baddeleySpatialPointPatterns2015, pp. 144-145; @ripleyFindingEdgePoisson1977].
+There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial region [@baddeleySpatialPointPatterns2015, pp. 144-145; @ripleyFindingEdgePoisson1977].
 
 ```{r}
 setRiprasWindows <- function(pp){
@@ -129,7 +129,7 @@ lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp
 
 The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
 
-For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that both the correlation stationarity assumption and the local scaling assumption can't be rejected. \[ME: Does this make sense? Or is this just an artifact?\]
+For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that for this choice of quadrats both the correlation stationarity assumption and the local scaling assumption can't be rejected.
 
 As the interpretation of the permutation test is highly dependent on the quadrats, the results should be interpreted with care. Both inhomogeneous and locally scaled versions of the summary functions have support and both offer interesting insights into the spatial pattern. Therefore, we will compare all versions and show what the choice of metrics means for their interpretation.
 

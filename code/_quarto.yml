@@ -73,10 +73,10 @@ website:
       collapse-level: 2
       contents: 
         - text: "---"
-        - text: "Univariate Methods"
+        - section: "Univariate Methods"
         - text: "Lattice-based Methods"
-        - text: "---"
-        - text: "Multivariate Methods"
           file: 05-HTS-univar-latSOD.qmd
-        - text: "Multivariate Lattice-based Methods"
+        - text: "---"
+        - section: "Multivariate Methods"
+        - text: "Lattice-based Methods"
           file: 06-HTS-multivar-latSOD.qmd

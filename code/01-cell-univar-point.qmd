@@ -457,7 +457,7 @@ The inhomogeneous curves look different to their homogeneous counterparts but th
 
 Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns2015 pp. 278-279] [@baddeleySpatstatPackageAnalyzing2005].
 
-```{r}
+```{r, warnings = FALSE}
 res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'nnorient', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 p <- plotMetricPerFov(res, correction = "bordm", theo = TRUE, x = "phi", image_id = 'sample_id')

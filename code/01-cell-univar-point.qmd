@@ -403,7 +403,7 @@ The $F$ and $G$ functions are, like the $K$ function, cumulative. The same disad
 
 $$
 h(r) = \frac{f(r)}{1-F(r)}.
-$$ 
+$$
 
 [@baddeleySpatialPointPatterns2015 pp. 271-274].
 
@@ -535,12 +535,12 @@ As in the discrete case, summary functions assume that the point process is stat
 
 The mark correlation function measures the dependence between two marks for two points at distance $r$. It is applicable to stationary point processes with marks. The generalized mark correlation function is given by:
 
-$$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$ 
+$$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$
 
 where $f(m(u),m(v))$ is a test function with two arguments (representing the two marks at locations $u$ and $v$) and returns a non-negative value. For continuous non-negative marks, the canonical choice for $f$ is typically $f(m(u),m(v))= m(u)m(v)$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns2015 pp. 644-645].
 
 ```{r}
-res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'markcorr',  marks = genes, r_seq=NULL, by = c('Animal_ID','gene'), continuous = TRUE)
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'markcorr',  marks = genes, r_seq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE)
 p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
 p
 ```
@@ -562,7 +562,7 @@ In the scenario of random labeling, so where the marks are distributed randomly,
 Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we weigh each interaction between points by the product of the continuous marks of both points.
 
 ```{r}
-res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'Kmark',  marks = genes, r_seq=NULL, by = c('Animal_ID','gene'), continuous = TRUE) 
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'Kmark',  marks = genes, r_seq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE) 
 p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
 p
 ```

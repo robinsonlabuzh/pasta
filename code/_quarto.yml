@@ -32,37 +32,51 @@ website:
         file: 00-home.qmd
       - text: "Setup"
         file: 00-setup.qmd
-      - sidebar:cellbased
-      - sidebar:spotbased
+      - sidebar:overview
+      - sidebar:imaging
+      - sidebar:HTS
   sidebar:
-    - id: cellbased 
-      title: "Cell-based Analysis"
+    - id: overview
+      title: "Overview"
+      style: "docked"
+      background: light
+      collapse-level: 2
+      contents:
+        - text: "---"
+        - text: "Overview Point Pattern-based Methods"
+          file: 00-overview-ppSOD.qmd
+        - text: "Overview Lattice-based Methods"
+          file: 00-overview-latSOD.qmd
+    - id: imaging 
+      title: "Imaging-based Data"
       style: "docked"
       background: light
       collapse-level: 3
       contents: 
         - text: "---"
-        - text: "Univariate Methods"
+        - section: "Univariate Methods"
+        - text: "Point Pattern-based Methods"
+          file: 01-imaging-univar-ppSOD.qmd
+        - text: "Lattice-based Methods"
+          file: 02-imaging-univar-latSOD.qmd
         - text: "---"
-        - text: "Univariate Point Pattern Methods"
-          file: 01-cell-univar-point.qmd
-        - text: "Univariate Lattice Methods for Cells"
-          file: 02-cell-univar-lattice.qmd
-        - text: "---"
-        - text: "Multivariate Methods"
-        - text: "---"
-        - text: "Multivariate Point Pattern Methods"
-          file: 03-cell-multivar-point.qmd
-        - text: "Multivariate Lattice Methods for Cells"
-          file: 04-cell-multivar-lattice.qmd
+        - section: "Multivariate Methods"
+        - text: "Point Pattern-based Methods"
+          file: 03-imaging-multivar-ppSOD.qmd
+        - text: "Lattice-based Methods"
+          file: 04-imaging-multivar-latSOD.qmd
           
-    - id: spotbased
-      title: "Spot-based Analysis"
+    - id: HTS
+      title: "HTS-based Data"
       style: "docked"
       background: light
       collapse-level: 2
       contents: 
-        - text: "Univariate Lattice Methods for Spots"
-          file: 05-spot-univar-lattice.qmd
-        - text: "Multivariate Lattice Methods for Spots"
-          file: 06-spot-multivar-lattice.qmd
+        - text: "---"
+        - text: "Univariate Methods"
+        - text: "Lattice-based Methods"
+        - text: "---"
+        - text: "Multivariate Methods"
+          file: 05-HTS-univar-latSOD.qmd
+        - text: "Multivariate Lattice-based Methods"
+          file: 06-HTS-multivar-latSOD.qmd

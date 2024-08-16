@@ -72,7 +72,7 @@ se <- Banksy::clusterBanksy(se, lambda = lambda, npcs = npcs, resolution = 0.8)
 cnames <- colnames(colData(se))
 cnames <- cnames[grep("^clust", cnames)]
 
-plotColData(se, x = "X", y = "Y", point_size = 0.01, colour_by = cnames[1]) +
+p <- plotColData(se, x = "X", y = "Y", point_size = 0.01, colour_by = cnames[1]) +
   scale_color_manual(values = pals::glasbey()) +
   coord_equal() +
   theme_void() +
@@ -89,7 +89,7 @@ spe <- subset(spe, ,in_tissue == TRUE)
 spe <- logNormCounts(spe)
 
 lambda <- 0.5
-k_geom <- 15
+k_geom <- 6
 npcs <- 50
 aname <- "logcounts"
 spe <- Banksy::computeBanksy(spe, assay_name = aname, k_geom = k_geom)
@@ -106,14 +106,14 @@ cnames <- cnames[grep("^clust", cnames)]
 colData(spe) <- cbind(colData(spe),(spatialCoords(spe)))
 colData(spe)
 
-plotColData(spe, x = "pxl_col_in_fullres", y = "pxl_row_in_fullres", point_size = 1.5, colour_by = cnames[1]) +
+q <- plotColData(spe, x = "pxl_col_in_fullres", y = "pxl_row_in_fullres", point_size = 1.5, colour_by = cnames[1]) +
   scale_y_reverse() +
   coord_equal() +
   scale_color_manual(values = pals::glasbey()) +
-  xlab('X') +
-  ylab('Y') +
   theme_void() +
-  theme(legend.position = "none")
+  theme(legend.position = "none") +
+  xlab('X') +
+  ylab('Y')
 
 plotVisium(spe, annotate = cnames[1], image = TRUE) +
   scale_color_manual(values = pals::glasbey())

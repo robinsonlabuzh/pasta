@@ -1,4 +1,4 @@
-# Point Pattenr Analysis -- Summary
+# Point Pattern Analysis -- Summary
 
 ## Introduction
 

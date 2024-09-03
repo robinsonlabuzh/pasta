@@ -6,7 +6,7 @@ Cells (or transcripts) can be approximated as points given their location.
 
 ### `spatstat` package and `ppp` object
 
-The central package to analyse point patterns in `R` is called `r BiocStyle::CRANpkg('spatstat')` [@baddeleySpatstatPackageAnalyzing2005]. The main data object to compute on is called a `ppp` object. `ppp` objects describe point patterns in two dimensional space, `ppx` objects create multidimensional point patterns. A `ppp` object is is made up of three specifications [@baddeleySpatstatPackageAnalyzing2005]:
+The central package to analyse point patterns in `R` is called `r BiocStyle::CRANpkg('spatstat')` [@baddeleySpatstatPackageAnalyzing2005]. The main data object to compute on is called a `ppp` object. `ppp` objects describe point patterns in two dimensional space, `ppx` objects create multidimensional point patterns. A `ppp` object is made up of three specifications [@baddeleySpatstatPackageAnalyzing2005]:
 
 -   The locations of the points in question ($x$,$y$ and, optionally, $z$ coordinates)
 -   The observation window
@@ -335,7 +335,7 @@ These curves could be analysed using tools from functional data analysis such as
 
 ### Cross Mark Comparison
 
-The same analyses as above can be performed between two celltypes. The corresponding functions are called cross functions [@baddeleySpatialPointPatterns2015 pp. 594 ff.]. As an exercise, try to implement (similar to the analyses above) a cross comparison between two cell types of interest. With the provided functions this is possible, just give a function you like as input and a vector with two cell types you wish to compare. You can look at functions in the documentation of `r BiocStyle::CRANpkg('spatstat.explore')`. We provide an example below:
+The same analyses as above can be performed between two cell types. The corresponding functions are called cross functions [@baddeleySpatialPointPatterns2015 pp. 594 ff.]. As an exercise, try to implement (similar to the analyses above) a cross comparison between two cell types of interest. With the provided functions this is possible, just give a function you like as input and a vector with two cell types you wish to compare. You can look at functions in the documentation of `r BiocStyle::CRANpkg('spatstat.explore')`. We provide an example below:
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # select OD Mature and Microglia cells

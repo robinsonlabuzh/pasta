@@ -16,6 +16,7 @@ Until now, we have considered the cells to be represented in a point pattern. Ho
 For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package [@mosesVoyagerExploratorySinglecell2023]. The `voyager` package also provides wrapper functions around the package `spdep` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object.
 
 ```{r}
+#taken from https://pachterlab.github.io/voyager/articles/vig4_cosmx.html
 (sfe <- HeNSCLCData())
 
 # Empty cells
@@ -28,8 +29,6 @@ colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
 # Remove low quality cells
 sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
 # Re-calculate stats
-rowData(sfe)$means <- rowMeans(counts(sfe))
-rowData(sfe)$vars <- rowVars(counts(sfe))
 rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)

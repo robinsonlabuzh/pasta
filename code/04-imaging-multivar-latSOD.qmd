@@ -15,6 +15,7 @@ For this representation of cells, we will rely on the `SpatialFeatureExperiment`
 
 
 ```{r}
+#taken from https://pachterlab.github.io/voyager/articles/vig4_cosmx.html
 (sfe <- HeNSCLCData())
 
 # Empty cells
@@ -27,8 +28,6 @@ colData(sfe)$prop_neg <- colSums(counts(sfe)[neg_inds,])/colData(sfe)$nCounts
 # Remove low quality cells
 sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
 # Re-calculate stats
-rowData(sfe)$means <- rowMeans(counts(sfe))
-rowData(sfe)$vars <- rowVars(counts(sfe))
 rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)

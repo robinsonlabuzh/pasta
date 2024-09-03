@@ -1,12 +1,8 @@
-![](../misc/overview_brain_tech.png)
-<p><small> An overview showcasing various data modalities obtained from different spatial transcriptomics technologies (Images adapted from [@MERFISHSpatialProfiling], [@SpatialGeneExpression]). </small></p>
+![](../misc/fig1-overview.png)
+<p><small> Imaging-based data can be interpreted as a point pattern either via the transcript locations or via cell centroids. Alternatively, the segmented cellular outlines can be interpreted as an irregular lattice. High throughput (HTS)-based approaches are most often recorded on a regular lattice. This enables either point pattern or lattice data analysis [@baddeleySpatialPointPatterns2015; @pebesmaSpatialDataScience2023; @raoExploringTissueArchitecture2021]. Data: [@shi2023spatial; @10xVisium_Mouse].. </small></p>
 
 This vignette provides an overview of exploratory data analysis techniques tailored to the data modalities arising from the two primary spatial transcriptomic technologies: image-based methods (e.g., MERFISH, CosMx, Xenium) and spot-based approaches (e.g., Visium).
 
 Image-based techniques yield subcellular-resolution images, allowing for the study of cells within their natural context. This data can be analysed as spatial point pattern where the points represent cells. Alternatively, we can rely on the segmentation of each individual cell and interpret the collection of all cells as an irregular lattice.
 
 In contrast, spot-based methods, not yet achieving subcellular resolution, produce data represented as a regularly spaced grid corresponding to the sampling locations (spots). Each location has the same area and consists of a collection of different measurements.
-
-# Disclaimer
-
-This site is still under development. Sources might be inconsistent or missing. All information should be considered preliminary and subject to change. The information presented here is for internal (Department of Molecular Life Sciences, University of Zurich) use only and is not intended for any other purpose.

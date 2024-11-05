@@ -53,7 +53,8 @@ p <- ggplot(dfm, aes(x=r, y=value, group=variable, colour=sel)) +
   geom_vline(xintercept = 200) +
   theme(legend.position = "none") +
   theme_light() +
-  ggtitle("LISA curves of slice 0.01")
+  ggtitle("LISA curves of slice 0.01") +
+  labs(colour="Value at r~200")
 
 ppdf <- as.data.frame(pp[['0.01']]) %>% filter(marks=="OD Mature")
 ppdf$sel <- get_sel$sel # assume they are in same order
@@ -77,17 +78,27 @@ dat$Y <- t(mat)
 dat$sel <- get_sel$sel
 
 # perform functional PCA
-res <- functionalPCA(dat = dat, r = df_fdob$r |> unique(), knots = 30, pve = 0.99)
+res <- functionalPCA(dat = dat, r = df_fdob$r |> unique())
+scores_df <- res$scores %>% as.data.frame()
+scores_df$sel <- get_sel$sel
 # plot a biplot
-p_biplot <- plotFpca(dat = dat, res = res, colourby = 'sel')
-p_biplot <- p_biplot + ggtitle("Biplot of LISA curves") +
+p_biplot <- ggplot(scores_df, aes(scores_df[, 1], scores_df[, 2], colour = sel)) +
+  geom_point() +
+  coord_equal() +
+  theme_light() +
+  xlab("functional PC1") +
+  ylab("functional PC2") +
+  scale_color_continuous(type = "viridis") +
+  ggtitle("Biplot of LISA curves") +
   xlab('PC1') +
-  ylab('PC2')
-  
+  ylab('PC2') +
+  labs(colour="Value at r~200")
 
+res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 
 #assemble plots for paper
-p_L <- plotMetric(plot_by = zstack_list, pp, celltype_ls, 'r', 'Lest', 'iso', bootstrap = TRUE)
+p_L <- plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id') + theme(legend.position = 'right') + labs(colour="Slice")
 p_local <- wrap_plots(list(p,p_biplot), nrow = 2, guides = 'collect')
 L_plot <- wrap_plots(list(p_L, p_local), nrow = 2, heights = c(1, 2))
 
@@ -103,7 +114,7 @@ pls <- lapply(zstack_list, function(zstack){
     theme(legend.position = 'none')
   if(zstack == '0.01'){
     p <- pp_sel |> as.data.frame() |> 
-      ggplot(aes(x = x, y = y, col = res$scores[,1])) +
+      ggplot(aes(x = x, y = y, col = get_sel$sel)) +
       scale_color_continuous(type = "viridis") +
       geom_point(size=0.75) +
       theme_light() +
@@ -177,3 +188,46 @@ p_K <- plotMetric(celltype_ls, ppls, 'Kest', 'iso')
 
 ggsave('outs/Kest.pdf', plot = p_K, width = 5, height = 3)
 
+### SI figure pp
+
+# homogeneous functions
+res_ls <- lapply(list('Kest', 'Lest', 'pcf'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+  return(res)
+})
+
+p_ls_homo <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id') + theme(legend.position = 'right') + labs(colour="Slice")})
+p_homo <- wrap_plots(p_ls_homo)
+
+# inhomogeneous functions
+res_ls <- lapply(list('Kinhom', 'Linhom'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'), correction = 'isotropic') 
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+  return(res)
+})
+
+res_pcf <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'pcfinhom', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id')) 
+res_pcf <- subset(res_pcf, sample_id %in% c('-0.09', '0.01', '0.21'))
+
+p_ls_inhomo <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id') + theme(legend.position = 'right') + labs(colour="Slice")})
+p <- plotMetricPerFov(res_pcf, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id') + theme(legend.position = 'right') + labs(colour="Slice")
+
+p_ls_inhomo <- wrap_plots(p_ls_inhomo)
+p_inhomo <- wrap_plots(p_ls_inhomo, p, widths=c(2,1))
+
+# locally scaled functions 
+
+res_ls <- lapply(list('Kscaled', 'Lscaled'), function(fun){
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
+  return(res)
+})
+
+p_ls_scaled <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id') + theme(legend.position = 'right') + labs(colour="Slice")})
+p_scaled <- wrap_plots(p_ls_scaled)
+
+
+p <- wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect') + plot_annotation(tag_levels = 'A')
+
+ggsave('outs/pp_function_comparison.pdf', plot = p, width = 10, height = 10)

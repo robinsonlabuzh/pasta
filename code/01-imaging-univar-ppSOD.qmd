@@ -88,12 +88,12 @@ where the derivative of the $K$ function divided by the probability of a Poisson
 #| message: false
 #| warning: false
 res_ls <- lapply(list('Kest', 'Lest', 'pcf'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')})
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')})
 ```
 
 \
@@ -119,16 +119,16 @@ where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an est
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 res_ls <- lapply(list('Kinhom', 'Linhom'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-res_pcf <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'pcfinhom', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id')) 
+res_pcf <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'pcfinhom', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id')) 
 res_pcf <- subset(res_pcf, sample_id %in% c('-0.09', '0.01', '0.21'))
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "border", theo = TRUE, x = "r", image_id = 'sample_id')})
-p <- plotMetricPerFov(res_pcf, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id')
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "border", theo = TRUE, x = "r", imageId = 'sample_id')})
+p <- plotMetricPerFov(res_pcf, correction = "iso", theo = TRUE, x = "r", imageId = 'sample_id')
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -159,12 +159,12 @@ Since the $L$-function is simply a transformation of the $K$-function, the same 
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
 res_ls <- lapply(list('Kscaled', 'Lscaled'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id')})
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", imageId = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16, include=TRUE}
@@ -177,7 +177,6 @@ We see, that in slice 0.01 oligodendrocytes are far from the Poisson process lin
 ```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
 p <- wrap_plots(list(p_homo, p_inhomo, p_scaled), nrow = 3, guides = 'collect') + plot_annotation(tag_levels = 'A')
 p
-ggsave('pp_function_comparison.pdf', plot = p, width = 8, height = 9)
 ```
 
 In the plot above we see all variants of the correlation metrics. The assumptions of either homogeneity (first row), inhomogeneity (second row) and local scaling (third row) change the interpretation of these example point patterns. In summary, in this example homogeneous variants show a positive association for all slices whereas inhomogeneity infered a Poisson distribution for slice $0.21$. Furthermore, the inhomogeneous variant estimated repulsion for slices $-0.09$ and $0.01$, whereas homogeneous variants estimated clustering for all radii, whereas slice $0.21$ became stronger than the other two slices past $r>350$. The locally scaled version showed positive associations for all slices and no crossing of curves over the radii.
@@ -421,12 +420,12 @@ For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consist
 
 ```{r, fig.height = 10, fig.width = 7}
 res_ls <- lapply(list('Gest', 'Fest', 'Jest'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "rs", theo = TRUE, x = "r", image_id = 'sample_id')})
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "rs", theo = TRUE, x = "r", imageId = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -439,12 +438,12 @@ There are inhomogeneous variants of the spacing functions explained above [@badd
 
 ```{r}
 res_ls <- lapply(list('Ginhom', 'Finhom', 'Jinhom'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "bord", theo = TRUE, x = "r", image_id = 'sample_id')})
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, correction = "bord", theo = TRUE, x = "r", imageId = 'sample_id')})
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
@@ -458,9 +457,9 @@ The inhomogeneous curves look different to their homogeneous counterparts but th
 Next to the NN distance, we can estimate the *orientation* of the neighbours, which gives an indication of the orientation of the spacing. It works by taking the angle between each point and its $k^{th}$ nearest neighbour. The angle is anticlockwise from the x-axis [@baddeleySpatialPointPatterns2015 pp. 278-279] [@baddeleySpatstatPackageAnalyzing2005].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide', include=TRUE}
-res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'nnorient', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = 'nnorient', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
-p <- plotMetricPerFov(res, correction = "bordm", theo = TRUE, x = "phi", image_id = 'sample_id')
+p <- plotMetricPerFov(res, correction = "bordm", theo = TRUE, x = "phi", imageId = 'sample_id')
 ```
 
 ```{r}
@@ -543,8 +542,8 @@ $$ k_f(r) = \frac{\mathbb{E}[f(m(u),m(v))]}{\mathbb{E}[f(M,M')]},$$
 where $f(m(u),m(v))$ is a test function with two arguments (representing the two marks at locations $u$ and $v$) and returns a non-negative value. For continuous non-negative marks, the canonical choice for $f$ is typically $f(m(u),m(v))= m(u)m(v)$. $M$ and $M′$ represent independent, identically distributed random points with the same distribution as the mark of a randomly chosen point. This denominator is chosen such that random marks have a mark correlation of 1 [@baddeleySpatialPointPatterns2015 pp. 644-645].
 
 ```{r}
-res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'markcorr',  marks = genes, r_seq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE)
-p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'markcorr',  marks = genes, rSeq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE)
+p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", imageId = 'gene')
 p
 ```
 
@@ -565,8 +564,8 @@ In the scenario of random labeling, so where the marks are distributed randomly,
 Also here, the canonical function is: $f(m_1, m_2) = m_1 m_2$. This means we weigh each interaction between points by the product of the continuous marks of both points.
 
 ```{r}
-res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'Kmark',  marks = genes, r_seq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE) 
-p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'gene')
+res <- calcMetricPerFov(sub, 'OD Mature', subsetby = genes, fun = 'Kmark',  marks = genes, rSeq=NULL, by = c('Animal_ID','sample_id'), continuous = TRUE) 
+p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", imageId = 'gene')
 p
 ```
 

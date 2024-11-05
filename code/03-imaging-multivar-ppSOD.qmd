@@ -154,12 +154,12 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Kcross.inhom',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 <!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
@@ -219,12 +219,12 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Lcross.inhom',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 ```{r}
 #| include: false
@@ -277,12 +277,12 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'markconnect',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 #resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 
@@ -344,12 +344,12 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Kdot',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id', ID = "ID")
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id', ID = "ID")
 ```
 
 The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 
@@ -371,12 +371,12 @@ resCross <- calcMetricPerFov(
   subsetby = 'sample_id',
   fun = 'markcorr',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 
@@ -507,12 +507,12 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Kcross',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
 
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 The result is different from the previous analysis. The Ependymal cells now appear to be clustered. This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and research question. The interpretation of the results should always be done with the assumption of stationarity or inhomogeneity in mind and should be reported in an analysis.

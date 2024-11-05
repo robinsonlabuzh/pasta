@@ -251,12 +251,12 @@ $$
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10, results='hide'}
 res_ls <- lapply(list('Kest', 'Lest'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')})
+p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')})
 ```
 
 ```{r, fig.height=5, fig.width=10}
@@ -268,10 +268,10 @@ The strongest estimate of association between oligodendrocytes is found for the 
 Same can be done for the arrangement of `Microglia` cells across these three sections.
 
 ```{r, eval=FALSE}
-res <- calcMetricPerFov(spe, 'Microglia', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+res <- calcMetricPerFov(spe, 'Microglia', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 
-plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 We note that the Microglia cells are distributed close to a Poisson Process across the different slices.
@@ -291,11 +291,11 @@ gex <- assay(spe)[genes,] %>% t %>% as.matrix %>%
 # gene expression to marks
 colData(spe) <- colData(spe) %>% cbind(gex)
 
-res <- calcMetricPerFov(spe, selection = 'Esr1', subsetby = 'sample_id', fun = 'markcorr',  marks = 'Esr1', r_seq=NULL, by = c('Animal_ID', 'sample_id'), continuous = TRUE)
+res <- calcMetricPerFov(spe, selection = 'Esr1', subsetby = 'sample_id', fun = 'markcorr',  marks = 'Esr1', rSeq=NULL, by = c('Animal_ID', 'sample_id'), continuous = TRUE)
 
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
   
-p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", image_id = 'sample_id')
+p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", imageId = 'sample_id')
 p
 ```
 
@@ -348,10 +348,10 @@ ggplot(pp_df_odmature_microglia, aes(x, y, colour = marks)) +
 ```
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10, results='hide'}
-res <- calcMetricPerFov(spe, c("OD Mature", "Microglia"), subsetby = 'sample_id', fun = 'Lcross', marks = 'cluster_id', r_seq=NULL, by = c('Animal_ID','sample_id'))
+res <- calcMetricPerFov(spe, c("OD Mature", "Microglia"), subsetby = 'sample_id', fun = 'Lcross', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 
-p <- plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+p <- plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 ```{r, fig.height=5, fig.width=10}

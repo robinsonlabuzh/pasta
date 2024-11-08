@@ -169,7 +169,7 @@ where $f(x_i,x_j)$ is the measure of association between features of interest an
 
 ### Moran's I
 
-Moran's I is the most prominent measure of spatial autocorrelation. The values are bounded by $-1$ and $1$. The expected value is close to $0$ for large $n$, the exact value is given by $\mathbb{E}(I) = -1/(n-1)$. A value higher than the expected value indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Spatial autocorrelation means that similar values tend to be found together in the tissue. In fact, Moran's I can be interpreted as the Pearson correlation between the value at location $i$ and the averages value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @cliff1981spatial p. 21].
+Moran's I is the most prominent measure of spatial autocorrelation. The values are bounded by $-1$ and $1$. The expected value is close to $0$ for large $n$, the exact value is given by $\mathbb{E}(I) = -1/(n-1)$. A value higher than the expected value indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Spatial autocorrelation means that similar values tend to be found together in the tissue. In fact, Moran's I can be interpreted as the Pearson correlation between the value at location $i$ and the averages value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @cliff1981spatial, p. 21].
 
 In the first example we will calculate Moran's I for the number of counts and genes measured in the Visium dataset. First, we have a look at the distribution by eye.
 

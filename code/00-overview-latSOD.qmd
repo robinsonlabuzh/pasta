@@ -250,7 +250,7 @@ pPval <- plotLocalResult(sfe_tissue, "localmoran",
 pExp + pLi + pPval
 ```
 
-In the local version of Moran's I, the interpretation is the same as the global version. When interpreting local autocorrelation measures, it is important to consider both the effect size estimates and the significance level. Since the significance level is calculated for each spot separately, it is recommended to adjust for multiple testing. By default, `runUnivariate` uses the Benjamini & Hochberg correction. The local Moran's I statistics reveal locations in the tissue that have similar values to their neighbours (c.f., the lower part of the tissue).
+In the local version of Moran's I, the interpretation is the same as the global version. When interpreting local autocorrelation measures, it is important to consider both the effect size estimates and the significance level. Since the significance level is calculated for each spot separately, it is recommended to adjust for multiple testing. By default, `runUnivariate` uses the Benjamini & Hochberg correction [@benjamini_hochberg1995fdr]. The local Moran's I statistics reveal locations in the tissue that have similar values to their neighbours (c.f., the lower part of the tissue).
 
 ```{r}
 #| include: false

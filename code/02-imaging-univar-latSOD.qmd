@@ -13,7 +13,7 @@ theme_set(theme_minimal())
 
 Until now, we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of individual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (e.g., spot-based spatial transcriptomics data), the sample areas in an irregular lattice can have different sizes and are not necessarily regularly distributed over the sample space.
 
-For this representation of the cells we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package [@mosesVoyagerExploratorySinglecell2023]. The `voyager` package also provides wrapper functions around the package `spdep` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object.
+For this representation of the cells we will rely on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package. For preprocessing of the dataset and code examples we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `r BiocStyle::Biocpkg('voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('voyager')` package provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object.
 
 ```{r}
 #taken from https://pachterlab.github.io/voyager/articles/vig4_cosmx.html
@@ -44,9 +44,6 @@ bbox_use <- st_as_sfc(st_bbox(c(xmin = 3500, xmax = 14000, ymin = 157200, ymax =
 sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
 ```
 
-
-<!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
-
 In this vignette, we will show the metrics related to two marker genes: _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells).
 
 ```{r}
@@ -54,12 +51,12 @@ In this vignette, we will show the metrics related to two marker genes: _KRT17_ 
 #| fig-height: 10
 plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", 
-                   ncol = 2, scattermore = TRUE) + 
+                   ncol = 2, size = 2, scattermore = FALSE) +
   theme_void()
 
 plotSpatialFeature(sfe, c("TAGLN"),
                    colGeometryName = "centroids", 
-                   ncol = 2, scattermore = TRUE) + 
+                   ncol = 2, size = 2, scattermore = FALSE) + 
   theme_void()
 ```
 

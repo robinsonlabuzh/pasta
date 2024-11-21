@@ -90,7 +90,7 @@ The window of a point pattern does not need to be rectangular; we can receive ro
 
 Let's investigate the observation window for the slice $-0.09$.
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 # subset point pattern list
 pp_sub <- pp_ls[["-0.09"]]
 # base R plot of all marks
@@ -101,7 +101,7 @@ Here, we have a rectangular window around all points.
 
 Let's investigate what a round window would look like:
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 pp_sub_round <- pp_sub
 # calculate circle with radius 850 µm and a center at the 
 # centroid of the window would look like
@@ -128,13 +128,13 @@ In our example, we have a multitype point pattern, meaning there are different c
 
 First the multitype case:
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 pp_sub |> plot()
 ```
 
 Then splitting the point pattern and plotting a multivariate view on the same pattern.
 
-```{r, fig.height=7, fig.width=10}
+```{r, fig.height=10, fig.width=10}
 pp_sub |>
   split() |>
   plot()

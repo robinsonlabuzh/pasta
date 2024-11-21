@@ -85,6 +85,8 @@ $$
 \mu = \int_{B} \lambda(u) du.
 \label{eq:expected_number_inhomogeneous}
 $$
+### Confounding between clustering and inhomogeneity  
+Often, it is hard to distinguish inhomogeneous intensity from genuine clustering of points. Patterns can arise from an inhomogeneous process or a clustered process and it is not straightforward to distinguish them: one is governed by different (inhomogeoenous) intensities whereas the other is due to interactions (clustering) between points [@baddeleySpatialPointPatterns2015, p. 151 ff.]. One way this can occur is if cells of different sizes are treated as points instead of considering their entire volume [@baddeleySpatialPointPatterns2015, p. 210 ff.].
 
 ### Isotropy
 
@@ -100,7 +102,7 @@ If a process is not correlation stationary, so the estimates of the inhomogeneou
 
 We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable [@baddeleySpatialPointPatterns2015, pp. 689-693].
 
-```{r, warning=FALSE}
+```{r, warning=FALSE, include=FALSE,eval=FALSE}
 # This function performs permutation test for different point patterns
 permutation_test <- function(pp, mark, split, minpoints) {
   pp_sel <-  subset(pp, marks %in% mark, drop = TRUE)
@@ -130,9 +132,9 @@ permutation_test <- function(pp, mark, split, minpoints) {
 lapply(c("Microglia", "OD Mature", "Ependymal"), function(x) permutation_test(pp[['0.01']], x, split = 3, minpoints = 10))
 ```
 
-The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity.
+<!-- The p-value of the test for local scaling for microglia cells is $<0.05$ which indicates that the assumption of local scaling is rejected. Therefore, the distribution of microglia cells is not a scaled version of an overall distribution pattern. The p-value of the test for inhomogeneity for both microglia cells is $>0.05$ indicating that the assumption of correlation stationarity is not rejected. In this case we can use the inhomogeneous version of the K-function which assumes correlation stationarity. -->
 
-For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that for this choice of quadrats both the correlation stationarity assumption and the local scaling assumption can't be rejected.
+<!-- For ependymal and OD mature cells however, the p-values for both the local scaling test and the inhomogeneity test are $>0.05$ which means that for this choice of quadrats both the correlation stationarity assumption and the local scaling assumption can't be rejected. -->
 
 As the interpretation of the permutation test is highly dependent on the quadrats, the results should be interpreted with care. Both inhomogeneous and locally scaled versions of the summary functions have support and both offer interesting insights into the spatial pattern. Therefore, we will compare all versions and show what the choice of metrics means for their interpretation.
 

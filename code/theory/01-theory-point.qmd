@@ -37,7 +37,7 @@ When considering a pattern with $m$ multiple types, as we do in the [@moffittMol
 
 ### Observation Windows
 
-Most often, one does not observe the entire point process, but only a subset of the process. This is called window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
+Most often, one does not observe the entire point process, but only a subset of the process. This is called window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
 There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial region [@baddeleySpatialPointPatterns2015, pp. 144-145; @ripleyFindingEdgePoisson1977].
 
@@ -66,7 +66,7 @@ Complete spatial randomness (CSR) is often used as the null model for various po
 
 #### Homogeneity
 
-"Homogeneity \[...\] means that the expected number of points falling in a region B should be proportional to its area \|B\|" [@baddeleySpatialPointPatterns2015, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns2015, pp. 132-133]. :
+"Homogeneity \[...\] means that the expected number of points falling in a region B should be proportional to its area \|B\|" [@baddeleySpatialPointPatterns2015, pp. 132] given a proportionality constant $\lambda$. The constant $\lambda$ represents the intensity of the process, i.e., the average number of points in a unit area [@baddeleySpatialPointPatterns2015, pp. 132-133]
 
 $$
 \mathbb{E}[X\cap B] = \lambda |B|.
@@ -79,7 +79,7 @@ Independence implies that in two (non-overlapping) regions $A$ and $B$, the numb
 
 ### Inhomogeneous Poisson Process
 
-A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of the spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns2015, pp. 138].
+A Poisson process that is spatially varying in its average density of points is called inhomogeneous. Here, the average density, $\lambda(u)$, sometimes known as the intensity function (see below), is a function of the spatial location $u$. In this case, the expected number of points falling into a region $B$, $\mu = n(X\cap B)$, is an integration of the intensity function over that region [@baddeleySpatialPointPatterns2015, pp. 138]
 
 $$
 \mu = \int_{B} \lambda(u) du.
@@ -165,11 +165,11 @@ intensityPointProcess(pp_ls[['0.01']], mark = TRUE) %>% round(8)
 
 #### Kernel Estimation
 
-In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There is a wide variety of kernel estimators (see [@baddeleySpatialPointPatterns2015, pp. 168]), but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
+In kernel estimation, we try to estimate the intensity function $\lambda(u)$ of the point process. There is a wide variety of kernel estimators, see [@baddeleySpatialPointPatterns2015, pp. 168], but a popular choice is the isotropic Gaussian kernel where the standard deviation corresponds to the smoothing bandwidth [@baddeleySpatialPointPatterns2015, pp. 168].
 
 ```{r, fig.width=8, fig.height=8}
 pp_sel <-  subset(pp_ls[['0.01']]$`OD Mature`, drop = TRUE)
-Dens <- density(pp_sel, sigma = 100)
+Dens <- density.ppp(pp_sel, sigma = 50)
 plot(Dens, main = 'Kernel Density (OD Mature cells)')
 ```
 
@@ -190,7 +190,7 @@ val <- quadrat.test(pp_ls[['0.01']]$`OD Mature`, 5, alternative="regular", metho
 val
 ```
 
-A p-value of `r val$p.value` indicates that the null hypothesis of irregularity can not be rejected strongly. Thus, the point pattern of oligodendrocyts is strongly irregular.
+A p-value of `r val$p.value` indicates that the null hypothesis of irregularity can't be rejected at $\alpha = 0.05$. Thus, the point pattern of oligodendrocyts is strongly irregular.
 
 Alternatively, we can inspect departures from the hypothesis that points were generated by a Poisson process. We can identify hotspots and coldspots by comparing the standard error of the `relrisk` function, which computes nonparamatric estimates of the relative risk by kernel smoothing, to the theoretical null distribution of points. The relative risk is the ratio of spatially varying probablilities of different types [@bullerAreasSpatialSegregation2020].
 

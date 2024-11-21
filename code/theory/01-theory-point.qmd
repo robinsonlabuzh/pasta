@@ -33,13 +33,15 @@ The theory of spatial point patterns is discussed in great detail in [@baddeleyS
 
 In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. For example, if a pattern is created by a Poisson point process it will be evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
 
-When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two very closely related concepts. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process. In the multivariate framework we assume that the types stem from distinct point processes and therefore we can consider dependencies of one type alone. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we can have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
+When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two distinct ways looking at the data. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The difference between these two views is that in the multitype framework we assume the points to stem from the same point process. In the multivariate framework we assume that the types stem from distinct point processes and therefore we can consider dependencies of one type alone. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types in one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we can have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
 
 ### Observation Windows
 
-The most common set up in point pattern analysis is what we call window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
+Most often, one does not observe the entire point process, but only a subset of the process. This is called window sampling. Instead of observing the entire pattern we observe a subset of this pattern in the so called window. An example could be different small microscopy windows through which a big tissue slice is observed. In this case, it would be wrong to assume the window to be the convex hull around the observed points because they are just a sample of the bigger point pattern [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
 There is another concept called the small world model. It assumes that points can only be observed in a finite small world and not beyond these boundaries. When thinking of an entire tissue, this is a very common scenario. Cells can only be observed within the tissue and not beyond. In this case, it would be correct to not assume a rectangular observation window but to use methods to estimate an unknown sampling window such as the Ripley-Rasson estimate of a spatial region [@baddeleySpatialPointPatterns2015, pp. 144-145; @ripleyFindingEdgePoisson1977].
+
+While the Ripley-Rasson can only estimate convex observation windows, something that might be an ideal approximation in our sample, we will estimate the observation with a Ripley-Rasson estimator.
 
 ```{r}
 setRiprasWindows <- function(pp){
@@ -98,7 +100,8 @@ If a process is not correlation stationary, so the estimates of the inhomogeneou
 
 We can use a permutation test to test the inhomogeneity assumption. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable [@baddeleySpatialPointPatterns2015, pp. 689-693].
 
-```{r, warning=FALSE, eval = FALSE}
+```{r, warning=FALSE}
+# This function performs permutation test for different point patterns
 permutation_test <- function(pp, mark, split, minpoints) {
   pp_sel <-  subset(pp, marks %in% mark, drop = TRUE)
   

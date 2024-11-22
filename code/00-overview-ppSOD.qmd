@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Cells (or transcripts) can be approximated as points given their location.
+We assume that cells (or transcripts) can be approximated as points locations.
 
 ### `spatstat` package and `ppp` object
 
-The central package to analyse point patterns in `R` is called `r BiocStyle::CRANpkg('spatstat')` [@baddeleySpatstatPackageAnalyzing2005]. The main data object to compute on is called a `ppp` object. `ppp` objects describe point patterns in two dimensional space, `ppx` objects create multidimensional point patterns. A `ppp` object is made up of three specifications [@baddeleySpatstatPackageAnalyzing2005]:
+A powerful package to analyse point patterns in `R` is called `r BiocStyle::CRANpkg('spatstat')` [@baddeleySpatstatPackageAnalyzing2005]. The main data object to compute on is called a `ppp` object. `ppp` objects describe point patterns in two dimensional space, `ppx` objects create multidimensional point patterns. A `ppp` object is made up of three specifications [@baddeleySpatstatPackageAnalyzing2005]:
 
 -   The locations of the points in question ($x$,$y$ and, optionally, $z$ coordinates)
 -   The observation window
@@ -18,7 +18,7 @@ On this central object, various `r BiocStyle::CRANpkg('spatstat')` metrics can b
 
 ![Structure of a `SpatialExperiment` object as introduced by Righelli et al.](https://raw.githubusercontent.com/drighelli/SpatialExperiment/devel/vignettes/SPE.png)
 
-Often, the starting point in spatial omics data analysis is a `r BiocStyle::Biocpkg('SpatialExperiment')` (or similar) object. This is a central data structure in the `BioConductor` framework to store spatial omics data. The data we consider here is a MERFISH assay of a mouse preoptic hypothalamus [@chenSpatiallyResolvedHighly2015; @moffittMolecularSpatialFunctional2018].
+Often, the starting point in spatial omics data analysis is a `r BiocStyle::Biocpkg('SpatialExperiment')` (or similar) object in `R` with Bioconductor. The data we consider here is a MERFISH assay of a mouse preoptic hypothalamus [@chenSpatiallyResolvedHighly2015; @moffittMolecularSpatialFunctional2018].
 
 ```{r}
 #| label: load packages
@@ -57,9 +57,10 @@ Next, we want to extract three slices of this `r BiocStyle::Biocpkg('SpatialExpe
 ```{r}
 # define the Z-stacks that you want to compare
 zstack_list <- list("-0.09", "0.01", "0.21")
-# small helper function to extract the z-slices and convert them to `ppp` objects
+# small helper function to extract the z-slices and
+# convert them to `ppp` objects
 selectZstacks <- function(zstack, spe) {
-  spe[, spe$sample_id == zstack] |> 
+  spe[, spe$sample_id == zstack] |>
     .ppp(marks = "cluster_id")
 }
 pp_ls <- lapply(zstack_list, selectZstacks, spe) |>
@@ -74,7 +75,7 @@ We can plot one of these slices, e.g. slice $-0.09$ with ggplot
 
 ```{r}
 # create a dataframe from the point pattern
-pp_df <- pp_ls$`-0.09` %>% as.data.frame
+pp_df <- pp_ls[["-0.09"]] |> as.data.frame()
 # plot with ggplot
 ggplot(pp_df, aes(x, y, colour = marks)) +
   geom_point(size = 1) +
@@ -85,13 +86,13 @@ ggplot(pp_df, aes(x, y, colour = marks)) +
 
 As stated above, one important aspect of a point pattern is the observation window. It represents the region in which a pattern is observed or e.g. a survey was conducted [@baddeleySpatialPointPatterns2015, pp. 85]. In most microscopy use cases we encounter window sampling. Window sampling describes the case where we don't observe the entire point pattern in a window but just a sample [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
-The window of a point pattern does not need to be rectangular; we can receive round biopsies or calculate convex hulls around our sample [@baddeleySpatialPointPatterns2015, pp. 143-145].
+The window of a point pattern does not need to be rectangular; we can receive round biopsies or calculate convex and non-convex hulls around our sample [@baddeleySpatialPointPatterns2015, pp. 143-145].
 
 Let's investigate the observation window for the slice $-0.09$.
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 # subset point pattern list
-pp_sub <- pp_ls$`-0.09`
+pp_sub <- pp_ls[["-0.09"]]
 # base R plot of all marks
 pp_sub |> plot()
 ```
@@ -100,15 +101,16 @@ Here, we have a rectangular window around all points.
 
 Let's investigate what a round window would look like:
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 pp_sub_round <- pp_sub
-# calculate circle with radius 850 µm and a center at the centroid of the window would look like
+# calculate circle with radius 850 µm and a center at the 
+# centroid of the window would look like
 w <- disc(r = 850, centroid.owin(Window(pp_sub)))
 Window(pp_sub_round) <- w
 pp_sub_round |> plot()
 ```
 
-Correctly assigning windows is very important. The window should represent the space where points are expected. This means, in window sampling, one should not restrict the window. This would lead to a false underestimation of the area where the points can be potentially observed. This problem of where we can observe points and where not (beyond the boundary of the window) leads to a range of problems collectively called edge effects [@baddeleySpatialPointPatterns2015, pp. 143-145]. We will discuss these later.
+Correctly assigning windows is very important. The window should represent the space where points are expected. Point pattern methods assume that the process that we observe is a sample from a larger process (this concept is called window sampling). If the window is too small it would lead to a false underestimation of the area where the points can be potentially observed. This problem of where we can observe points and where not (beyond the boundary of the window) leads to a range of problems collectively called edge effects [@baddeleySpatialPointPatterns2015, pp. 143-145]. We will discuss these later.
 
 ### Marks
 
@@ -126,13 +128,13 @@ In our example, we have a multitype point pattern, meaning there are different c
 
 First the multitype case:
 
-```{r}
+```{r, fig.width=10, fig.height=10}
 pp_sub |> plot()
 ```
 
 Then splitting the point pattern and plotting a multivariate view on the same pattern.
 
-```{r, fig.height=7, fig.width=10}
+```{r, fig.height=10, fig.width=10}
 pp_sub |>
   split() |>
   plot()
@@ -147,10 +149,10 @@ Marks can as well be continuous as in the case of gene expression. We choose som
 sub <- spe[, spe$sample_id == "-0.09"]
 #  Genes from Fig. 6 of Moffitt et al. (2018)
 genes <- c("Slc18a2", "Esr1", "Pgr")
-gex <- assay(sub)[genes, ] %>%
-  t() %>%
-  as.matrix() %>%
-  data.frame() %>%
+gex <- assay(sub)[genes, ] |>
+  t() |>
+  as.matrix() |>
+  data.frame() |>
   set_rownames(NULL)
 # gene expression to marks
 marks(pp_sub) <- gex
@@ -160,8 +162,8 @@ Now that we have points with multivariate continuous marks
 
 ```{r, fig.height=5, fig.width=10}
 # create a dataframe in long format for plotting
-pp_df <- pp_sub %>%
-  as.data.frame() %>%
+pp_df <- pp_sub |>
+  as.data.frame() |>
   pivot_longer(cols = 3:5)
 
 ggplot(pp_df, aes(x, y, colour = log(value + 1))) +
@@ -180,10 +182,10 @@ We can compare patterns between marks of the same type. This is referred to as a
 ```{r, fig.height=5, fig.width=10}
 # create a dataframe from the point pattern
 pp_df_discrete <- lapply(zstack_list, function(x) {
-  df <- pp_ls[[x]] %>% as.data.frame()
+  df <- pp_ls[[x]] |> as.data.frame()
   df$stack <- x
   return(df)
-}) %>% bind_rows()
+}) |> bind_rows()
 
 # select OD Mature cells
 pp_df_odmature <- pp_df_discrete[pp_df_discrete$marks == "OD Mature", ]
@@ -204,17 +206,17 @@ pp_df <- lapply(zstack_list, function(x) {
   sub <- spe[, spe$sample_id == x]
   #  Genes from Fig. 6 of Moffitt et al. (2018)
   genes <- c("Slc18a2", "Esr1", "Pgr")
-  gex <- assay(sub)[genes, ] %>%
-    t() %>%
-    as.matrix() %>%
-    data.frame() %>%
+  gex <- assay(sub)[genes, ] |>
+    t() |>
+    as.matrix() |>
+    data.frame() |>
     set_rownames(NULL)
   # gene expression to marks
   marks(pp_ls[[x]]) <- gex
-  df <- pp_ls[[x]] %>% as.data.frame()
+  df <- pp_ls[[x]] |> as.data.frame()
   df$stack <- x
   return(df)
-}) %>% bind_rows()
+}) |> bind_rows()
 
 ggplot(pp_df, aes(x, y, colour = log(Esr1 + 1))) +
   geom_point(size = 0.5) +
@@ -250,13 +252,29 @@ L(r) = \sqrt{\frac{K(r)}{\pi}}
 $$
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10, results='hide'}
-res_ls <- lapply(list('Kest', 'Lest'), function(fun){
-  res <- calcMetricPerFov(spe, 'OD Mature', subsetby = 'sample_id', fun = fun, marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
+res_ls <- lapply(list('Kest', 'Lest'), function(fun) {
+  res <- calcMetricPerFov(
+    spe,
+    'OD Mature',
+    subsetby = 'sample_id',
+    fun = fun,
+    marks = 'cluster_id',
+    rSeq = NULL,
+    by = c('Animal_ID', 'sample_id')
+  )
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
-return(res)
+  return(res)
 })
 
-p_ls <- lapply(res_ls, function(res){plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')})
+p_ls <- lapply(res_ls, function(res) {
+  plotMetricPerFov(
+    res,
+    theo = TRUE,
+    correction = "iso",
+    x = "r",
+    imageId = 'sample_id'
+  )
+})
 ```
 
 ```{r, fig.height=5, fig.width=10}
@@ -268,10 +286,24 @@ The strongest estimate of association between oligodendrocytes is found for the 
 Same can be done for the arrangement of `Microglia` cells across these three sections.
 
 ```{r, eval=FALSE}
-res <- calcMetricPerFov(spe, 'Microglia', subsetby = 'sample_id', fun = 'Lest', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
+res <- calcMetricPerFov(
+  spe,
+  'Microglia',
+  subsetby = 'sample_id',
+  fun = 'Lest',
+  marks = 'cluster_id',
+  rSeq = NULL,
+  by = c('Animal_ID', 'sample_id')
+)
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 
-plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
+plotMetricPerFov(
+  res,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
 ```
 
 We note that the Microglia cells are distributed close to a Poisson Process across the different slices.
@@ -286,16 +318,31 @@ where the numerator is the conditional expectation of the marks at location $u,v
 
 ```{r}
 genes <- c("Slc18a2", "Esr1", "Pgr")
-gex <- assay(spe)[genes,] %>% t %>% as.matrix %>% 
-  data.frame %>% set_rownames(NULL)
+gex <- assay(spe)[genes, ] |> t |> as.matrix |>
+  data.frame |> set_rownames(NULL)
 # gene expression to marks
-colData(spe) <- colData(spe) %>% cbind(gex)
+colData(spe) <- colData(spe) |> cbind(gex)
 
-res <- calcMetricPerFov(spe, selection = 'Esr1', subsetby = 'sample_id', fun = 'markcorr',  marks = 'Esr1', rSeq=NULL, by = c('Animal_ID', 'sample_id'), continuous = TRUE)
+res <- calcMetricPerFov(
+  spe,
+  selection = 'Esr1',
+  subsetby = 'sample_id',
+  fun = 'markcorr',
+  marks = 'Esr1',
+  rSeq = NULL,
+  by = c('Animal_ID', 'sample_id'),
+  continuous = TRUE
+)
 
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
-  
-p <- plotMetricPerFov(res, correction = "iso", theo = TRUE, x = "r", imageId = 'sample_id')
+
+p <- plotMetricPerFov(
+  res,
+  correction = "iso",
+  theo = TRUE,
+  x = "r",
+  imageId = 'sample_id'
+)
 p
 ```
 
@@ -312,14 +359,19 @@ L_odmature_lisa <- localL(pp)
 df <- as.data.frame(L_odmature_lisa)
 dfm <- reshape2::melt(df, "r")
 
-get_sel <- dfm %>%
-  dplyr::filter(r > 200.5630 & r < 201.4388, variable != "theo") %>%
-  dplyr::mutate(sel = value) %>%
+get_sel <- dfm |>
+  dplyr::filter(r > 200.5630 & r < 201.4388, variable != "theo") |>
+  dplyr::mutate(sel = value) |>
   dplyr::select(variable, sel)
 
-dfm <- dfm %>% left_join(get_sel)
+dfm <- dfm |> left_join(get_sel)
 
-p <- ggplot(dfm, aes(x = r, y = value, group = variable, colour = sel)) +
+p <- ggplot(dfm, aes(
+  x = r,
+  y = value,
+  group = variable,
+  colour = sel
+)) +
   geom_line(linewidth = 1) +
   scale_color_continuous(type = "viridis") +
   geom_vline(xintercept = 200) +
@@ -343,15 +395,29 @@ pp_df_odmature_microglia <- pp_df_discrete[pp_df_discrete$marks %in% c("OD Matur
 
 ggplot(pp_df_odmature_microglia, aes(x, y, colour = marks)) +
   geom_point(size = 0.5) +
-  facet_wrap(~stack, scales = "free") +
+  facet_wrap( ~ stack, scales = "free") +
   theme(aspect.ratio = 1)
 ```
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10, results='hide'}
-res <- calcMetricPerFov(spe, c("OD Mature", "Microglia"), subsetby = 'sample_id', fun = 'Lcross', marks = 'cluster_id', rSeq=NULL, by = c('Animal_ID','sample_id'))
+res <- calcMetricPerFov(
+  spe,
+  c("OD Mature", "Microglia"),
+  subsetby = 'sample_id',
+  fun = 'Lcross',
+  marks = 'cluster_id',
+  rSeq = NULL,
+  by = c('Animal_ID', 'sample_id')
+)
 res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
 
-p <- plotMetricPerFov(res, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
+p <- plotMetricPerFov(
+  res,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
 ```
 
 ```{r, fig.height=5, fig.width=10}

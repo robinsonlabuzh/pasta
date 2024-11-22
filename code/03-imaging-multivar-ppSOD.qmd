@@ -14,15 +14,15 @@ sub <- spe[, spe$sample_id == "0.01"]
 
 ## Multitype and Multivariate viewpoint
 
-A pattern with multiple type of points, e.g. cell types, can be seen in different ways. One the one hand, the **multitype approach** assumes that the points $x$ were recorded together with with their labels $m$ and that they were generated at the same time. The locations and labels therefore have a joint distribution $P(X,M)$. On the other hand one can assume that the pattern with multiple types of points is a combination of several distinct point patterns, one for each type of point. This is the **multivariate approach** and the different point patterns $A$ and $B$ form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns2015, pp. 565-567]:
+A pattern with multiple type of points, e.g. points representing different cell types, can be seen in different ways. One the one hand, the **multitype approach** assumes that the points $x$ were recorded together with with their labels $m$ and that they were generated at the same time. The locations and labels therefore have a joint distribution $P(X,M)$. Alternatively, in the multivariate approach, the pattern with multiple types of points is assumed to be a combination of several distinct point patterns; one for each type of point. Here, separate point patterns $A$ and $B$ form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns2015, pp. 565-567];
 
-- complete spatial randomness and independence (CSRI): the points are distributed at random; the type of each points is randomly allocated; independence between points of different types; allocation of the types independently of the other points and of its location.
-- random labeling: each point is assigned a type at random independently of its location
-- independence of components:  the points of different types are independent of each other.
+- Complete spatial randomness and independence (CSRI): points are distributed at random; the type of each points is randomly allocated; independence between points of different types; allocation of the types independently of the other points and of its location.
+- Random labeling: each point is assigned a type at random independently of its location.
+- Independence of components: points of different types are independent of each other.
 
-Apart from CSRI is is also important for the analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
+Apart from CSRI an important aspect for analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
 
-For simplicity, we will focus on three cell types of our point pattern: Ependymal, OD Mature and Microglia.
+For simplicity, we will focus on three cell types in our point pattern: Ependymal, OD Mature and Microglia.
 <!-- This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the pattern. -->
 
 ```{r}
@@ -34,7 +34,7 @@ pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
 spe_sel <- spe[, spe$sample_id == "0.01" &  spe$cluster_id %in% selection]
 ```
 
-We select on fov, which corresponds to one cut in the frontal plane.
+We select one fov, which corresponds to one cut in the frontal plane.
 
 ```{r}
 #| fig-width: 7.5
@@ -53,7 +53,7 @@ The summary of `pp` (point pattern) object returns general properties, plus inte
 summary(pp)
 ```
 
-To get the overall intensity the individual intensities can be summed up. Assuming that the the multitype process is first order stationary (i.e. each sub-process is stationary) the individual intensities sum up to the intensity of the unmarked point process [@baddeleySpatialPointPatterns2015, pp. 574ff.].
+To get the overall intensity the individual intensities can be summed up. Assuming that the multitype process is first order stationary (i.e. each sub-process is stationary) the individual intensities sum up to the intensity of the unmarked point process [@baddeleySpatialPointPatterns2015, pp. 574ff.].
 
 ```{r}
 sum(intensity(pp)) == intensity(unmark(pp))
@@ -68,7 +68,7 @@ ppls <- split(pp_sel) # split by mark
 plot(density(ppls))
 ```
 
-Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially because the window is larger than the tissue and there is a tissue border in the bottom middle.
+Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially since the window extends beyond the tissue boundary, with a visible border at the bottom center.
 
 To further inverstiagte the spatial arrangement of the different cell types we can calculate the relative risk, i.e., the probability of observing a given celltype at a given location. It is calculated using the function `relrisk`. The bandwidth for smoothing is calculated with `bw.relrisk` and might need to be adjusted [@baddeleySpatialPointPatterns2015, pp. 577-583].
 
@@ -89,7 +89,7 @@ im_sum <- signif(im_sum,9)
 all(im_sum==1)
 ```
 
-The `relrisk` function further gives us the dominant mark for different regions of the tissue of interest. This could be interesting in the annotation of spatial domains. It indicates at each location, which cell type is most likely to occur. 
+The `relrisk` function also gives us the dominant mark for different regions of the tissue of interest. This could be interesting in the annotation or comparison of spatial domains. It indicates the most likely cell type to occur at each location.
 
 ```{r}
 #| fig-width: 5

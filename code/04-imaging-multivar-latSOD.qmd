@@ -45,7 +45,7 @@ sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
 
-In this vignette, we will show the metrics related a ligand-receptor pair, CEACAM6 and EGFR which was identified in the original publication of the CosMx dataset [@heHighplexImagingRNA2022].
+In this vignette we are highlighting lattice data analysis approaches for multivariate observations. We will show the metrics related to a ligand-receptor pair, CEACAM6 and EGFR which was identified in the original publication of the CosMx dataset [@heHighplexImagingRNA2022].
 
 
 ```{r}
@@ -53,7 +53,7 @@ In this vignette, we will show the metrics related a ligand-receptor pair, CEACA
 #| fig-height: 10
 plotSpatialFeature(sfe, c("CEACAM6"),
                    colGeometryName = "centroids", 
-                   ncol = 2, scattermore = TRUE) + 
+                   ncol = 2, size = 2, scattermore = FALSE) + 
   theme_void()
 ```
 
@@ -63,7 +63,7 @@ plotSpatialFeature(sfe, c("CEACAM6"),
 #| fig-height: 10
 plotSpatialFeature(sfe, c("EGFR"),
                    colGeometryName = "centroids", 
-                   ncol = 2, scattermore = TRUE) + 
+                   ncol = 2, size = 2, scattermore = FALSE) + 
   theme_void()
 ```
 
@@ -77,6 +77,8 @@ colGraphName <- "knn5"
 colGeometryName <- "centroids"
 segmentation <- "cellSeg"
 ```
+
+With a defined spatial weight matrix, one can calculate multivariate spatial metrics. We will consider both global and local bivariate observations as well as local multivariate spatial metrics.
 
 {{< include theory/05-theory-multivar-lattice.qmd >}}
 

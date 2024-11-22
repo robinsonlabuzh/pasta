@@ -1,10 +1,8 @@
 ## Spatial weight matrix
 
-One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to define neighbours, such as contiguity-based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance-based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` provides an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html) [@bivandPackagesAnalyzingSpatial2022].
 
-Segmentation of individual cells is challenging [@wangCellSegmentationImage2019] and construction of contiguity-based neighbours based on individual cell segmentation assumes very accurate segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
-
-In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous [@pebesmaSpatialDataScience2023].
+In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous [@pebesmaSpatialDataScience2023; @wangCellSegmentationImage2019].
 
 ```{r}
 colGraph(sfe, "poly2nb") <-
@@ -25,7 +23,7 @@ p1 <- plotColGraph(sfe,
 ) + theme_void()
 ```
 
-Alternatively, we can use a k-nearest neighbours approach. The the number $k$ is somewhat arbitrary.
+Alternatively, we can use a k-nearest neighbours approach. The choice of the number $k$ is somewhat arbitrary.
 
 ```{r}
 colGraph(sfe, "knn5") <-

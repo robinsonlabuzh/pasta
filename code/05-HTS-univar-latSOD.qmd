@@ -1,4 +1,14 @@
-# Preamble
+# Lattice data analysis -- univariate methods for HTS-based data
+
+In this vignette we will show:
+
+- Univariate lattice data analysis methods for HTS-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a 10X Visium data set from @mckellarLargescaleIntegrationSinglecell2021.
+
+- Complementary resources using this data and methods are found in the [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig1_visium_basic.html)
 
 ## Dependencies
 

@@ -1,5 +1,15 @@
 # Lattice data analysis -- Summary
 
+In this vignette we will show:
+
+- An overview of lattice data analysis methods for HTS-based data.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a CosMx data set from @mckellarLargescaleIntegrationSinglecell2021.
+
+- This vignette is based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html)
+
 # Introduction
 
 In contrast to point pattern based methods, we can view the location of cells or spots as a fixed lattice and measure the corresponding marker expression at each location. HTS-based spatial transcriptomic technologies often produce data on a regular lattice (i.e., approximately evenly spaced spots or beads of uniform size and shape), whereas imaging-based technologies yield irregular lattice structures (i.e., with variable cell sizes and shapes, and non-uniform spacing).

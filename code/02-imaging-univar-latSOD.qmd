@@ -1,4 +1,14 @@
-# Irregular Lattices
+# Lattice data analysis -- univariate methods for imaging-based data
+
+In this vignette we will show:
+
+- Univariate lattice data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a CosMx data set from @heHighplexImagingRNA2022.
+
+- Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html)
 
 ## Dependencies
 

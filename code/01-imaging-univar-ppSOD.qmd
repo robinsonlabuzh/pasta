@@ -1,6 +1,14 @@
-# Summary
+# Point pattern analysis -- univariate methods for imaging-based data
 
-TODO
+In this vignette we will show:
+
+- Univariate point patternd data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
+
+- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.  
 
 # Discrete Marks
 

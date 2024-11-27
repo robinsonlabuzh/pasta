@@ -1,3 +1,15 @@
+# Point pattern analysis -- multivariate methods for imaging-based data
+
+In this vignette we will show:
+
+- Multivariate point pattern data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
+
+- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.  
+
 ```{r}
 #| include: false
 library(spatialFDA)

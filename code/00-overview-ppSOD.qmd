@@ -1,5 +1,15 @@
 # Point Pattern Analysis -- Summary
 
+In this vignette we will show:
+
+- Univariate and multivariate point pattern data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
+
+- For more background on point pattern analysis we refer the reader to our more detailed vignettes and @baddeleySpatialPointPatterns2015.  
+
 ## Introduction
 
 We assume that cells (or transcripts) can be approximated as points locations.
@@ -318,8 +328,8 @@ where the numerator is the conditional expectation of the marks at location $u,v
 
 ```{r}
 genes <- c("Slc18a2", "Esr1", "Pgr")
-gex <- assay(spe)[genes, ] |> t |> as.matrix |>
-  data.frame |> set_rownames(NULL)
+gex <- assay(spe)[genes, ] |> t() |> as.matrix() |>
+  data.frame() |> set_rownames(NULL)
 # gene expression to marks
 colData(spe) <- colData(spe) |> cbind(gex)
 

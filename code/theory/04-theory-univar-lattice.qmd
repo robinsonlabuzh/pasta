@@ -1,12 +1,12 @@
 ## Global Measures
 
-Global methods give us an overview over the entire field-of-view and summarize the spatial autocorrelation metric to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
+Global methods give us an overview over the entire field-of-view and summarize e.g. spatial autocorrelation metrics to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
 
 In general, a global spatial autocorrelation measure has the form of a double sum over all locations $i,j$
 
 $$\sum_i \sum_j f(x_i,x_j) w_{ij}$$
 
-where $f(x_i,x_j)$ is the measure of association between features of interest and $w_{ij}$ scales the relationship by a spatial weight as defined in the weight matrix $W$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). In the following we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023; @anselin2024introduction].
+where $f(x_i,x_j)$ is the measure of association between features of interest and $w_{ij}$ scales the relationship by a spatial weight as defined in the weight matrix $W$. If $i$ and $j$ are not neighbours, i.e. we assume they do not have any spatial association, the corresponding element of the weights matrix is 0 (i.e., $w_{ij} = 0$). Below we will see that the function $f$ varies between the different spatial autocorrelation measures [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023; @anselin2024introduction].
 
 ### Global Moran's I coefficient
 
@@ -39,13 +39,9 @@ sfe <- runUnivariate(sfe,
 
 res <- rowData(sfe)[features,]
 res
-#value of the metric
-res[,7]
-#p-value
-res[,9]
 ```
 
-We can see both genes have a positive Moran's I coefficient and a highly significant p-value. The expected value is $\mathbb{E}(I) = -1/(n-1)$ which is for large $N$ close to 0 [@cliff1981spatial, p. 21]. Positive and significant values indicate that areas with similar values are clustered. It is important to note that this could be both at the high or low end of the values of interest. Negative values indicate clustering of alternating values, i.e., gives a measure of spatial heterogeneity. Moreover, one should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same weight matrix.
+One should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's I coefficients between different values, we need to use the same weight matrix.
 
 ### Global's Geary's C coefficient
 
@@ -66,13 +62,8 @@ sfe <- runUnivariate(sfe,
 
 res <- rowData(sfe)[features,]
 res
-#value of the metric
-res[,7]
-#p-value
-res[,9]
 ```
 
-Again, the value of Geary's $C$ indicates that the genes are spatially auto-correlated.
 
 ### Global Getis-Ord $G$ statistic
 

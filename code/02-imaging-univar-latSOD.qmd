@@ -73,7 +73,7 @@ plotSpatialFeature(sfe, c("TAGLN"),
 
 {{< include theory/03-theory-irreg-lattice.qmd >}}
 
-Here we set the arguments for the examples below.
+Here we set the arguments for the examples below. We will continue with the two features _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
 
 ```{r}
 features <- c("KRT17", "TAGLN")

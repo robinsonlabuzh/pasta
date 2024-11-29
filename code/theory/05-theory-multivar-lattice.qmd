@@ -8,7 +8,7 @@ $$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
 
 where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
 
-The global bivariate Moran's $I$ is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial. Therefore, the result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
+The global bivariate Moran's $I$ is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial lag. The result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
 #### Implementation using `spdep`
 
@@ -22,11 +22,13 @@ res <- spdep::moran_bv(x = logcounts(sfe)[features[1],],
          nsim = 499)
 res
 
+plot(res)
+
 ci <- boot::boot.ci(res, conf = c(0.99, 0.95, 0.9), type = "basic")
 ci
 ```
 
-The value `t0` indicates the test statistic of global bivariate Moran's $I$. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`.
+The value `t0` indicates the test statistic of global bivariate Moran's $I$. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`. Significance can be assessed by comparing the permuted confidence interval with the test statistic.
 
 ### Global Bivariate Lee's $L$
 
@@ -47,7 +49,7 @@ res_lee$lee.mc_statistic
 res_lee$lee.mc_p.value
 ```
 
-The effect sice of bivariate lee's $L$ for the genes `r features` is `r res_lee$lee.mc_statistic` and the associated p-value is `r res_lee$lee.mc_p.value`  
+The effect sice of bivariate Lee's $L$ for the genes `r features` is `r res_lee$lee.mc_statistic` and the associated p-value is `r res_lee$lee.mc_p.value`  
 
 ## Local Measures for Bivariate Data
 
@@ -180,7 +182,43 @@ Cardinality is a measure of how many neighbours of the two matrices are common. 
 
 ## Measures for binary and categorical data
 
-In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022].
+### Join count statistic
+
+In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022; @cliff1981spatial].
+
+#### Implementation using `spdep`
+
+First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data
+
+```{r}
+# Run PCA on the sample
+sfe <- runPCA(sfe)
+# Cluster based on first 20 PC's and using leiden
+colData(sfe)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
+                                    BLUSPARAM = SNNGraphParam(
+                                        cluster.fun = "leiden",
+                                        cluster.args = list(
+                                            resolution_parameter = 0.3,
+                                            objective_function = "modularity")))
+```
+
+We can visualise the clusters as follows:
+
+```{r}
+plotSpatialFeature(sfe,
+  "cluster",
+  colGeometryName = colGeometryName
+)
+```
+
+The join count statistic is calculated as follows:
+
+```{r}
+joincount.multi(colData(sfe)$cluster,
+             colGraph(sfe, colGraphName))
+```
+
+The rows show different combinations of clusters that are in physical contact. E.g. $1:1$ means the cluster $1$ with itself. The column `Joincount` is the observed statistic whereas the column `Expected` is the expected value of the statistic for this combination. Like this, we can compare whether contacts among cluster combinations occur more frequently than expected at random [@cliff1981spatial].
 
 ## A note of caution
 

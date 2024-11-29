@@ -19,7 +19,10 @@ suppressPackageStartupMessages({
   library(spdep)
   library(stringr)
   library(magrittr)
+  library(bluster)
 })
+
+set.seed(12345)
 
 .ppp <- \(spe, marks = NULL) {
   xy <- spatialCoords(spe)

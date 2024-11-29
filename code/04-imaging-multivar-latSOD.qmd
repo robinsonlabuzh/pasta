@@ -8,7 +8,7 @@ In this vignette we will show:
 
 - The use case is a CosMx data set from @heHighplexImagingRNA2022.
 
-- Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html)
+- Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html), [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html).
 
 ## Dependencies
 

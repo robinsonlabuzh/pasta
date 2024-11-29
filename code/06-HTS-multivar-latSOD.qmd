@@ -10,10 +10,6 @@ In this vignette we will show:
 
 - Complementary resources using this data and methods are found in the [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html)
 
-## Overview
-
-In this script we 
-
 ## Dependencies
 
 ```{r}

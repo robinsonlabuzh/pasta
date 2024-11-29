@@ -9,6 +9,7 @@ suppressPackageStartupMessages({
   library(patchwork)
   library(reshape2)
   library(sf)
+  library(rgeoda)
   library(Voyager)
   library(SpatialFeatureExperiment)
   library(SFEData)

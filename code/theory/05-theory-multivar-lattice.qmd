@@ -1,14 +1,14 @@
 ## Global Measures for Bivariate Data
 
-### Global Bivariate Moran's I
+### Global Bivariate Moran's $I$
 
-For two continous variables the global bivariate Moran's I is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
+For two continous variables the global bivariate Moran's $I$ is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
 
 $$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
 
 where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
 
-The global bivariate Moran's I is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial. Therefore, the result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
+The global bivariate Moran's $I$ is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial. Therefore, the result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
 #### Implementation using `spdep`
 
@@ -26,11 +26,11 @@ ci <- boot::boot.ci(res, conf = c(0.99, 0.95, 0.9), type = "basic")
 ci
 ```
 
-The value `t0` indicates the test statistic of global bivariate Moran's I. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`.
+The value `t0` indicates the test statistic of global bivariate Moran's $I$. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`.
 
-### Global Bivariate Lee's L
+### Global Bivariate Lee's $L$
 
-Lee’s L is a bivariate measure that combines non-spatial pearson correlation with spatial autocorrelation via Moran’s I [@leeDevelopingBivariateSpatial2001]. This enables us to asses the spatial dependence of two continuous variables in a single measure. The measure is defined as
+Lee’s $L$ is a bivariate measure that combines non-spatial pearson correlation with spatial autocorrelation via Moran’s $I$ [@leeDevelopingBivariateSpatial2001]. This enables us to asses the spatial dependence of two continuous variables in a single measure. The measure is defined as
 
 $$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n[\sum_{j=1}^nw_{ij}(x_j-\bar{x})](\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^n(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^n(y_i-\bar{y})^2}}$$
 
@@ -51,9 +51,9 @@ The effect sice of bivariate lee's $L$ for the genes `r features` is `r res_lee$
 
 ## Local Measures for Bivariate Data
 
-### Local Bivariate Moran's I
+### Local Bivariate Moran's $I$
 
-Similar to the global bivariate Moran's I statistic, there is a local analogue. The formula is given by:
+Similar to the global bivariate Moran's $I$ statistic, there is a local analogue. The formula is given by:
 
 $$
 I_i^B = cx_i\sum_jw_{ij}y_j
@@ -61,7 +61,7 @@ $$
 
 where $c$ is a constant scaling factor [@anselin2002visualizing; @bivandPackagesAnalyzingSpatial2022].
 
-This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on local bivariate Moran's I and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
+This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on local bivariate Moran's $I$ and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
 
 #### Implementation using `voyager`
 
@@ -80,12 +80,12 @@ plotLocalResult(sfe_tissue, "localmoran_bv",
                 colGeometryName = colGeometryName, size = 2) 
 ```
 
-### Local Bivariate Lee's L
+### Local Bivariate Lee's $L$
 
-Similar to the global variant of Lee's L the local variant [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022] is defined as 
+Similar to the global variant of Lee's $L$ the local variant [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022] is defined as 
 
 $$L_i(x,y) = \frac{n(\sum_{j=1}^nw_{ij}(x_j-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^n(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^n(y_i-\bar{y})^2}}$$
-Local Lee's L is a measure of spatial co-expression, when the variables of interest are gene expression measurements. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022]. 
+Local Lee's $L$ is a measure of spatial co-expression, when the variables of interest are gene expression measurements. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022]. 
 
 ##### Implementation using `voyager`
 
@@ -105,9 +105,9 @@ plotLocalResult(sfe_tissue, "locallee",
 
 ## Local Measures for Multivariate Data
 
-### Multivariate local Geary's C
+### Multivariate local Geary's $C$
 
-Geary’s C is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995] defines it as
+Geary’s $C$ is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995] defines it as
 
 $$c_i = \sum_{j=1}^n w_{ij}(x_i-y_j)^2$$
 
@@ -115,7 +115,7 @@ and can be generalized to $k$ features (in our case genes) by expanding
 
 $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
-where $c_{v,i}$ is the local Geary’s C for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretation of the mixture of similarity in the physical space and similarity in the attribute space [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995]. 
+where $c_{v,i}$ is the local Geary’s $C$ for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretation of the mixture of similarity in the physical space and similarity in the attribute space [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995]. 
 
 #### Implementation using `voyager`
 
@@ -136,7 +136,7 @@ sfe_tissue <- runMultivariate(sfe, type = "localC_multi",
 plotSpatialFeature(sfe_tissue, "localC_multi", size = 2, scattermore = FALSE)
 ```
 
-We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple features but the exact combination is not known. @anselinLocalIndicatorMultivariate2019 write "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014).". Multi-attribute space refers here to the highly variable genes. The problem can be summarised to where the similarity comes from, the gene expression or the physical space. The same problem is common in spatial domain detection methods [@anselinLocalIndicatorMultivariate2019].
+We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple features but the exact combination is not known. @anselinLocalIndicatorMultivariate2019 write "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014).". Multi-attribute space refers here to the highly variable genes. The problem can be summarised to where the similarity comes from, the gene expression or the physical space [@anselinLocalIndicatorMultivariate2019]. The same problem is common in spatial domain detection methods.
 
 ```{r}
 #| fig-width: 15
@@ -155,7 +155,7 @@ plotted are the effect size and the adjusted p-values in space.
 
 ## Local Neighbour Match Test
 
-This test is useful to assess the overlap of the k-nearest neighbours from physical distances (tissue space) with the k-nearest neighbours from the gene expression measurements (attribute space). k-nearest neighbour matrices are computed for both physical and attribute space. In a second step the probability of overlap between the two matrices is computed [@anselinToblerLawMultivariate2020]. 
+This test is useful to assess the overlap of the $k$-nearest neighbours from physical distances (tissue space) with the $k$-nearest neighbours from the gene expression measurements (attribute space). $k$-nearest neighbour matrices are computed for both physical and attribute space. In a second step the probability of overlap between the two matrices is computed [@anselinToblerLawMultivariate2020]. 
 
 ```{r}
 #| warning: false
@@ -170,15 +170,17 @@ nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
 sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
-tm_shape(sf) + tm_fill(col = 'Cardinality')  
-tm_shape(sf) + tm_fill(col = 'Probability')  
+p <- tm_shape(sf) + tm_fill(col = 'Cardinality')
+q <- tm_shape(sf) + tm_fill(col = 'Probability')  
+
+tmap_arrange(p,q)
 ```
 
-Cardinality is a measure of how many neighbours of the two matrices are common. Some regions show high cardinality with low probability and therefore share similarity on both attribute and physical space. In contrast to multivariate local Geary's C this metric focuses directly on the distances and not on a weighted average. A problem of this approach is called the empty space problem which states that as the number of dimensions of the feature sets increase, the empty space between observations also increases [@anselinToblerLawMultivariate2020].  
+Cardinality is a measure of how many neighbours of the two matrices are common. Some regions show high cardinality with low probability and therefore share similarity on both attribute and physical space. In contrast to multivariate local Geary's $C$ this metric focuses directly on the distances and not on a weighted average. A problem of this approach is called the empty space problem which states that as the number of dimensions of the feature sets increase, the empty space between observations also increases [@anselinToblerLawMultivariate2020].
 
 ## Measures for binary and categorical data
 
-In addition to measures of spatial autocorrelation of continuous data as seen above, the join chount statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014, @bivandPackagesAnalyzingSpatial2022].
+In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022].
 
 ## A note of caution
 

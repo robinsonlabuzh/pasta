@@ -1,4 +1,18 @@
-# Preamble
+# Lattice data analysis -- multivaraite methods for HTS-based data
+
+In this vignette we will show:
+
+- Multivariate lattice data analysis methods for HTS-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a 10X Visium data set from @mckellarLargescaleIntegrationSinglecell2021.
+
+- Complementary resources using this data and methods are found in the [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html)
+
+## Overview
+
+In this script we 
 
 ## Dependencies
 

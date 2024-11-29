@@ -1,4 +1,14 @@
-# Irregular Lattices
+# Lattice data analysis -- univariate methods for imaging-based data
+
+In this vignette we will show:
+
+- Univariate lattice data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a CosMx data set from @heHighplexImagingRNA2022.
+
+- Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html)
 
 ## Dependencies
 
@@ -63,7 +73,7 @@ plotSpatialFeature(sfe, c("TAGLN"),
 
 {{< include theory/03-theory-irreg-lattice.qmd >}}
 
-Here we set the arguments for the examples below.
+Here we set the arguments for the examples below. We will continue with the two features _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
 
 ```{r}
 features <- c("KRT17", "TAGLN")

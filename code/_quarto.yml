@@ -19,6 +19,7 @@ format:
     embed-resources: true
     code-fold: true
     code-summary: "Show the code"
+
     
 editor_options: 
   chunk_output_type: console
@@ -35,16 +36,22 @@ website:
     ©2024 The `pasta` authors.\n
     Content is published under [Creative Commons CC-BY-4.0 License](https://creativecommons.org/licenses/by/4.0/) for the text 
     and [GPL-3 License](https://www.gnu.org/licenses/gpl-3.0.html) for any code.
+  repo-url: https://github.com/robinsonlabuzh/pasta
+  repo-actions: [source, issue]
   navbar:
     search: true
+    tools:
     left:
       - text: "Home"
         file: 00-home.qmd
+      - text: "About"
+        file: 00-about.qmd
       - text: "Setup"
         file: 00-setup.qmd
       - sidebar:overview
       - sidebar:imaging
       - sidebar:HTS
+
   sidebar:
     - id: overview
       title: "Overview"
@@ -90,3 +97,5 @@ website:
         - section: "Multivariate Methods"
         - text: "Lattice-based Methods"
           file: 06-HTS-multivar-latSOD.qmd
+
+date: last-modified	

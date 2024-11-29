@@ -6,9 +6,9 @@ In this vignette we will show:
 
 - This includes global metrics on the entire field of view and local variants thereof. 
 
-- The use case is a CosMx data set from @mckellarLargescaleIntegrationSinglecell2021.
+- The use case is a 10x Visium data set from @mckellarLargescaleIntegrationSinglecell2021.
 
-- This vignette is based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html)
+- This overview is on parts based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
 
 # Introduction
 
@@ -32,6 +32,7 @@ suppressPackageStartupMessages({
   library(tidyr)
   library(magrittr)
   library(scater)
+  library(bluster)
 })
 
 theme_set(theme_light())
@@ -208,12 +209,10 @@ sfe_tissue <- colDataUnivariate(sfe_tissue,
   colGraphName = "visium", nsim = 1000,
   type = "moran.mc"
 )
-plotMoranMC(sfe_tissue, c("nCounts", "nGenes"),
-  linewidth = 2
-)
-```
 
-Here, we can see the Moran's I values for the number of counts and genes that were identified in the Visium dataset and a permutation-based null distribution. As we can see, the Moran's I values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
+colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),] |> t()
+```
+As we can see, the Moran's I values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
 
 ## Local Measures for Univariate Data
 
@@ -390,12 +389,47 @@ pPoly + pKnn5 + pKnn10
 
 The overall pattern of spatial autocorrelation is similar across the different weight matrices. However, locally there are some differences, as well as in the scale of the autocorrelation (note that the same color in the different plots does not correspond to the same value between the plots). There is a trend of smoothing of the value, the larger the neighbourhood in consideration.
 
+# Measures for categorical data
+
+There also exist methods to detect spatial autocorrelation of categorical variables. As we have no categorical measurements in this dataset, we will perform non-spatial clustering using Leiden clustering on the PCA space.
+
+```{r}
+# Run PCA on the sample
+sfe <- runPCA(sfe_tissue)
+# Cluster based on first 20 PC's and using leiden
+colData(sfe_tissue)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
+                                    BLUSPARAM = SNNGraphParam(
+                                        cluster.fun = "leiden",
+                                        cluster.args = list(
+                                            resolution_parameter = 0.3,
+                                            objective_function = "modularity")))
+```
+
+We can visually inspect the spatial arrangement of the clusters. We see that they are spatially "clustered".
+
+```{r}
+plotSpatialFeature(sfe_tissue,
+  "cluster",
+  colGeometryName = "spotPoly"
+)
+```
+Metrics such as the join count statistics can be use to analysis spatial arrangements of categorical data. In essence, the join count statistic calculates the frequency of categories among neighbours and compares this value with a theoretical distribution or permutations of the labels to get a significance score [@cliff1981spatial].
+
+Here we will use an extension to multiple categories `joincount.multi`. The test gives information if the different clusters are in contact with itself and each other. The output shows the calculated number of contacts vs. the expected number, if the clusters were randomly assigned to points. The function does not report p-values, but they can be calculated at a specified significance level using the z-values.
+
+```{r}
+joincount.multi(colData(sfe_tissue)$cluster,
+             colGraph(sfe_tissue, "visium"))
+```
+For example, we can see here that the calculated number of contacts of clusters 1 and 3 is far below the expected value. On the other hand all clusters are in contact with itself more often than expected at random.
+
 # Summary and Considerations
 
 -   Lattice data refers to spatial data collected at fixed locations arranged in regular or irregular grids, contrasting with stochastic point pattern analysis.
 -   Regular lattices have uniform, evenly spaced spots, while irregular lattices have variable sizes and shapes with non-uniform spacing.
 -   The spatial weight matrix models spatial relationships between lattice units. Different methods exist to define the spatial weight matrix.
 -   Global spatial autocorrelation measures, like Moran's I, summarize spatial correlation over the entire field, while local measures identify local clusters of similarity or dissimilarity.
+- There exist measures of spatial autocorrelation for continous and categorical data.
 
 ```{r}
 sessionInfo()

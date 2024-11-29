@@ -1,3 +1,9 @@
+## Lattice data
+
+A lattice consists of individual spatial units $D = \{A_1, A_2,...,A_n\}$ where the units do not overlap. The data is then a realisation of a random variable along the lattice $Y_i = Y (A_i)$ [@zuurAnalysingEcologicalData2007]. The lattice is irregular, if the units have variable size and are not spaced regularly, such as is the case with cells in tissue. 
+
+More details about lattices can be found on [here](05-HTS-univar-latSOD.qmd## Regular lattice and spatial weight matrix).
+
 ## Spatial weight matrix
 
 One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to define neighbours, such as contiguity-based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance-based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` provides an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html) [@bivandPackagesAnalyzingSpatial2022].

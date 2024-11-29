@@ -1,6 +1,6 @@
 ## Global Measures
 
-Global methods give us an overview over the entire field-of-view and summarize e.g. spatial autocorrelation metrics to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
+Global methods give us an overview over the entire field-of-view and summarize spatial autocorrelation metrics to a single value. The metrics are a function of the weight matrix and the variables of interest. The variables of interest can be gene expression, intensity of a marker or the area of the cell. The global measures can be seen as a weighted average of the local metric, as explained below.
 
 In general, a global spatial autocorrelation measure has the form of a double sum over all locations $i,j$
 
@@ -14,7 +14,7 @@ The global Moran's $I$ [@moranNotesContinuousStochastic1950] coefficient is a me
 
 $$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_i (x_i - \bar{x})^2}.$$
 
-where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation [@pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Moran's I can be interpreted as the Pearson correlation between the value at location $i$ and the average value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
 
 #### Implementation using `voyager`
 
@@ -45,7 +45,7 @@ The result of global Moran's $I$ for the gene `r features[[1]]` is `r round(resM
 
 The result of global Moran's $I$ for the gene `r features[[2]]` is `r round(resMoran$moran[2], digits = 3)`, the associated p-values is `r round(res[[paste0('moran.mc_p.value_', unique(sfe$sample_id))]][2], digits = 3)`. This means that gene `r features[[2]]` shows `r if(resMoran$moran[2]>0){'positive autocorrelation'}else{'negative autocorrelation'}`
 
-One should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's $I$ coefficients between different values, we need to use the same weight matrix.
+One should note that the result is dependent on the weight matrix. Different weight matrices will give different results. To compare Moran's $I$ coefficients of different features, we need to use the same weight matrix.
 
 ### Global's Geary's $C$ coefficient
 
@@ -53,7 +53,7 @@ Geary's $C$ [@gearyContiguityRatioStatistical1954] is a different measure of glo
 
 $$C = \frac{(n-1) \sum_i \sum_j w_{ij}(x_i-x_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(x_i-\bar{x})^2}$$
 
-where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$, $w_{ij}$ is the spatial weight between the locations of $i$ and $j$ and $n$ the total numer of locations. The interpretation is opposite to Moran's $I$: a value smaller than $1$ indicates positive autocorrelation whereas a value greater than $1$ represents negative autocorrelation [@cliff1981spatial, p. 17; @pebesmaSpatialDataScience2023; @fischer2010handbook, pp. 255-265].
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$, $w_{ij}$ is the spatial weight between the locations of $i$ and $j$ and $n$ the total number of locations. The interpretation is opposite to Moran's $I$: a value smaller than $1$ indicates positive autocorrelation whereas a value greater than $1$ represents negative autocorrelation [@cliff1981spatial, p. 17; @pebesmaSpatialDataScience2023; @fischer2010handbook, pp. 255-265].
 
 #### Implementation using `voyager`
 
@@ -221,4 +221,4 @@ plotLocalResult(sfe, "LOSH",
 
 ## A note of caution
 
-The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement.
+The local methods presented above should always be interpreted with care, since we face the problem of multiple testing when calculating them for each cell. Moreover, the presented methods should mainly serve as exploratory measures to identify interesting regions in the data. Multiple processes can lead to the same pattern, thus from identifying the pattern we cannot infer the underlying process. Indication of clustering does not explain why this occurs. On the one hand, clustering can be the result of spatial interaction between the variables of interest. We have an accumulation of a gene of interest in one region of the tissue. On the other hand clustering can be the result spatial heterogeneity, when local similarity is created by structural heterogeneity in the tissue, e.g., that cells with uniform expression of a gene of interest are grouped together which then creates the apparent clustering of the gene expression measurement [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023; @anselin2024introduction].

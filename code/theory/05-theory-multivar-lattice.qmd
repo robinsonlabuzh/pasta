@@ -16,17 +16,17 @@ The global bivariate Moran's I is a measure of correlation between the variables
 #| fig-width: 15
 #| fig-height: 10
 
-res_xy <- spdep::moran_bv(x = logcounts(sfe)[features[1],],
+res <- spdep::moran_bv(x = logcounts(sfe)[features[1],],
          y = logcounts(sfe)[features[2],],
          listw =  colGraph(sfe, colGraphName),
          nsim = 499)
+res
 
-print(res_xy)
-
-boot::boot.ci(res_xy, conf = c(0.99, 0.95, 0.9), type = "basic")
+ci <- boot::boot.ci(res, conf = c(0.99, 0.95, 0.9), type = "basic")
+ci
 ```
 
-The value `t` indicates the test statistic of global bivariate Moran's I. The bootstrap confidence interval is calculated for different coverages.
+The value `t0` indicates the test statistic of global bivariate Moran's I. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`.
 
 ### Global Bivariate Lee's L
 
@@ -47,7 +47,7 @@ res_lee$lee.mc_statistic
 res_lee$lee.mc_p.value
 ```
 
-We see both the test statistic and the p-value for bivariate Lee's $L$.
+The effect sice of bivariate lee's $L$ for the genes `r features` is `r res_lee$lee.mc_statistic` and the associated p-value is `r res_lee$lee.mc_p.value`  
 
 ## Local Measures for Bivariate Data
 

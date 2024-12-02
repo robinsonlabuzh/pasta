@@ -58,10 +58,10 @@ The effect sice of bivariate Lee's $L$ for the genes `r features` is `r res_lee$
 Similar to the global bivariate Moran's $I$ statistic, there is a local analogue. The formula is given by:
 
 $$
-I_i^B = cx_i\sum_jw_{ij}y_j
+I_i^B = x_i\sum_jw_{ij}y_j
 $$
 
-where $c$ is a constant scaling factor [@anselin2002visualizing; @bivandPackagesAnalyzingSpatial2022].
+[@anselin2024introduction; @bivandPackagesAnalyzingSpatial2022].
 
 This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on local bivariate Moran's $I$ and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
 

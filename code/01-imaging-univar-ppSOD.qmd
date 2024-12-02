@@ -49,7 +49,7 @@ Correlation, or more generally covariance, represents a second-order summary sta
 
 #### Empirical Ripley's $K$
 
-With Ripley's $K$ we measure "the average number of $r$-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204]. This number is still dependent on the size of the observation window so we can normalise it by the number of points $n$ and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [@baddeleySpatialPointPatterns2015, pp. 204; @ripleyModellingSpatialPatterns1977; @ripleySecondOrderAnalysisStationary1976a]:
+With Ripley's $K$ we measure "the average number of $r$-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204]. This number is still dependent on the size of the observation window so we can normalise it by the number of points $n$ and the window size, $|W|$. We then obtain the empirical Ripley's $K$ function [@baddeleySpatialPointPatterns2015, pp. 204; @ripleyModellingSpatialPatterns1977; @ripleySecondOrderAnalysisStationary1976]:
 
 $$
 \hat{K}(r) = \frac{|W|}{n(n-1)}\sum_{i=1}^n\sum_{j=1 \\j \neq i}^n\{d_{ij}\leq r\} e_{ij}(r)

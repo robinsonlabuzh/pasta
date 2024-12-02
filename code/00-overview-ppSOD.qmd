@@ -239,7 +239,7 @@ We note that the gene `Esr1` is differentially distributed across the slices of 
 
 #### Correlation
 
-Correlation is a second order quantity that measures the dependence between points [@baddeleySpatialPointPatterns2015 pp. 199]. A famous way to measure this is with Ripley's $K$, which is a cumulative function that quantifies the "number of $r$-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204; @ripleySecondOrderAnalysisStationary1976a].
+Correlation is a second order quantity that measures the dependence between points [@baddeleySpatialPointPatterns2015 pp. 199]. A famous way to measure this is with Ripley's $K$, which is a cumulative function that quantifies the "number of $r$-neighbours of a typical random point" [@baddeleySpatialPointPatterns2015, pp. 204; @ripleySecondOrderAnalysisStationary1976].
 
 ##### Global Measures
 

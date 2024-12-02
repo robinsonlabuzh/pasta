@@ -20,6 +20,7 @@ suppressPackageStartupMessages({
   library(stringr)
   library(magrittr)
   library(bluster)
+  library(dixon)
 })
 
 set.seed(12345)

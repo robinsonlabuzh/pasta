@@ -1,10 +1,14 @@
+## Lattice data
+
+A lattice consists of individual spatial units $D = \{A_1, A_2,...,A_n\}$ where the units do not overlap. The data is then a realisation of a random variable along the lattice $Y_i = Y (A_i)$ [@zuurAnalysingEcologicalData2007]. The lattice is irregular, if the units have variable size and are not spaced regularly, such as is the case with cells in tissue. 
+
+More details about lattices can be found on [here](05-HTS-univar-latSOD.qmd## Regular lattice and spatial weight matrix).
+
 ## Spatial weight matrix
 
-One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to create neighbours, such as contiguitiy based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to define neighbours, such as contiguity-based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance-based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` provides an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html) [@bivandPackagesAnalyzingSpatial2022].
 
-Segmentation of individual cells is challenging [@wangCellSegmentationImage2019] and construction of contiguity-based neighbours based on individual cell segmentation assumes very accurate segmentation results. Furthermore it would neglect the influence of more distant, not directly adjacent neighbours, which based on the feature of interest might not be the correct assumption.
-
-In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous.
+We consider first contiguity-based neighbours. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous [@pebesmaSpatialDataScience2023; @wangCellSegmentationImage2019].
 
 ```{r}
 colGraph(sfe, "poly2nb") <-
@@ -14,10 +18,7 @@ colGraph(sfe, "poly2nb") <-
     style = "W",
     snap = 20 # all cells with less distance  apart are considered contiguous
   )
-```
 
-
-```{r}
 p1 <- plotColGraph(sfe,
   colGraphName = "poly2nb",
   colGeometryName = "cellSeg",
@@ -25,7 +26,7 @@ p1 <- plotColGraph(sfe,
 ) + theme_void()
 ```
 
-Alternatively, we can use a k-nearest neighbours approach. The the number $k$ is somewhat arbitrary.
+Alternatively, we can use a $k$-nearest neighbours approach. The choice of the number $k$ is somewhat arbitrary.
 
 ```{r}
 colGraph(sfe, "knn5") <-
@@ -34,9 +35,7 @@ colGraph(sfe, "knn5") <-
     k = 5,
     zero.policy = TRUE
   )
-```
 
-```{r}
 p2 <- plotColGraph(sfe,
   colGraphName = "knn5",
   colGeometryName = "cellSeg",
@@ -44,16 +43,10 @@ p2 <- plotColGraph(sfe,
 ) + theme_void()
 ```
 
-The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition some cells don't have any direct neighbours. In contrast, the k-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
+The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
 p1 + p2
 ```
-
-<!-- > Thought: if we assume non perfect segmentation we could basically calculate the same statistics also on point pattern derived datasets. We would also use a k-nearest neighbours approach in a "point pattern" dataset. The centroids of the cells as a proxy for the spatial location. -->
-
-<!-- > Is there a good methods to dermine a good neighbourhood matrix? -->
-
-<!-- > Point pattern as a "event based" dataset, lattice data an "observation" based dataset. -->

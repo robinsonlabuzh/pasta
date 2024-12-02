@@ -1,18 +1,14 @@
 suppressPackageStartupMessages({
   library(SpatialExperiment)
   library(spatstat)
-  library(mixR)
   library(dplyr)
   library(ggplot2)
   library(rlang)
-  library(seg)
   library(stats)
-  library(RANN)
   library(STexampleData)
   library(patchwork)
   library(reshape2)
   library(sf)
-  library(ncf)
   library(rgeoda)
   library(Voyager)
   library(SpatialFeatureExperiment)
@@ -21,10 +17,13 @@ suppressPackageStartupMessages({
   library(scater)
   library(tmap)
   library(spdep)
-  library(dixon)
   library(stringr)
   library(magrittr)
+  library(bluster)
+  library(dixon)
 })
+
+set.seed(12345)
 
 .ppp <- \(spe, marks = NULL) {
   xy <- spatialCoords(spe)

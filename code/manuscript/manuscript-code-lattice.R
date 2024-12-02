@@ -503,6 +503,7 @@ data.frame(
   geom_smooth(method = "lm", col = "red")
 
 
+<<<<<<< Updated upstream
 layout <- "
 AAAA
 AAAA
@@ -514,6 +515,9 @@ BBCC
 
 psupp <- pknncont + pGeneLoc + pLocPval +
   plot_layout(design = layout) +
+=======
+psupp <- pGeneLoc + pLocPval + pknncont + pDistcont +
+>>>>>>> Stashed changes
   plot_annotation(tag_levels = "A")
 
 psupp

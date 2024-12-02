@@ -1,3 +1,15 @@
+# Point pattern analysis -- multivariate methods for imaging-based data
+
+In this vignette we will show:
+
+- Multivariate point pattern data analysis methods for imaging-based approaches.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
+
+- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.  
+
 ```{r}
 #| include: false
 library(spatialFDA)
@@ -14,15 +26,15 @@ sub <- spe[, spe$sample_id == "0.01"]
 
 ## Multitype and Multivariate viewpoint
 
-A pattern with multiple type of points, e.g. cell types, can be seen in different ways. One the one hand, the **multitype approach** assumes that the points $x$ were recorded together with with their labels $m$ and that they were generated at the same time. The locations and labels therefore have a joint distribution $P(X,M)$. On the other hand one can assume that the pattern with multiple types of points is a combination of several distinct point patterns, one for each type of point. This is the **multivariate approach** and the different point patterns $A$ and $B$ form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns2015, pp. 565-567]:
+A pattern with multiple type of points, e.g. points representing different cell types, can be seen in different ways. One the one hand, the **multitype approach** assumes that the points $x$ were recorded together with with their labels $m$ and that they were generated at the same time. The locations and labels therefore have a joint distribution $P(X,M)$. Alternatively, in the multivariate approach, the pattern with multiple types of points is assumed to be a combination of several distinct point patterns; one for each type of point. Here, separate point patterns $A$ and $B$ form a joint distribution $P(A,B)$. To test if the labels depend on the location one can assume the following null hypotheses [@baddeleySpatialPointPatterns2015, pp. 565-567];
 
-- complete spatial randomness and independence (CSRI): the points are distributed at random; the type of each points is randomly allocated; independence between points of different types; allocation of the types independently of the other points and of its location.
-- random labeling: each point is assigned a type at random independently of its location
-- independence of components:  the points of different types are independent of each other.
+- Complete spatial randomness and independence (CSRI): points are distributed at random; the type of each points is randomly allocated; independence between points of different types; allocation of the types independently of the other points and of its location.
+- Random labeling: each point is assigned a type at random independently of its location.
+- Independence of components: points of different types are independent of each other.
 
-Apart from CSRI is is also important for the analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
+Apart from CSRI an important aspect for analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
 
-For simplicity, we will focus on three cell types of our point pattern: Ependymal, OD Mature and Microglia.
+For simplicity, we will focus on three cell types in our point pattern: Ependymal, OD Mature and Microglia.
 <!-- This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the pattern. -->
 
 ```{r}
@@ -34,7 +46,7 @@ pp_sel <-  subset(pp, marks %in% selection, drop = TRUE)
 spe_sel <- spe[, spe$sample_id == "0.01" &  spe$cluster_id %in% selection]
 ```
 
-We select on fov, which corresponds to one cut in the frontal plane.
+We select one fov, which corresponds to one cut in the frontal plane.
 
 ```{r}
 #| fig-width: 7.5
@@ -53,7 +65,7 @@ The summary of `pp` (point pattern) object returns general properties, plus inte
 summary(pp)
 ```
 
-To get the overall intensity the individual intensities can be summed up. Assuming that the the multitype process is first order stationary (i.e. each sub-process is stationary) the individual intensities sum up to the intensity of the unmarked point process [@baddeleySpatialPointPatterns2015, pp. 574ff.].
+To get the overall intensity the individual intensities can be summed up. Assuming that the multitype process is first order stationary (i.e. each sub-process is stationary) the individual intensities sum up to the intensity of the unmarked point process [@baddeleySpatialPointPatterns2015, pp. 574ff.].
 
 ```{r}
 sum(intensity(pp)) == intensity(unmark(pp))
@@ -68,7 +80,7 @@ ppls <- split(pp_sel) # split by mark
 plot(density(ppls))
 ```
 
-Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially because the window is larger than the tissue and there is a tissue border in the bottom middle.
+Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially since the window extends beyond the tissue boundary, with a visible border at the bottom center.
 
 To further inverstiagte the spatial arrangement of the different cell types we can calculate the relative risk, i.e., the probability of observing a given celltype at a given location. It is calculated using the function `relrisk`. The bandwidth for smoothing is calculated with `bw.relrisk` and might need to be adjusted [@baddeleySpatialPointPatterns2015, pp. 577-583].
 
@@ -89,7 +101,7 @@ im_sum <- signif(im_sum,9)
 all(im_sum==1)
 ```
 
-The `relrisk` function further gives us the dominant mark for different regions of the tissue of interest. This could be interesting in the annotation of spatial domains. It indicates at each location, which cell type is most likely to occur. 
+The `relrisk` function also gives us the dominant mark for different regions of the tissue of interest. This could be interesting in the annotation or comparison of spatial domains. It indicates the most likely cell type to occur at each location.
 
 ```{r}
 #| fig-width: 5
@@ -105,9 +117,9 @@ plot(dom,las=2,main="Dominant mark")
 
 ## Nearest neighbourhood contingency
 
-To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by [@dixonNearestneighborContingencyTable2002]. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
+To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by [-@dixonNearestneighborContingencyTable2002]. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
 
-The measure of segregation $S$ is defined in [@dixonNearestneighborContingencyTable2002] as 
+The measure of segregation $S$ is defined in [-@dixonNearestneighborContingencyTable2002] as 
 
 $$S_{i,j}= \frac{\log[(N_{i,j}/(N_i−N_{i,j})]}{[(N_i−1)/(N−N_i)]}$$
 where $N_i$ is the number of individuals $i$, $N_{i,j}$ is the number of individuals of type $i$ with a nearest neighbor of type $j$, and $N$ is the total number of individuals. 
@@ -116,17 +128,22 @@ A value of $S=0$ is consistent with random labeling. A value larger than 0 indic
 
 
 ```{r}
-#| echo: true
+#| echo: false
 #| message: false
+#| warning: false
 out <- dixon(as.data.frame(pp_sel), nsim = 99)
+```
+
+
+```{r}
 out$tablaZ %>% 
   arrange(desc(abs(`Z `))) %>%
   select(-`  p-val.Nobs`)
 ```
 
-In this table we see that most Ependymal cells are very clustered, while Microglia are more evenly distributed. Further we see that it is less likely to find a Ependymal cells next to a OD mature cells than by chance. 
+In this table we see that most Ependymal cells are very clustered ($S=1.96$), while Microglia are more evenly distributed. Further we see that it is less likely to find a Ependymal cells next to a OD mature cells than by chance. 
 
-OD Mature cells show this interesting characteristic that they are clustered in some parts of the tissue and more evenly distributed in other parts of the tissue. This characteristic is not visible in the table. The statistic also considers only the nearest neighbour and ignores neighbours that are further away. 
+OD Mature cells show this interesting characteristic that they are clustered in some parts of the tissue and more evenly distributed in other parts of the tissue. This characteristic is not visible in the table. The statistic also considers only the nearest neighbour and ignores neighbours that are further away, c.f., [section about local scaling](01-imaging-univar-ppSOD.qmd### Local Scaling). 
 
 ## Summary functions for pairs of types
 
@@ -134,17 +151,17 @@ Similar to the simple case without marks, it is possible to estimate summary fun
 
 ### Cross K-function
 
-The cross K-function is a summary function that measures the average number of points of type `j` within a distance `r` of a point of type `i`. The formula is given by: 
+The cross K-function is a summary function that measures the average number of points of type $j$ within a distance $r$ of a point of type $i$. The formula is given by: 
 
 $$
-K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j})|u \in X^{i}],
+K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j}) \mid u \in X^{i}],
 $$
 
-where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between clustering and inhomogeneity, c.f. [@baddeleySpatialPointPatterns2015, pp. 151-152] 
+where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between [section about local scaling](theory/01-theory-point.qmd### Confounding dbetween clustering and inhomogeneity) [@baddeleySpatialPointPatterns2015, pp. 151-152]. 
 
-First, we plot an overview over the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
+First, we plot an overview of the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
 
-```{r}
+```{r, echo=FALSE}
 #| fig-width: 15
 #| fig-height: 10
 
@@ -154,12 +171,24 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Kcross.inhom',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
-
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+```
+
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+plotCrossMetricPerFov(
+  resCross,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
 ```
 
 <!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
@@ -168,13 +197,15 @@ The diagonal of the inhomogeneous cross K-function plot shows the K-function for
 
 In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
-Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross K-function. Note that the option to calculate confidence intervals is not yet implemented in `spatialFDA`.
+Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross K-function. Note that the option to calculate confidence intervals is not yet implemented in `spatialFDA` and we will therefore use a custom method below.
 
 ```{r}
 #| include: true
 #| eval: true
-#| echo: false
+#| echo: true
 #| message: false
+#| warning: false
+#| output: false
 #| results: hide
 plotCrossMetric <- function(ppp, fun, from, to, edgecorr){
   lce <- lohboot(ppp, fun, from = from, to = to)
@@ -198,13 +229,12 @@ p_epend_micro <- plotCrossMetric(pp_sel, "Kcross.inhom",
 ```{r}
 #| include: true
 #| eval: true
-#| echo: false
 #| fig-width: 7.5
 #| fig-height: 5
 p_epen_od + p_epend_micro
 ```
 
-Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line, there is indication of attraction while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of attraction between Ependymal and OD Mature cells while there is indication of repulsion between Ependymal and Microglia cells.
+Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line, there is indication of attraction while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of attraction between Ependymal and OD Mature cells (above Poisson line) while there is indication of repulsion between Ependymal and Microglia cells (below Poisson line).
 
 ### Cross L-function 
 Alternatively the L cross function with similar interpretation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns2015, pp. 596ff].
@@ -212,6 +242,9 @@ Alternatively the L cross function with similar interpretation can be calculated
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
+#| message: false
+#| warning: false
+#| output: false
 
 resCross <- calcCrossMetricPerFov(
   spe,
@@ -219,18 +252,39 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Lcross.inhom',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
-
-resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
+
+
+```{r}
+#| message: false
+#| warning: false
+#| output: false
+resCross <- subset(resCross, sample_id %in% fov_sel)
+```
+
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+plotCrossMetricPerFov(
+  resCross,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
+```
+
 ```{r}
 #| include: false
 #| eval: false
-#| echo: true
 #| message: false
+#| warning: false
+#| output: false
 #| results: hide
 plotCrossAll <- function(ppp, fun, edgecorr){
   nMarks <- length(unique(marks(ppp)))
@@ -270,6 +324,9 @@ plotCrossAll(pp_sel, "markconnect", "iso") +
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
+#| message: false
+#| warning: false
+#| output: false
 
 resCross <- calcCrossMetricPerFov(
   spe = spe_sel,
@@ -277,12 +334,23 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'markconnect',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
+```
 
-#resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+
+plotCrossMetricPerFov(
+  resCross,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
 ```
 
 
@@ -294,13 +362,13 @@ The dashed lines indicate expected values under random labeling. The values meas
 
 The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
 
-$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r\}.$$
+$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r)\}$$
 
 The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
 
-$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u}).$$
+$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})\}.$$
 
-If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying. Then we only assume correlation stationarity.
+If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying, for which we oly assume correlation stationarity.
 
 There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$ [@baddeleySpatialPointPatterns2015, p. 597 ff].
 
@@ -337,19 +405,24 @@ plotCrossAll(pp_sel, "Kdot.inhom", "iso")
 ```{r}
 #| fig-width: 7.5
 #| fig-height: 5
-
+#| message: false
+#| warning: false
+#| output: false
 resCross <- calcCrossMetricPerFov(
   spe,
   selection = c("OD Mature", "Ependymal", "Microglia"),
   subsetby = 'sample_id',
   fun = 'Kdot',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
+```
 
+
+```{r}
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id', ID = "ID")
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id', ID = "ID")
 ```
 
 The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 
@@ -365,18 +438,30 @@ The Mark or Type Equality function for a stationary multitype point process meas
 If k < 1, points at distance r are less likely than expected to be of the same type. If > 1, they are more likely to be of the same type. The value 1 indicates a lack of correlation [@baddeleySpatialPointPatterns2015, p. 603 ff].
 
 ```{r}
+#| message: false
+#| warning: false
+#| output: false
 resCross <- calcMetricPerFov(
   spe,
   selection = c("OD Mature", "Ependymal", "Microglia"),
   subsetby = 'sample_id',
   fun = 'markcorr',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
+```
 
+
+```{r}
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
+plotMetricPerFov(
+  resCross,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
 ```
 
 
@@ -399,7 +484,7 @@ plotMarkCorr <- function(pp, edgecorr = "iso") {
 plotMarkCorr(pp_sel)
 ```
 
-We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. The curve never crosses the dashed line at 1, which means that it is generally more likely to find points of the same type at any distance than expected by chance.
+We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. At around $r=265$ this behavior changes and it becomes slightly less likely to find the same type compared to by chance.
 
 <!-- ### I-function  -->
 
@@ -435,7 +520,7 @@ If both statments are correct, the point pattern is considered to be complete sp
 
 ## Testing random labelling
 
-The random labeling test is most logical when the marks represents its status, which is not most appropriate assumption when considering cell types. Testing for random labeling can be done using permutation test, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset [@baddeleySpatialPointPatterns2015, p. 609 ff].
+The random labeling test is most logical when the marks represents its status, which is not the most appropriate assumption when considering cell types. Testing for random labeling can be done using permutation tests, in which the labels are randomly permuted. Random labeling can be assumed if the permuted datasets are statistically equivalent to the original dataset [@baddeleySpatialPointPatterns2015, p. 609 ff].
 
 ## Testing the indepenence of components assumption
 
@@ -449,13 +534,26 @@ $K_{ij} = \pi r^2, G_{ij}(r) = F_{j}(r),  J_{ij}(r) \equiv 1$. Alternatively, ra
 #| message: false
 #| results: hide
 
-plotEnvCross <- function(pp, i, j, fun, nsim = 39, radius = 150, global = FALSE){
+plotEnvCross <- function(pp,
+                         i,
+                         j,
+                         fun,
+                         nsim = 39,
+                         radius = 150,
+                         global = FALSE) {
   pp_scaled <- rescale(pp)
-  E1 <- envelope(pp_scaled, fun, nsim=nsim, i=i, j=j,
-                 simulate=expression(rshift(pp_scaled, radius = radius)), global = global)
+  E1 <- envelope(
+    pp_scaled,
+    fun,
+    nsim = nsim,
+    i = i,
+    j = j,
+    simulate = expression(rshift(pp_scaled, radius = radius)),
+    global = global
+  )
   p <- ggplot(E1, aes(x = r, y = .data[["mmean"]])) +
     geom_line(size = 1) +
-    geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25)+
+    geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.25) +
     geom_line(aes(x = r, y = obs), linetype = "dotted", size = 1) +
     geom_line() +
     labs(title = attributes(E1)$yexp) +
@@ -463,23 +561,29 @@ plotEnvCross <- function(pp, i, j, fun, nsim = 39, radius = 150, global = FALSE)
   return(p)
 }
 
-pEnv <- plotEnvCross(pp_sel, fun = "Kcross.inhom",
-                     "Ependymal", "OD Mature", nsim = 39, radius = 150)
+pEnv <- plotEnvCross(
+  pp_sel,
+  fun = "Kcross.inhom",
+  "Ependymal",
+  "OD Mature",
+  nsim = 39,
+  radius = 150
+)
 ```
 
 ```{r}
 #| include: false
 #| eval: false
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 7
+#| fig-height: 7
 pEnv
 ```
 
 ```{r}
 #| include: false
 #| eval: false
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 7
+#| fig-height: 7
 plotEnvCross(pp_sel, fun = "Kcross.inhom",
              "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
@@ -507,15 +611,26 @@ resCross <- calcCrossMetricPerFov(
   subsetby = 'sample_id',
   fun = 'Kcross',
   marks = 'cluster_id',
-  r_seq = seq(0, 500, length.out = 100),
+  rSeq = seq(0, 500, length.out = 100),
   by = c('Animal_ID', 'sample_id')
 )
-
-resCross <- subset(resCross, sample_id %in% fov_sel)
-plotCrossMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", image_id = 'sample_id')
 ```
 
-The result is different from the previous analysis. The Ependymal cells now appear to be clustered. This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and research question. The interpretation of the results should always be done with the assumption of stationarity or inhomogeneity in mind and should be reported in an analysis.
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+resCross <- subset(resCross, sample_id %in% fov_sel)
+plotCrossMetricPerFov(
+  resCross,
+  theo = TRUE,
+  correction = "iso",
+  x = "r",
+  imageId = 'sample_id'
+)
+```
+
+The result is different from the previous analysis. The Ependymal cells now appear to be clustered (above the Poisson line). This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and research question. The interpretation of the results should always be done with the assumption of stationarity or inhomogeneity in mind and should be reported in an analysis.
 
 ## Session info
 

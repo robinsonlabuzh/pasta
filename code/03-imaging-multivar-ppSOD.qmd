@@ -179,6 +179,9 @@ resCross <- subset(resCross, sample_id %in% fov_sel)
 
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 plotCrossMetricPerFov(
   resCross,
   theo = TRUE,
@@ -264,6 +267,9 @@ resCross <- subset(resCross, sample_id %in% fov_sel)
 
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 plotCrossMetricPerFov(
   resCross,
   theo = TRUE,
@@ -272,6 +278,7 @@ plotCrossMetricPerFov(
   imageId = 'sample_id'
 )
 ```
+
 ```{r}
 #| include: false
 #| eval: false
@@ -334,6 +341,9 @@ resCross <- calcCrossMetricPerFov(
 
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
+
 plotCrossMetricPerFov(
   resCross,
   theo = TRUE,
@@ -352,11 +362,11 @@ The dashed lines indicate expected values under random labeling. The values meas
 
 The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
 
-$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r\)}.$$
+$$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r)\}$$
 
 The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
 
-$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})}.$$
+$$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})\}.$$
 
 If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying, for which we oly assume correlation stationarity.
 
@@ -564,16 +574,16 @@ pEnv <- plotEnvCross(
 ```{r}
 #| include: false
 #| eval: false
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 7
+#| fig-height: 7
 pEnv
 ```
 
 ```{r}
 #| include: false
 #| eval: false
-#| fig-width: 5
-#| fig-height: 5
+#| fig-width: 7
+#| fig-height: 7
 plotEnvCross(pp_sel, fun = "Kcross.inhom",
              "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
@@ -608,6 +618,8 @@ resCross <- calcCrossMetricPerFov(
 
 
 ```{r}
+#| fig-width: 15
+#| fig-height: 10
 resCross <- subset(resCross, sample_id %in% fov_sel)
 plotCrossMetricPerFov(
   resCross,

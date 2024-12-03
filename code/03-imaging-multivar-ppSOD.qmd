@@ -632,6 +632,8 @@ plotCrossMetricPerFov(
 
 The result is different from the previous analysis. The Ependymal cells now appear to be clustered (above the Poisson line). This is because stationarity assumes that Ependymal cells could theoretically be present in the total observation window. If this assumption is justified, depends on the context and research question. The interpretation of the results should always be done with the assumption of stationarity or inhomogeneity in mind and should be reported in an analysis.
 
+# Appendix
+
 ## Session info
 
 ```{r}

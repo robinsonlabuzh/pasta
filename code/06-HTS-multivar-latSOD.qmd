@@ -59,6 +59,8 @@ segmentation <- "spotPoly"
 
 {{< include theory/05-theory-multivar-lattice.qmd >}}
 
+# Appendix
+
 ## Session info
 
 ```{r}

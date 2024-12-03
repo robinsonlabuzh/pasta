@@ -464,6 +464,10 @@ Translation correction:
 
 -   Point pattern analysis allows for the analysis of continuous gene expression marks as well.
 
+# Appendix
+
+## Session info
+
 ```{r}
 sessionInfo()
 ```

@@ -92,6 +92,8 @@ With a defined spatial weight matrix, one can calculate multivariate spatial met
 
 {{< include theory/05-theory-multivar-lattice.qmd >}}
 
+# Appendix
+
 ## Session info
 
 ```{r}

@@ -49,8 +49,6 @@ suppressPackageStartupMessages({
 
 ```{r, message=FALSE, warning=FALSE}
 #| label: load-data
-# load the data from ExperimentHub
-source("../code/load_data.R")
 # source some helper functions
 source("../code/utils.R")
 library('spatialFDA')
@@ -465,6 +463,10 @@ Translation correction:
 -   There are corresponding metrics for single cells and their interactions.
 
 -   Point pattern analysis allows for the analysis of continuous gene expression marks as well.
+
+# Appendix
+
+## Session info
 
 ```{r}
 sessionInfo()

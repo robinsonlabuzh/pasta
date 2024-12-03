@@ -68,23 +68,22 @@ ggplot(gg, aes(x, y, col = cluster_id)) +
   theme_void() + theme(legend.key.size = unit(0.5, "lines"))
 ```
 
-# Sequencing-based dataset
-
-## Setup
-
-```{r}
-spe_vis <- Visium_humanDLPFC()
-```
-
-# Appendix
-
 ## Save data
 
 ```{r}
 #| label: save-data
+# Define the directory and file paths
+dir_path <- "../data"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+}
+
 saveRDS(spe, "../data/spe.rds")
-saveRDS(spe_vis, "../data/spe_spot.rds")
 ```
+
+# Appendix
 
 ## Session info
 

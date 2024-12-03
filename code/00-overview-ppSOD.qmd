@@ -49,8 +49,6 @@ suppressPackageStartupMessages({
 
 ```{r, message=FALSE, warning=FALSE}
 #| label: load-data
-# load the data from ExperimentHub
-source("../code/load_data.R")
 # source some helper functions
 source("../code/utils.R")
 library('spatialFDA')

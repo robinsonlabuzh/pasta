@@ -38,6 +38,7 @@ website:
     and [GPL-3 License](https://www.gnu.org/licenses/gpl-3.0.html) for any code.
   repo-url: https://github.com/robinsonlabuzh/pasta
   repo-actions: [source, issue]
+  repo-subdir: code
   navbar:
     search: true
     tools:

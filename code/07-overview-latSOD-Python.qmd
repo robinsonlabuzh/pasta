@@ -1,0 +1,154 @@
+# Lattice data analysis -- Summary
+
+In this vignette we will show:
+
+- An overview of lattice data analysis methods for HTS-based data.
+
+- This includes global metrics on the entire field of view and local variants thereof. 
+
+- Use `R` and `python`
+
+
+::: {.panel-tabset}
+
+## Dependencies R
+
+```{r}
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(ggplot2)
+  library(patchwork)
+  library(Voyager)
+  library(SpatialFeatureExperiment)
+  library(SFEData)
+  library(spdep)
+  library(sf)
+  library(stringr)
+  library(tidyr)
+  library(magrittr)
+  library(scater)
+  library(bluster)
+})
+
+theme_set(theme_light())
+```
+
+## Dependencies python 
+
+```{python}
+import numpy as np
+import scanpy as sc
+import squidpy as sq
+from esda.moran import Moran, Moran_Local, Moran_BV
+from libpysal.weights import W, lat2W
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+```
+:::
+
+
+## Setup and Preprocessing
+
+```{r}
+# Load the dataset
+sfe <- SFEData::McKellarMuscleData(dataset = "full")
+# Take spots that are covered with tissue
+sfe_tissue <- sfe[, colData(sfe)$in_tissue]
+# Filter out genes with no counts
+sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
+# Convert counts log-transformed normalized expression values
+sfe_tissue <- scater::logNormCounts(sfe_tissue)
+```
+
+# Moran's I
+
+```{r}
+zellkonverter::
+```
+
+
+
+
+```{python}
+adata_spatial = sc.read_h5ad("../data/adata_neighbors.h5ad")
+spatial_weights_matrix = W.from_sparse(adata_spatial.obsp['spatial_connectivities'])
+leiden_clusters = np.array(adata_spatial.obs['leiden'].values).astype(int)
+moran = Moran(np.array(adata_spatial.obs['leiden'].values).astype(int), spatial_weights_matrix, permutations=1000)
+print(moran.I)
+```
+```{python}
+sq.pl.spatial_scatter(adata_spatial, color='leiden')
+```
+
+```{python}
+local_moran = Moran_Local(leiden_clusters, spatial_weights_matrix, permutations=1000)
+adata_spatial.obs['moran_local'] = local_moran.q
+adata_spatial.obs['moran_local_p'] = local_moran.p_sim
+adata_spatial.obs['moran_local_z'] = local_moran.z_sim
+```
+
+```{python}
+sq.pl.spatial_scatter(adata_spatial, color='moran_local')
+```
+
+
+```{python}
+def moran_bv_i(spatial_data, gene1, gene2, spatial_weights_matrix):
+    gene1 = spatial_data[:, gene1].X.toarray()
+    gene2 = spatial_data[:, gene2].X.toarray()
+    return Moran_BV(gene1, gene2, spatial_weights_matrix).I
+```
+
+```{python}
+moran_bv_i(adata_spatial, "Synpo", "Nphs1", spatial_weights_matrix)
+```
+
+```{python}
+from esda import LOSH
+
+losh = LOSH(spatial_weights_matrix, inference='chi-square')
+losh.fit(leiden_clusters)
+```
+
+```{python}
+# visualize the results
+adata_spatial.obs['LOSH'] = losh.Hi
+sq.pl.spatial_scatter(adata_spatial, color='LOSH')
+```
+
+```{python}
+from esda import Join_Counts
+
+join_counts = Join_Counts(adata_spatial[:, "Synpo"].X.toarray() > 0, spatial_weights_matrix)
+```
+
+```{python}
+join_counts.bb, join_counts.ww, join_counts.bw
+```
+
+```{python}
+from esda import Spatial_Pearson
+
+spatial_pearson = Spatial_Pearson()
+```
+
+```{python}
+spatial_pearson.fit(adata_spatial[:, "Fn1"].X.toarray(), adata_spatial[:, "Acta2"].X.toarray())
+```
+
+```{python}
+fig, ax = plt.subplots(figsize=(5, 5))
+sns.heatmap(spatial_pearson.association_, cmap='coolwarm', center=0, annot=True, fmt=".2f", ax=ax)
+ax.set_xticklabels(["Synpo", "Nphs1"])
+ax.set_yticklabels(["Synpo", "Nphs1"])
+```
+
+
+## Session info
+
+```{r}
+sessionInfo()
+```
+
+

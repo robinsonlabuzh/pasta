@@ -32,7 +32,7 @@
     "Version": "3.17"
   },
   "Python": {
-    "Version": "3.11.4",
+    "Version": "3.10.12",
     "Type": "virtualenv",
     "Name": "./renv/python/virtualenvs/renv-python-3.10"
   },
@@ -3701,26 +3701,6 @@
         "utils"
       ],
       "Hash": "40b74690debd20c57d93d8c246b305d4"
-    },
-    "sosta": {
-      "Package": "sosta",
-      "Version": "0.99.1",
-      "Source": "Bioconductor",
-      "Requirements": [
-        "SpatialExperiment",
-        "SummarizedExperiment",
-        "dplyr",
-        "ggplot2",
-        "patchwork",
-        "rlang",
-        "sf",
-        "smoothr",
-        "spatstat.explore",
-        "spatstat.geom",
-        "stats",
-        "terra"
-      ],
-      "Hash": "1b0f87270b482d3652f5edc37a839009"
     },
     "sourcetools": {
       "Package": "sourcetools",

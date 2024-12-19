@@ -10,8 +10,6 @@ In this vignette we will show:
 
 - This overview is in parts based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
 
-- All `Python` examples were written by [Malte Kuehl](https://www.au.dk/en/malte.kuehl@clin.au.dk)
-
 # Introduction
 
 In contrast to point pattern based methods, we can view the location of cells or spots as a fixed lattice and measure the corresponding marker expression at each location. HTS-based spatial transcriptomic technologies often produce data on a regular lattice (i.e., approximately evenly spaced spots or beads of uniform size and shape), whereas imaging-based technologies yield irregular lattice structures (i.e., with variable cell sizes and shapes, and non-uniform spacing).

@@ -14,9 +14,13 @@ In this vignette we will show:
 
 In contrast to point pattern based methods, we can view the location of cells or spots as a fixed lattice and measure the corresponding marker expression at each location. HTS-based spatial transcriptomic technologies often produce data on a regular lattice (i.e., approximately evenly spaced spots or beads of uniform size and shape), whereas imaging-based technologies yield irregular lattice structures (i.e., with variable cell sizes and shapes, and non-uniform spacing).
 
-For this representation of the cells, we will rely on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `Voyager` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object. The package `spdep` is designed for the analysis of spatial data with lattice structure.
+For this representation of the cells, we will rely in `R` on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `Voyager` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object. The package `spdep` is designed for the analysis of spatial data with lattice structure.
 
-## Dependencies
+For the implementation in `Python` we will rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. For the data representation we rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
+
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 suppressPackageStartupMessages({
@@ -36,11 +40,43 @@ suppressPackageStartupMessages({
 })
 
 theme_set(theme_light())
+
+source('utils.R')
 ```
+
+## `Python`
+
+```{python}
+import numpy as np
+import scanpy as sc
+import squidpy as sq
+from esda.moran import Moran, Moran_Local, Moran_Local_BV
+from esda.join_counts import Join_Counts
+from libpysal.weights import W
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+import warnings
+from scipy.stats import false_discovery_control
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams['font.family'] = 'Futura'
+df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
+df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
+cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
+cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
+```
+
+::: 
 
 ## Setup and Preprocessing
 
 We will load a dataset by [@mckellarLargescaleIntegrationSinglecell2021] using the Visium technology [@stahlVisualizationAnalysisGene2016]. The data shows a sample taken from the tibialis anterior muscle of a mouse.
+
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 # Load the dataset
@@ -51,13 +87,41 @@ sfe_tissue <- sfe[, colData(sfe)$in_tissue]
 sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
 # Convert counts log-transformed normalized expression values
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
+
+features <- c("Myh2", "Calr")
 ```
 
+## `Python`
+
+```{python}
+adata = sc.read_h5ad("../data/McKellarMuscleData_processed.h5ad")
+adata.obsm['spatial'] = np.array(list(zip((adata.obs['x'] * -1), adata.obs['y'])))
+adata.var_names = adata.var["symbol"]
+adata.raw = adata.copy()
+adata.X = adata.layers["logcounts"].astype(np.float64) # necessary for Local Moran to work
+```
+
+::: 
+
 `SpatialFeatureExperiment` [@mosesVoyagerExploratorySinglecell2023] objects are an extension of the `r BiocStyle::Biocpkg('SpatialExperiment')` object [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022]. It additionally contains geometric annotations that are encoded as simple features of the `r BiocStyle::CRANpkg('sf')` library [@pebesmaSpatialDataScience2023].
+
+For `Python` we use the `anndata` object [@virshup2024anndata].
+
+::: {.panel-tabset}
+
+## `R` 
 
 ```{r}
 sfe_tissue
 ```
+
+## `Python`
+
+```{python}
+adata
+```
+
+::: 
 
 For example, the spots of the Visium dataset are stored as a simple feature collection.
 
@@ -71,16 +135,11 @@ colGeometry(sfe_tissue, "spotPoly") |> head()
 
 Lattice data refers to spatial data collected at locations arranged in a regular or irregular grid (lattice). Each location has a defined spatial unit, and the sampling locations are fixed rather than random. This approach contrasts with point pattern analysis, where we assume that the locations were generated by a stochastic process [@zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023; @baddeleySpatialPointPatterns2015].
 
-```{r}
-#| include: false
-#| eval: false
-plotSpatialFeature(sfe_tissue,
-  "nCounts",
-  colGeometryName = "spotPoly"
-)
-```
-
 As can be seen below, the Visium dataset is a regular lattice. The color shows the number of counts detected in each Visium spot. In contrast, the outlines of individual cells after segmentation (e.g., from a higher resolution spatial omics assay) could be seen as an irregular lattice. As this dataset also contains (manual) segmentations of myofibers (muscle cells stored as `myofiber_simplified`), we will illustrate calculations based on irregular lattices of the myofiber segmentations.
+
+::: {.panel-tabset}
+
+## `R` 
 
 ```{r}
 # A plot using the plotSpatialFeature from Voyager
@@ -102,11 +161,24 @@ q <- ggplot() +
 p | q
 ```
 
+## `Python`
+
+```{python}
+sq.pl.spatial_scatter(adata, color="nCounts", cmap="Blues", shape=None, library_id="spatial")
+plt.gca().set_axis_off()
+```
+
+:::
+
 ## Spatial weight matrix
 
 In lattice data analysis, a key concept is the *spatial weight matrix*, which models the spatial relationships between units in the lattice (i.e., spots or cells). Various methods exist for constructing this matrix, such as contiguity-based (direct neighbors), graph-based, or distance-based methods. [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` gives an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html).
 
 For Visium, the most straightforward way is to take the direct neighbours of each spot. This is done using the function `findVisiumGraph`.
+
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
@@ -118,6 +190,32 @@ plotColGraph(sfe_tissue,
   colGeometryName = "spotPoly"
 ) + theme_void()
 ```
+
+## `Python`
+
+```{python}
+sq.gr.spatial_neighbors(adata, n_neighs=6, coord_type="grid")
+spatial_weights = W.from_sparse(adata.obsp['spatial_connectivities'])
+
+fig, ax = plt.subplots(1, 1, figsize=(4, 8))
+sq.pl.spatial_scatter(
+    adata[adata.obsp["spatial_connectivities"].nonzero()[0], :],
+    connectivity_key="spatial_connectivities",
+    size=0.25,
+    na_color="black",
+    edges_color="black",
+    edges_width=0.25,
+    shape=None,
+    library_id="spatial",
+    ax=ax,
+    fig=fig,
+)
+ax.set_axis_off()
+fig.suptitle("Connectivity grid", size=10, y=0.8)
+fig.set_dpi(200)
+```
+
+:::
 
 In an irregular lattice, the task of finding a spatial weight matrix is more complex, as different options exist. One option is to base the neighbourhood graph on neighbours that are in direct contact with each other (contiguous), as implemented in the `poly2nb` method.
 
@@ -184,34 +282,78 @@ Moran's $I$ is the most prominent measure of spatial autocorrelation. The values
 
 In the first example we will calculate Moran's $I$ for the number of counts and genes measured in the Visium dataset. First, we have a look at the distribution by eye.
 
+::: {.panel-tabset}
+
+## `R` 
+
 ```{r}
 plotSpatialFeature(sfe_tissue,
-  features = c("nCounts", "nGenes"),
+  features = features,
   colGeometryName = "spotPoly",
   swap_rownames = "symbol"
 )
 ```
 
+## `Python`
+
+```{python}
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(8, 5))
+sq.pl.spatial_scatter(adata, color=["Myh2", "Calr"], cmap="Blues", shape=None, library_id="spatial", ax=[ax1, ax2], fig=fig, size=40, use_raw=False)
+ax1.set_axis_off()
+ax2.set_axis_off()
+```
+
+:::
+
 Based on these values we can calculate Moran's $I$
 
+::: {.panel-tabset}
+
+## `R`
+
 ```{r}
-calculateUnivariate(t(colData(sfe_tissue)[, c("nCounts", "nGenes")]),
+sfe_tissue <- runUnivariate(sfe_tissue,
   type = "moran",
-  listw = colGraph(sfe_tissue, "visium")
+  features = features,
+  colGraphName = "visium",
+  swap_rownames = "symbol"
 )
+
+rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features,]
 ```
+
+## `Python`
+
+```{python}
+moran_myh2 = Moran(adata[:, "Myh2"].X.toarray(), spatial_weights, permutations=100)
+moran_calr = Moran(adata[:, "Calr"].X.toarray(), spatial_weights, permutations=100)
+print("Calr:", moran_calr.I, "Myh2:", moran_myh2.I)
+```
+
+::: 
 
 We can further use permutation testing to get a significance of our estimates.
 
+:::
+
 ```{r}
-sfe_tissue <- colDataUnivariate(sfe_tissue,
-  features = c("nCounts", "nGenes"),
-  colGraphName = "visium", nsim = 1000,
-  type = "moran.mc"
+sfe_tissue <- runUnivariate(sfe_tissue,
+  type = "moran.mc",
+  features = features,
+  colGraphName = "visium",
+  swap_rownames = "symbol",
+  nsim = 100
 )
 
-colFeatureData(sfe_tissue)[c("nCounts", "nGenes"),] |> t()
+rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features,]
 ```
+
+```{python}
+moran_calr.p_sim, moran_myh2.p_sim
+print("Calr:", "I:", moran_calr.I, "p-value:", moran_calr.p_sim)
+print("Myh2:", "I:", moran_myh2.I, "p-value:", moran_myh2.p_sim)
+```
+
 As we can see, the Moran's $I$ values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
 
 ## Local Measures for Univariate Data
@@ -225,6 +367,10 @@ Local Moran's $I$ provides a measure of spatial autocorrelation at each location
 $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
 
 where the index $i$ refers to the location for which the measure is calculated. The interpretation is analogous to global Moran's $I$ where a value of $I_i$ higher than $\mathbb{E}(I_i) = -w_i/(n-1)$ indicates spatial autocorrelation; smaller values indicate negative autocorrelation [@anselinLocalIndicatorsSpatial1995]. It is important to note that, as for the global counterpart, the value of local Moran's $I$ could be a result from both the high or low end of the values. Here we will calculate the local Moran's $I$ value for the measurement of muscle fiber marker gene *Myh2*:
+
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 sfe_tissue <- runUnivariate(sfe_tissue,
@@ -258,6 +404,23 @@ pPval <- plotLocalResult(sfe_tissue, "localmoran",
 # please note that the colour scales for plots 2 & 3 are different
 pExp + pLi + pPval
 ```
+
+## `Python`
+
+```{python}
+local_moran_myh2 = Moran_Local(adata[:, "Myh2"].X.toarray(), spatial_weights, permutations=100, seed=3407)
+adata.obs["local_moran_myh2"] = local_moran_myh2.Is
+adata.obs["local_moran_myh2_p"] = -np.log10(false_discovery_control(local_moran_myh2.p_z_sim*2))
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(14, 5))
+sq.pl.spatial_scatter(adata, color="Myh2", cmap="Blues", shape=None, library_id="spatial", title=r"Myh2 $ln(\:\frac{y}{s}+1\:)$ counts", ax=ax1, fig=fig, size=40, use_raw=False)
+sq.pl.spatial_scatter(adata, color="local_moran_myh2", cmap=cmap_continuous, vmin=-adata.obs["local_moran_myh2"].max(), vcenter=0, shape=None, library_id="spatial", title="Local Moran's Is Myh2", ax=ax2, fig=fig, size=40)
+sq.pl.spatial_scatter(adata, color="local_moran_myh2_p", cmap=cmap_continuous, vmin=-2.5, shape=None, library_id="spatial", title="Simulated $-log_{10}(\:p_{adj}\:)$", ax=ax3, fig=fig, size=40)
+ax1.set_axis_off()
+ax2.set_axis_off()
+ax3.set_axis_off()
+```
+
+:::
 
 In the local version of Moran's $I$, the interpretation is the same as the global version. When interpreting local autocorrelation measures, it is important to consider both the effect size estimates and the significance level. Since the significance level is calculated for each spot separately, it is recommended to adjust for multiple testing. By default, `runUnivariate` uses the Benjamini & Hochberg correction [@benjamini_hochberg1995fdr]. The local Moran's $I$ statistics reveal locations in the tissue that have similar values to their neighbours (c.f., the lower part of the tissue).
 
@@ -302,10 +465,14 @@ where $a_i$ and $b_i$ are the two variables of interest and $w_{ij}$ is the valu
 
 There exists a local version that we will explore here. Note that the results are not symmetric, but very similar to each other.
 
+::: {.panel-tabset}
+
+## `R`
+
 ```{r}
 sfe_tissue <- runBivariate(sfe_tissue, "localmoran_bv", # wraps the method from spdep
   c("Myh1", "Myh2"),
-  swap_rownames = "symbol", nsim = 1000
+  swap_rownames = "symbol", nsim = 100
 )
 
 # this command gives all results of localmoran_bv
@@ -315,6 +482,25 @@ plotLocalResult(sfe_tissue, "localmoran_bv", c("Myh1__Myh2", "Myh2__Myh1"),
   colGeometryName = "spotPoly", divergent = TRUE, diverge_center = 0
 )
 ```
+
+## `Python`
+
+```{python}
+local_moran_bv_myh1_myh2 = Moran_Local_BV(adata[:, "Myh1"].X.toarray(), adata[:, "Myh2"].X.toarray(), spatial_weights, permutations=100, seed=3407)
+local_moran_bv_myh2_myh1 = Moran_Local_BV(adata[:, "Myh2"].X.toarray(), adata[:, "Myh1"].X.toarray(), spatial_weights, permutations=100, seed=3407)
+adata.obs["local_moran_bv_myh1_myh2"] = local_moran_bv_myh1_myh2.Is
+adata.obs["local_moran_bv_myh2_myh1"] = local_moran_bv_myh2_myh1.Is
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 5))
+sq.pl.spatial_scatter(adata, color="local_moran_bv_myh1_myh2", cmap=cmap_continuous, vmin=-adata.obs["local_moran_bv_myh1_myh2"].max(), shape=None, vcenter=0, library_id="spatial", title=r'Myh1 $\rightarrow$ Myh2', ax=ax1, fig=fig, size=40)
+sq.pl.spatial_scatter(adata, color="local_moran_bv_myh2_myh1", cmap=cmap_continuous, vmin=-adata.obs["local_moran_bv_myh2_myh1"].max(), shape=None, vcenter=0, library_id="spatial", title=r'Myh2 $\rightarrow$ Myh1', ax=ax2, fig=fig, size=40)
+fig.suptitle("Moran's local bivariate I", weight="bold", size=18, y=0.98)
+ax1.set_axis_off()
+ax2.set_axis_off()
+fig.tight_layout()
+```
+
+::: 
 
 Please note that the result might overestimate the spatial autocorrelation of the variables due to the inherent (non-spatial) correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
@@ -409,12 +595,26 @@ colData(sfe_tissue)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
 
 We can visually inspect the spatial arrangement of the clusters. We see that they are spatially "clustered".
 
+::: {.panel-tabset}
+
+## `R`
+
 ```{r}
 plotSpatialFeature(sfe_tissue,
   "cluster",
   colGeometryName = "spotPoly"
 )
 ```
+
+## `Python`
+
+```{python}
+sq.pl.spatial_scatter(adata, color="cluster", palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["cluster"]))]), library_id="spatial", title="Clusters", shape=None, size=55)
+plt.gca().set_axis_off()
+```
+
+:::
+
 Metrics such as the join count statistics can be use to analysis spatial arrangements of categorical data. In essence, the join count statistic calculates the frequency of categories among neighbours and compares this value with a theoretical distribution or permutations of the labels to get a significance score [@cliff1981spatial].
 
 Here we will use an extension to multiple categories `joincount.multi`. The test gives information if the different clusters are in contact with itself and each other. The output shows the calculated number of contacts vs. the expected number, i.e., if the clusters were randomly assigned to the locations. The function does not report p-values, but they can be calculated at a specified significance level using the z-values.

@@ -77,7 +77,7 @@ The stationarity assumption is not appropriate in all cases. To assess first-ord
 #| fig-width: 15
 #| fig-height: 7.5
 ppls <- split(pp_sel) # split by mark
-plot(density(ppls))
+plot(density(ppls, sigma = bw.diggle))
 ```
 
 Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially since the window extends beyond the tissue boundary, with a visible border at the bottom center.
@@ -172,7 +172,8 @@ resCross <- calcCrossMetricPerFov(
   fun = 'Kcross.inhom',
   marks = 'cluster_id',
   rSeq = seq(0, 500, length.out = 100),
-  by = c('Animal_ID', 'sample_id')
+  by = c('Animal_ID', 'sample_id'),
+  correction = 'isotropic'
 )
 resCross <- subset(resCross, sample_id %in% fov_sel)
 ```
@@ -422,7 +423,7 @@ resCross <- calcCrossMetricPerFov(
 
 ```{r}
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id', ID = "ID")
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
 ```
 
 The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 

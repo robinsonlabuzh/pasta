@@ -120,7 +120,8 @@ p_ls <- lapply(res_ls, function(res) {
     theo = TRUE,
     correction = "iso",
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 ```
@@ -180,7 +181,8 @@ p_ls <- lapply(res_ls, function(res) {
     correction = "border",
     theo = TRUE,
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 p <- plotMetricPerFov(
@@ -188,7 +190,8 @@ p <- plotMetricPerFov(
   correction = "iso",
   theo = TRUE,
   x = "r",
-  imageId = 'sample_id'
+  imageId = 'sample_id',
+  legend.position = "right"
 )
 ```
 
@@ -239,7 +242,8 @@ p_ls <- lapply(res_ls, function(res) {
     correction = "iso",
     theo = TRUE,
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 ```
@@ -537,7 +541,8 @@ p_ls <- lapply(res_ls, function(res) {
     correction = "rs",
     theo = TRUE,
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 ```
@@ -571,7 +576,8 @@ p_ls <- lapply(res_ls, function(res) {
     correction = "bord",
     theo = TRUE,
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 ```
@@ -602,7 +608,8 @@ p <- plotMetricPerFov(
   correction = "bordm",
   theo = TRUE,
   x = "phi",
-  imageId = 'sample_id'
+  imageId = 'sample_id',
+  legend.position = "right"
 )
 ```
 
@@ -646,8 +653,7 @@ In `spatstat`, a `mark` can basically take any value, discrete (e.g. cell types,
 genes <- c('Slc18a2', 'Esr1', 'Pgr')
 gex <- assay(sub)[genes,] %>% t %>% as.matrix %>% 
   data.frame %>% set_rownames(NULL)
-# gene expression to marks
-colData(sub) <- colData(sub) %>% cbind(gex)
+
 marks(pp) <- gex
 ```
 
@@ -701,7 +707,8 @@ p <- plotMetricPerFov(
   correction = "iso",
   theo = TRUE,
   x = "r",
-  imageId = 'gene'
+  imageId = 'gene',
+  legend.position = "right"
 )
 p
 ```
@@ -738,7 +745,8 @@ p <- plotMetricPerFov(
   correction = "iso",
   theo = TRUE,
   x = "r",
-  imageId = 'gene'
+  imageId = 'gene',
+  legend.position = "right"
 )
 p
 ```

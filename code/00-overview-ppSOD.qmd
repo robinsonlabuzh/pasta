@@ -58,6 +58,12 @@ spe <- readRDS("../data/spe.rds")
 spe
 ```
 
+```{r}
+colData(spe)$x <- spatialCoords(spe)[,'x']
+colData(spe)$y <- spatialCoords(spe)[,'y']
+annd <- zellkonverter::SCE2AnnData(spe)
+```
+
 We see that we have an object of class `r BiocStyle::Biocpkg('SpatialExperiment')` with $161$ genes (rows) and $73655$ cells. This object is very similar to a `r BiocStyle::Biocpkg('SingleCellExperiment')` object except it has the added `spatialCoords` slot. One slot in the `colData` is called `sample_id` which defines the so called z-slices. The three dimensional tissue is cut in the z-axis into consecutive two dimensional slices [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
 
 Next, we want to extract three slices of this `r BiocStyle::Biocpkg('SpatialExperiment')` object and convert the 2D slices into `ppp` objects.
@@ -280,7 +286,8 @@ p_ls <- lapply(res_ls, function(res) {
     theo = TRUE,
     correction = "iso",
     x = "r",
-    imageId = 'sample_id'
+    imageId = 'sample_id',
+    legend.position = "right"
   )
 })
 ```
@@ -310,7 +317,8 @@ plotMetricPerFov(
   theo = TRUE,
   correction = "iso",
   x = "r",
-  imageId = 'sample_id'
+  imageId = 'sample_id',
+  legend.position = "right"
 )
 ```
 
@@ -325,12 +333,6 @@ $$
 where the numerator is the conditional expectation of the marks at location $u,v$ separated by a radius $r$ and $f$ can be any function linking the two marks. The denominator is the expectation of two random marks $M,M'$ [@baddeleySpatialPointPatterns2015, pp. 603].
 
 ```{r}
-genes <- c("Slc18a2", "Esr1", "Pgr")
-gex <- assay(spe)[genes, ] |> t() |> as.matrix() |>
-  data.frame() |> set_rownames(NULL)
-# gene expression to marks
-colData(spe) <- colData(spe) |> cbind(gex)
-
 res <- calcMetricPerFov(
   spe,
   selection = 'Esr1',
@@ -349,7 +351,8 @@ p <- plotMetricPerFov(
   correction = "iso",
   theo = TRUE,
   x = "r",
-  imageId = 'sample_id'
+  imageId = 'sample_id',
+  legend.position = "right"
 )
 p
 ```
@@ -424,7 +427,8 @@ p <- plotMetricPerFov(
   theo = TRUE,
   correction = "iso",
   x = "r",
-  imageId = 'sample_id'
+  imageId = 'sample_id',
+  legend.position = "right"
 )
 ```
 

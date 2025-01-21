@@ -86,6 +86,7 @@ features <- c("KRT17", "TAGLN")
 colGraphName <- "knn5"
 colGeometryName <- "centroids"
 segmentation <- "cellSeg"
+plotsize = 1.25
 ```
 
 With a defined spatial weight matrix, one can calculate multivariate spatial metrics. We will consider both global and local bivariate observations as well as local multivariate spatial metrics.

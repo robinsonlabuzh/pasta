@@ -22,4 +22,52 @@ other options to specify the weight matrix $W$ are mentioned in @zuurAnalysingEc
 
 `Voyager` has a special function for the construction of the weight matrix in Visium data `findVisiumGraph`. This function defines the neigbours to be the surrounding spots.
 
+::: {.panel-tabset}
 
+### `R`
+
+```{r}
+# there is an empty spot we have to exclude as it has no neighbours
+sfe <- sfe[, colnames(sfe) != "GAGATCTGCTTGGCAT-1"]
+
+# construct the weight matrix using the Voyager function
+colGraph(sfe, "visium") <- findVisiumGraph(sfe)
+colGraph(sfe, "binary") <- findVisiumGraph(sfe, style = "B")
+
+plotColGraph(sfe,
+  colGraphName = colGraphName
+) + theme_void()
+```
+### `Python`
+
+```{python}
+sq.gr.spatial_neighbors(adata, n_neighs=6, coord_type="grid")
+spatial_weights = W.from_sparse(adata.obsp['spatial_connectivities'])
+
+# define a wider neighbourhood graph - result is more smoothed
+sq.gr.spatial_neighbors(adata, n_neighs=50, coord_type="grid", key_added="wide_spatial")
+spatial_weights_wide = W.from_sparse(adata.obsp["wide_spatial_connectivities"])
+
+fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+sq.pl.spatial_scatter(
+    adata[adata.obsp["spatial_connectivities"].nonzero()[0], :],
+    connectivity_key="spatial_connectivities",
+    size=0.1,
+    na_color="black",
+    edges_color="black",
+    edges_width=0.1,
+    shape=None,
+    library_id="spatial",
+    ax=ax,
+    fig=fig,
+)
+
+# remove unconnected spots
+adata = adata[adata.obsp["spatial_connectivities"].sum(1).A1 > 0, :]
+
+ax.set_axis_off()
+fig.suptitle("Connectivity grid", size=10, y=0.9)
+fig.set_dpi(200)
+```
+
+:::

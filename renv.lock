@@ -1314,7 +1314,7 @@
     },
     "dbplyr": {
       "Package": "dbplyr",
-      "Version": "2.5.0",
+      "Version": "2.3.4",
       "Source": "Repository",
       "Repository": "CRAN",
       "Requirements": [
@@ -1338,7 +1338,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "39b2e002522bfd258039ee4e889e0fd1"
+      "Hash": "63534894354af6b2587b7aa518a5193a"
     },
     "deSolve": {
       "Package": "deSolve",
@@ -3149,15 +3149,22 @@
     },
     "spatialFDA": {
       "Package": "spatialFDA",
-      "Version": "0.99.1",
-      "Source": "Bioconductor",
+      "Version": "0.99.4",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "spatialFDA",
+      "RemoteUsername": "mjemons",
+      "RemoteSha": "752ff4640e69bbd5595d4fac27637afa7e31c862",
       "Requirements": [
+        "R",
         "SpatialExperiment",
         "SummarizedExperiment",
         "dplyr",
         "fda",
         "ggplot2",
         "graphics",
+        "magrittr",
         "methods",
         "parallel",
         "patchwork",
@@ -3168,7 +3175,7 @@
         "stats",
         "tidyr"
       ],
-      "Hash": "857781d37a80fee615194f2722964e48"
+      "Hash": "abe5919ec82adb1a2e1049515785fbfe"
     },
     "spatstat": {
       "Package": "spatstat",

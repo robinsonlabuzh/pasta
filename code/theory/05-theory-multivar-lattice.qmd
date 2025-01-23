@@ -391,7 +391,7 @@ adata.obs["neighbors_match_fraction"] = df_neighborhood_match_test.loc[adata.obs
 
 # plot the results
 neighborhood_match_test_features = ["neighbors_match_count", "neighbors_match_fraction"]
-fig, axes = plt.subplots(1, len(features), figsize=(len(neighborhood_match_test_features)*5, 5))
+fig, axes = plt.subplots(1, len(neighborhood_match_test_features), figsize=(len(neighborhood_match_test_features)*5, 5))
 for feature, ax in zip(neighborhood_match_test_features, axes):
     title = feature.replace("_", " ").capitalize()
     sq.pl.spatial_scatter(adata, color=feature, shape=None, size=20, cmap="YlOrBr", title=title, ax=ax, fig=fig, use_raw=False)
@@ -412,14 +412,15 @@ In addition to measures of spatial autocorrelation of continuous data as seen ab
 
 ### `R`
 
-First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data
+First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data followed by Leiden clustering [@traag2019louvain]. 
 
 ```{r}
 # Run PCA on the sample
-sfe <- runPCA(sfe)
+sfe <- runPCA(sfe, ncomponents = 50)
 # Cluster based on first 20 PC's and using leiden
 colData(sfe)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
-                                    BLUSPARAM = SNNGraphParam(
+                                    BLUSPARAM = KNNGraphParam(
+                                        k = 20,
                                         cluster.fun = "leiden",
                                         cluster.args = list(
                                             resolution_parameter = 0.3,
@@ -437,12 +438,21 @@ plotSpatialFeature(sfe,
 
 ### `Python`
 
-```{python, eval = FALSE}
+```{python}
+#compute a PCA on the 
+sc.pp.pca(adata, n_comps = 50)
+#compute the neighbours
+sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
+#compute leiden clustering
+sc.tl.leiden(adata, resolution = 0.3)
+```
+
+```{python, eval = TRUE}
 fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 sq.pl.spatial_scatter(
     adata,
-    color="cluster",
-    palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["cluster"]))]),
+    color="leiden",
+    palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["leiden"]))]),
     shape=None,
     library_id="spatial",
     title="Clusters",
@@ -463,14 +473,14 @@ The join count statistic is calculated as follows:
 
 ```{r}
 joincount.multi(colData(sfe)$cluster,
-             colGraph(sfe, colGraphName))
+             colGraph(sfe, 'binary'))
 ```
 
 ### `Python`
 
-```{python, eval = FALSE}
-sq.gr.interaction_matrix(adata, "cluster", normalized=False, connectivity_key="spatial")
-df_join_counts_multivariate = pd.DataFrame(adata.uns["cluster_interactions"], columns=np.unique(adata.obs["cluster"]), index=np.unique(adata.obs["cluster"]))
+```{python, eval = TRUE}
+sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
+df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
 df_join_counts_multivariate
 ```
 

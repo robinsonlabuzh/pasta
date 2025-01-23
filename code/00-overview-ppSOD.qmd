@@ -10,6 +10,8 @@ In this vignette we will show:
 
 - For more background on point pattern analysis we refer the reader to our more detailed vignettes and @baddeleySpatialPointPatterns2015.  
 
+- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
+
 ## Introduction
 
 We assume that cells (or transcripts) can be approximated as points locations.

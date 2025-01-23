@@ -8,7 +8,9 @@ In this vignette we will show:
 
 - The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
 
-- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.  
+- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.
+
+- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
 
 ```{r}
 #| include: false

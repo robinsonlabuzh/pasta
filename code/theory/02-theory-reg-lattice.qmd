@@ -42,9 +42,10 @@ plotColGraph(sfe,
 
 ```{python}
 sq.gr.spatial_neighbors(adata, n_neighs=6, coord_type="grid")
-spatial_weights = W.from_sparse(adata.obsp["spatial_connectivities"])
 # remove unconnected spots
 adata = adata[adata.obsp["spatial_connectivities"].sum(1).A1 > 0, :]
+# calculate spatial weights
+spatial_weights = W.from_sparse(adata.obsp["spatial_connectivities"])
 
 # define a wider neighbourhood graph - result is more smoothed
 sq.gr.spatial_neighbors(adata, n_neighs=50, coord_type="grid", key_added="wide_spatial")

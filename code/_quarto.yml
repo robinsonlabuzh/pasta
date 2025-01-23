@@ -2,7 +2,9 @@ project:
   type: website
   execute-dir: file
   output-dir: ../docs
-
+  render:
+    - "*.qmd"
+    - "!theory/"
 bibliography: ../misc/PASTA.bib
 
 execute: 

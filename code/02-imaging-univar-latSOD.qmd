@@ -97,7 +97,7 @@ bbox_use <- st_as_sfc(st_bbox(c(xmin = 3500, xmax = 14000, ymin = 157200, ymax =
 
 ```{r}
 sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
-ann <-  zellkonverter::SCE2AnnData(sfe)
+ann <-  zellkonverter::SCE2AnnData(sfe, X_name = "counts")
 anndata::write_h5ad(ann, "../data/imaging_sfe.h5ad")
 ```
 

@@ -85,7 +85,8 @@ $$
 \mu = \int_{B} \lambda(u) du.
 \label{eq:expected_number_inhomogeneous}
 $$
-### Confounding between clustering and inhomogeneity  
+### Confounding between clustering and inhomogeneity
+
 Often, it is hard to distinguish inhomogeneous intensity from genuine clustering of points. Patterns can arise from an inhomogeneous process or a clustered process and it is not straightforward to distinguish them: one is governed by different (inhomogeoenous) intensities whereas the other is due to interactions (clustering) between points [@baddeleySpatialPointPatterns2015, p. 151 ff.]. One way this can occur is if cells of different sizes are treated as points instead of considering their entire volume [@baddeleySpatialPointPatterns2015, p. 210 ff.].
 
 ### Isotropy

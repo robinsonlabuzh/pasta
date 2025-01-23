@@ -338,7 +338,9 @@ print("Calr:", moran_calr.I, "Myh2:", moran_myh2.I)
 
 We can further use permutation testing to get a significance of our estimates.
 
-:::
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 sfe_tissue <- runUnivariate(sfe_tissue,
@@ -352,11 +354,15 @@ sfe_tissue <- runUnivariate(sfe_tissue,
 rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features,]
 ```
 
+## `Python`
+
 ```{python}
 moran_calr.p_sim, moran_myh2.p_sim
 print("Calr:", "I:", moran_calr.I, "p-value:", moran_calr.p_sim)
 print("Myh2:", "I:", moran_myh2.I, "p-value:", moran_myh2.p_sim)
 ```
+
+::: 
 
 As we can see, the Moran's $I$ values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
 
@@ -548,9 +554,7 @@ pKnn5 <- plotLocalResult(sfe_tissue, "knn5", "area",
   divergent = TRUE, diverge_center = 0
 ) + labs(title = "Local Moran's I (li)\n5 Nearest Neighbours", 
          fill = "li(area)")
-```
 
-```{r}
 annotGraph(sfe_tissue, "knn10") <-
   findSpatialNeighbors(sfe_tissue,
     type = "myofiber_simplified",
@@ -573,9 +577,7 @@ pKnn10 <- plotLocalResult(sfe_tissue, "knn10", "area",
   divergent = TRUE, diverge_center = 0
 ) + labs(title = "Local Moran's I (li)\n10 Nearest Neighbours", 
          fill = "li(area)")
-```
 
-```{r}
 pPoly + pKnn5 + pKnn10
 ```
 

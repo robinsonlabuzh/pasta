@@ -408,11 +408,11 @@ Cardinality is a measure of how many neighbours of the two matrices are common. 
 
 In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022; @cliff1981spatial].
 
+First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data followed by Leiden clustering [@traag2019louvain]. 
+
 ::: {.panel-tabset}
 
 ### `R`
-
-First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data followed by Leiden clustering [@traag2019louvain]. 
 
 ```{r}
 # Run PCA on the sample
@@ -425,11 +425,7 @@ colData(sfe)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
                                         cluster.args = list(
                                             resolution_parameter = 0.3,
                                             objective_function = "modularity")))
-```
 
-We can visualise the clusters as follows:
-
-```{r}
 plotSpatialFeature(sfe,
   "cluster",
   colGeometryName = colGeometryName, size = plotsize - 1
@@ -445,9 +441,7 @@ sc.pp.pca(adata, n_comps = 50)
 sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
 #compute leiden clustering
 sc.tl.leiden(adata, resolution = 0.3)
-```
 
-```{python, eval = TRUE}
 fig, ax = plt.subplots(1, 1, figsize=(5, 5))
 sq.pl.spatial_scatter(
     adata,
@@ -462,10 +456,9 @@ sq.pl.spatial_scatter(
 )
 ax.set_axis_off()
 ```
-
 ::: 
 
-The join count statistic is calculated as follows:
+The join count statistics of this example are:
 
 ::: {.panel-tabset}
 
@@ -481,10 +474,12 @@ joincount.multi(colData(sfe)$cluster,
 ```{python, eval = TRUE}
 sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
 df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
-df_join_counts_multivariate
+df_join_counts_multivariate/2
 ```
 
 ::: 
+
+The `Python` function `sq.gr.interaction_matrix` counts the interaction for each pair twice, while the `R` function `joincount.multi` counts each interaction only once. Therefore, we divide the resulting interaction matrix in `Python` by 2. Since highly variable gene selection and clustering might have different implementations, the results are not perfectly corresponding, c.f. @richImpactPackageSelection2024.
 
 The rows show different combinations of clusters that are in physical contact. E.g. $1:1$ means the cluster $1$ with itself. The column `Joincount` is the observed statistic whereas the column `Expected` is the expected value of the statistic for this combination. Like this, we can compare whether contacts among cluster combinations occur more frequently than expected at random [@cliff1981spatial].
 

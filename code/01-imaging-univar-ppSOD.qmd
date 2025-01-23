@@ -78,7 +78,7 @@ A stationary point process $X$ is invariant to translations. So the entire point
 
 ### The $L$-function
 
-The $K$-function can be \`\`centered'', which is then referred to as Besag's $L$-function. The $L$-function is a variance-stabilising version of the $K$-function [@caneteSpicyRSpatialAnalysis2022; @besag1977contribution; @besag1977contribution]:
+The $K$-function can be ''centered'', which is then referred to as Besag's $L$-function. The $L$-function is a variance-stabilising version of the $K$-function [@caneteSpicyRSpatialAnalysis2022; @besag1977contribution; @besag1977contribution]:
 
 $$
 L(r) = \sqrt{\frac{K(r)}{\pi}}.
@@ -136,7 +136,7 @@ p_homo
 
 The plot above shows the K-function (right), L-function (middle) and pair-correlation function for the three different slices.
 
-In the homogeneous case we see that all slices are above the Poisson line, indicating positive association for all slices. The association is strongest for slice \$-0.09\$ followed by \$0.01\$ and \$0.21\$. Interestingly, at radii $r>300$ the $K$ curve for slice $0.21$ crosses the other two curves.
+In the homogeneous case we see that all slices are above the Poisson line, indicating positive association for all slices. The association is strongest for slice $-0.09$ followed by $0.01$ and $0.21$. Interestingly, at radii $r>300$ the $K$ curve for slice $0.21$ crosses the other two curves.
 
 ### Correcting for Inhomogeneity
 
@@ -151,7 +151,7 @@ $$
 where $e(u,v;r)$ is an edge correction weight and $\hat{\lambda}(x_i)$ is an estimator of the intensity at point $x_i$. The estimation of the local intensities can happen in a data-dependent manner via kernel-smoothing. As this is the same data to then calculate the metric on, this can lead to biases. However, if the local intensities are known, the inhomogeneous $K$ function is an unbiased estimator [@baddeleySpatialPointPatterns2015, pp. 242-246].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
-res_ls <- lapply(list('Kinhom', 'Linhom'), function(fun) {
+res_ls <- lapply(list('Kinhom', 'Linhom', 'pcfinhom'), function(fun) {
   res <- calcMetricPerFov(
     spe,
     'OD Mature',
@@ -159,46 +159,27 @@ res_ls <- lapply(list('Kinhom', 'Linhom'), function(fun) {
     fun = fun,
     marks = 'cluster_id',
     rSeq = NULL,
-    by = c('Animal_ID', 'sample_id')
+    by = c('Animal_ID', 'sample_id'),
+    correction = 'isotropic'
   )
   res <- subset(res, sample_id %in% c('-0.09', '0.01', '0.21'))
   return(res)
 })
 
-res_pcf <- calcMetricPerFov(
-  spe,
-  'OD Mature',
-  subsetby = 'sample_id',
-  fun = 'pcfinhom',
-  marks = 'cluster_id',
-  rSeq = NULL,
-  by = c('Animal_ID', 'sample_id')
-)
-res_pcf <- subset(res_pcf, sample_id %in% c('-0.09', '0.01', '0.21'))
-
 p_ls <- lapply(res_ls, function(res) {
   plotMetricPerFov(
     res,
-    correction = "border",
+    correction = "iso",
     theo = TRUE,
     x = "r",
     imageId = 'sample_id',
     legend.position = "right"
   )
 })
-p <- plotMetricPerFov(
-  res_pcf,
-  correction = "iso",
-  theo = TRUE,
-  x = "r",
-  imageId = 'sample_id',
-  legend.position = "right"
-)
 ```
 
 ```{r, cache=FALSE, fig.height = 6, fig.width = 16}
 p_inhomo <- wrap_plots(p_ls, guides = 'collect')
-p_inhomo <- wrap_plots(p_inhomo, p, guides = 'collect', widths = c(2, 1))
 p_inhomo
 ```
 
@@ -269,7 +250,7 @@ Deciding whether a pattern is homogeneous or inhomogeneous can be based on metri
 
 #### Local Indicators of Spatial Association
 
-It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute \`local\` contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns2015 pp. 247-248].
+It is worth noting that the $K$- and $L$-functions described above are summary statistics over the entire pattern (i.e., averaged over all points). However, if we know that there are different regions in our point pattern, an alternative strategy is to compute ''local'' contributions to these patterns, i.e., local $K$- ,$L$- or pair-correlation functions. Baddeley et. al. propose to compare these $n$ functions with so-called functional principal component analysis (see below). We will show here the example of the LISA version of the $L$-function [@baddeleySpatialPointPatterns2015 pp. 247-248].
 
 ##### Local $L$ function
 
@@ -414,7 +395,7 @@ Baddeley et al. summarises three basic distances:
 -   NN distances: $d_i = \min_{j \neq i}d_{ij}$
 -   empty-space distance: $d(u) = \min_j||u-x_j||$
 
-Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above \`\`Testing for CSR''.
+Note also that there are tests of CSR that are based on spacing, including the Clark-Evans and Hopkins-Skellam Index tests that were discussed above ''Testing for CSR''.
 
 ### Nearest Neighbour approaches
 

@@ -8,7 +8,7 @@ In this vignette we will show:
 
 - The use case is a 10x Visium data set from @10xgenomicsAdultMouseKidney2021 downloaded from the [squidpy visium datasets](https://squidpy.readthedocs.io/en/stable/api/squidpy.datasets.visium.html) [@pallaSquidpyScalableFramework2022].
 
-- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using these methods are found in the [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html)
+- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using these methods are found in the [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html).
 
 - `Python` implementations rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. Data representation rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 

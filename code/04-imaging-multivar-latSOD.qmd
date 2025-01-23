@@ -8,9 +8,15 @@ In this vignette we will show:
 
 - The use case is a CosMx data set from @heHighplexImagingRNA2022.
 
-- Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html), [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html).
+- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html), [Voyager bivariate vignette](https://pachterlab.github.io/voyager/articles/bivariate.html) and [Voyager multivariate vignette](https://pachterlab.github.io/voyager/articles/localc.html).
+
+- `Python` implementations rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. Data representation rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 
 ## Dependencies
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| label: load-libs
@@ -18,10 +24,45 @@ In this vignette we will show:
 #| warning: false
 #| results: hide
 source("utils.R")
-theme_set(theme_minimal())
+theme_set(theme_light())
+```
+
+### `Python`
+
+```{python}
+import numpy as np
+import scanpy as sc
+import squidpy as sq
+from esda.moran import Moran_BV, Moran_Local_BV
+from esda.lee import Spatial_Pearson, Spatial_Pearson_Local
+from esda.geary_local_mv import Geary_Local_MV
+from scipy.stats import false_discovery_control
+from libpysal.cg import KDTree
+from libpysal.weights import W, KNN
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams['font.family'] = 'Futura'
+df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
+df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
+cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
+cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
 ```
 
 For this representation of cells, we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset, we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.
+
+:::
+
+## Setup and Preprocessing
+
+::: {.panel-tabset}
+
+### `R`
 
 
 ```{r}
@@ -41,6 +82,10 @@ sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
 rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)
+
+# save for python
+colData(sfe)$CenterX_global_px <- spatialCoords(sfe)[,1]
+colData(sfe)$CenterY_global_px <- spatialCoords(sfe)[,2]
 ```
 
 ```{r}
@@ -50,6 +95,28 @@ bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax =
 sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
 ```
 
+```{r}
+sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+ann <-  zellkonverter::SCE2AnnData(sfe)
+anndata::write_h5ad(ann, "../data/imaging_sfe.h5ad")
+```
+
+### `Python`
+
+```{python}
+adata = sc.read_h5ad("../data/imaging_sfe.h5ad")
+adata.obsm["spatial"] = np.column_stack([adata.obs["CenterX_global_px"], adata.obs["CenterY_global_px"]])
+# normalise counts
+adata.raw = adata.copy()
+sc.pp.normalize_total(adata)
+sc.pp.log1p(adata)
+# invert the spatial coordinates
+adata.obsm["spatial"][:, 1] = adata.obsm["spatial"][:, 1].max() - adata.obsm["spatial"][:, 1]
+adata
+```
+
+
+::: 
 
 <!-- [MR: do these need to be recalculated?] -->
 
@@ -77,9 +144,11 @@ plotSpatialFeature(sfe, c("EGFR"),
   theme_void()
 ```
 
-{{< include theory/03-theory-irreg-lattice.qmd >}}
-
 Here we set the arguments for the examples below.
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 features <- c("KRT17", "TAGLN")
@@ -88,6 +157,18 @@ colGeometryName <- "centroids"
 segmentation <- "cellSeg"
 plotsize = 1.25
 ```
+
+### `Python`
+
+```{python}
+# predefine genes
+features = ["KRT17", "TAGLN"]
+figsize = (len(features)*15, 10)
+```
+
+:::
+
+{{< include theory/03-theory-irreg-lattice.qmd >}}
 
 With a defined spatial weight matrix, one can calculate multivariate spatial metrics. We will consider both global and local bivariate observations as well as local multivariate spatial metrics.
 

@@ -10,7 +10,9 @@ where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the valu
 
 The global bivariate Moran's $I$ is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial lag. The result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
-#### Implementation using `spdep`
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| fig-width: 15
@@ -19,7 +21,8 @@ The global bivariate Moran's $I$ is a measure of correlation between the variabl
 res <- spdep::moran_bv(x = logcounts(sfe)[features[1],],
          y = logcounts(sfe)[features[2],],
          listw =  colGraph(sfe, colGraphName),
-         nsim = 499)
+         nsim = 499,
+         scale = TRUE)
 res
 
 plot(res)
@@ -27,6 +30,34 @@ plot(res)
 ci <- boot::boot.ci(res, conf = c(0.99, 0.95, 0.9), type = "basic")
 ci
 ```
+
+### `Python`
+
+```{python}
+np.random.seed(3407)
+moran_bv = Moran_BV(
+    adata[:, features[0]].X.toarray(),
+    adata[:, features[1]].X.toarray(),
+    spatial_weights,
+    transformation="r",
+    permutations=499,
+)
+adata.uns[f"moran_bv_{features[0]}_{features[1]}"] = moran_bv.I
+adata.uns[f"moran_bv_{features[0]}_{features[1]}_p_sim"] = moran_bv.p_sim
+
+for key in filter(lambda x: x.startswith("moran_"), adata.uns.keys()):
+    print(f"{key}: {adata.uns[key].round(4)}")
+    
+plt.figure(figsize=(5, 4), dpi=100)
+hist = plt.hist(moran_bv.sim, bins=30, color="lightgrey", edgecolor="black")
+plt.axvline(moran_bv.I, color="red", linestyle="--")
+plt.xlabel("Simulated bivariate Moran's I")
+plt.ylabel("Simulated frequency")
+plt.title(f"Bivariate Moran's I: {features[0]} vs {features[1]} (I: {moran_bv.I.round(4)}, p: {moran_bv.p_sim.round(4)})")
+sns.despine()
+```
+
+::: 
 
 The value `t0` indicates the test statistic of global bivariate Moran's $I$. The global bivariate Moran's $I$ value for the genes `r features` is `r res$t0`. Significance can be assessed by comparing the permuted confidence interval with the test statistic.
 
@@ -38,7 +69,9 @@ $$L(x,y) = \frac{n}{\sum_{i=1}^n(\sum_{j=1}^nw_{ij})^2}\frac{\sum_{i=1}^n[\sum_{
 
 where $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$, $x$ and $y$, the two variables of interest and $\bar{x}$ and $\bar{y}$ their means [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022]. 
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 res_lee <- calculateBivariate(sfe, type = "lee.mc", 
@@ -49,7 +82,39 @@ res_lee$lee.mc_statistic
 res_lee$lee.mc_p.value
 ```
 
-The effect sice of bivariate Lee's $L$ for the genes `r features` is `r res_lee$lee.mc_statistic` and the associated p-value is `r res_lee$lee.mc_p.value`  
+The effect size of bivariate Lee's $L$ for the genes `r features` is `r res_lee$lee.mc_statistic` and the associated p-value is `r res_lee$lee.mc_p.value`  
+
+### `Python`
+
+```{python}
+np.random.seed(3407)
+lees_l_estimator = Spatial_Pearson(connectivity=spatial_weights.to_sparse(), permutations=499)
+lees_l_estimator.fit(
+    adata[:, features[0]].X.toarray(),
+    adata[:, features[1]].X.toarray(),
+)
+adata.uns[f"lees_l_{features[0]}_{features[1]}"] = lees_l_estimator.association_
+adata.uns[f"lees_l_{features[0]}_{features[1]}_p_sim"] = lees_l_estimator.significance_
+
+fig, ax = plt.subplots(figsize=(5, 5))
+sns.heatmap(
+    lees_l_estimator.association_,
+    cmap=cmap_continuous,
+    annot=True,
+    cbar=False,
+    ax=ax,
+    mask=np.triu(np.ones_like(lees_l_estimator.association_)) - np.eye(2),
+)
+ax.set_title("Lee's L")
+ax.set_xticklabels(features[:2])
+ax.set_yticklabels(features[:2], rotation=0)
+
+for i, row in enumerate(lees_l_estimator.significance_):
+    for j, p in enumerate(row):
+        ax.text(j + 0.5, i + 0.75, f"p = {p:.3f}", ha="center", va="center", color="white", fontsize=8)
+```
+
+:::
 
 ## Local Measures for Bivariate Data
 
@@ -65,7 +130,9 @@ $$
 
 This can be interesting in the context of detection of coexpressed ligand-receptor pairs. A method that is based on local bivariate Moran's $I$ and tries to detect such pairs is `SpatialDM` [@liSpatialDMRapidIdentification2023].
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| fig-width: 15
@@ -79,8 +146,42 @@ sfe_tissue <- runBivariate(sfe, type = "localmoran_bv",
 plotLocalResult(sfe_tissue, "localmoran_bv", 
                  features = localResultFeatures(sfe_tissue, "localmoran_bv"),
                 ncol = 2, divergent = TRUE, diverge_center = 0,
-                colGeometryName = colGeometryName, size = 2) 
+                colGeometryName = colGeometryName, size = plotsize) 
 ```
+
+### `Python`
+
+```{python}
+local_moran_bv = Moran_Local_BV(
+    adata[:, features[0]].X.toarray().astype(np.float64),
+    adata[:, features[1]].X.toarray().astype(np.float64),
+    spatial_weights,
+    transformation="r",
+    permutations=499,
+    seed=3407,
+)
+adata.obs[f"local_moran_bv_{features[0]}_{features[1]}"] = local_moran_bv.Is
+adata.obs[f"local_moran_bv_{features[0]}_{features[1]}_p_sim"] = local_moran_bv.p_sim
+
+fig, ax = plt.subplots(1, 1, figsize=figsize)
+sq.pl.spatial_scatter(
+    adata,
+    color=f"local_moran_bv_{features[0]}_{features[1]}",
+    cmap=cmap_continuous,
+    vmin=-adata.obs[f"local_moran_bv_{features[0]}_{features[1]}"].abs().max(),
+    vmax=adata.obs[f"local_moran_bv_{features[0]}_{features[1]}"].abs().max(),
+    vcenter=0,
+    shape=None,
+    library_id="spatial",
+    title=f"Local bivariate Moran's I: {features[0]}"+ r"$\rightarrow$" + f"{features[1]}",
+    ax=ax,
+    fig=fig,
+    size=40,
+)
+ax.set_axis_off()
+```
+
+::: 
 
 ### Local Bivariate Lee's $L$
 
@@ -89,7 +190,9 @@ Similar to the global variant of Lee's $L$ the local variant [@leeDevelopingBiva
 $$L_i(x,y) = \frac{n(\sum_{j=1}^nw_{ij}(x_j-\bar{x}))(\sum_{j=1}^nw_{ij}(y_j-\bar{y}))}{\sqrt{\sum_{i=1}^n(x_i-\bar{x})^2}\sqrt{\sum_{i=1}^n(y_i-\bar{y})^2}}$$
 Local Lee's $L$ is a measure of spatial co-expression, when the variables of interest are gene expression measurements. Unlike the gobal version, the variables are not averaged and show the local contribution to the metric. Positive values indicate colocalization, negative values indicate segregation [@leeDevelopingBivariateSpatial2001 ;@bivandPackagesAnalyzingSpatial2022]. 
 
-##### Implementation using `voyager`
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| fig-width: 15
@@ -102,8 +205,39 @@ sfe_tissue <- runBivariate(sfe, type = "locallee",
 plotLocalResult(sfe_tissue, "locallee", 
                  features = localResultFeatures(sfe_tissue, "locallee"),
                 ncol = 2, divergent = TRUE, diverge_center = 0,
-                colGeometryName = colGeometryName, size = 2) 
+                colGeometryName = colGeometryName, size = plotsize) 
 ```
+
+### `Python`
+
+```{python}
+np.random.seed(3407)
+local_lees_l_estimator = Spatial_Pearson_Local(connectivity=spatial_weights.to_sparse(), permutations=499)
+local_lees_l_estimator.fit(
+    adata[:, features[0]].X.toarray().astype(np.float64),
+    adata[:, features[1]].X.toarray().astype(np.float64),
+)
+adata.obs[f"local_lees_l_{features[0]}_{features[1]}"] = local_lees_l_estimator.associations_
+
+fig, ax = plt.subplots(1, 1, figsize=figsize)
+sq.pl.spatial_scatter(
+    adata,
+    color=f"local_lees_l_{features[0]}_{features[1]}",
+    cmap=cmap_continuous,
+    vmin=-adata.obs[f"local_lees_l_{features[0]}_{features[1]}"].abs().max(),
+    vmax=adata.obs[f"local_lees_l_{features[0]}_{features[1]}"].abs().max(),
+    vcenter=0,
+    shape=None,
+    library_id="spatial",
+    title=f"Local Lees's Ls: {features[0]}"+ r"$\leftrightarrow$" + f"{features[1]}",
+    ax=ax,
+    fig=fig,
+    size=40,
+)
+ax.set_axis_off()
+```
+
+:::
 
 ## Local Measures for Multivariate Data
 
@@ -119,7 +253,9 @@ $$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
 
 where $c_{v,i}$ is the local Geary’s $C$ for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretation of the mixture of similarity in the physical space and similarity in the attribute space [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995]. 
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+### `R`
 
 To speed up computation we will use highly variable genes.
 
@@ -127,18 +263,41 @@ To speed up computation we will use highly variable genes.
 #| fig-width: 15
 #| fig-height: 10
 
-hvgs <- getTopHVGs(sfe, fdr.threshold = 0.01)
+hvgs <- getTopHVGs(sfe, n = 100)
 
 # Subset of the tissue
 sfe_tissue <- runMultivariate(sfe, type = "localC_multi",
                     subset_row = hvgs,
                     colGraphName = colGraphName)
 
-# Local C mutli is stored in colData so this is a workaround to plot it
-plotSpatialFeature(sfe_tissue, "localC_multi", size = 2, scattermore = FALSE)
+# # Local C mutli is stored in colData so this is a workaround to plot it
+# plotSpatialFeature(sfe_tissue, "localC_multi", size = plotsize, scattermore = FALSE)
 ```
 
+### `Python`
+
+```{python}
+sc.pp.highly_variable_genes(adata, n_top_genes=100, flavor="seurat_v3", inplace=True)
+
+local_geary_mv_estimator = Geary_Local_MV(connectivity=spatial_weights, permutations=100)
+local_geary_mv_estimator.fit(
+    [
+        adata[:, highly_variable_gene].X.toarray()[:, 0]
+        for highly_variable_gene in adata.var_names[adata.var["highly_variable"]].to_list()
+    ]
+)
+
+adata.obs["local_geary_mv"] = local_geary_mv_estimator.localG
+adata.obs["local_geary_mv_p"] = -np.log10(false_discovery_control(local_geary_mv_estimator.p_sim))
+```
+
+::: 
+
 We can further plot the results of the permutation test. Significant values indicate interesting regions, but should be interpreted with care for various reasons. For example, we are looking for similarity in a combination of multiple features but the exact combination is not known. @anselinLocalIndicatorMultivariate2019 write "Overall, however, the statistic indicates a combination of the notion of distance in multi-attribute space with that of geographic neighbors. This is the essence of any spatial autocorrelation statistic. It is also the trade-off encountered in spatially constrained multivariate clustering methods (for a recent discussion, see, e.g., Grubesic, Wei, and Murray 2014).". Multi-attribute space refers here to the highly variable genes. The problem can be summarised to where the similarity comes from, the gene expression or the physical space [@anselinLocalIndicatorMultivariate2019]. The same problem is common in spatial domain detection methods.
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| fig-width: 15
@@ -150,8 +309,31 @@ sfe <- runMultivariate(sfe, type = "localC_perm_multi",
                     colGraphName= colGraphName)
 
 # stored as spatially reduced dim; plot it in this way
-spatialReducedDim(sfe, "localC_perm_multi",  c(1, 11))
+spatialReducedDim(sfe, "localC_perm_multi",  c(1, 11), size = plotsize/2)
 ```
+
+
+### `Python`
+
+```{python}
+fig, ax = plt.subplots(1, 2, figsize=(len(features)*7, 7))
+sq.pl.spatial_scatter(
+    adata,
+    color=["local_geary_mv", "local_geary_mv_p"],
+    cmap="Blues",
+    vmin=0,
+    shape=None,
+    library_id="spatial",
+    title=["Geary's local multivariate C", "Simulated $-log_{10}(p_{adjusted})$"],
+    ax=ax,
+    fig=fig,
+    size=35,
+)
+for ax in ax:
+    ax.set_axis_off()
+```
+
+::: 
 
 plotted are the effect size and the adjusted p-values in space.
 
@@ -159,24 +341,64 @@ plotted are the effect size and the adjusted p-values in space.
 
 This test is useful to assess the overlap of the $k$-nearest neighbours from physical distances (tissue space) with the $k$-nearest neighbours from the gene expression measurements (attribute space). $k$-nearest neighbour matrices are computed for both physical and attribute space. In a second step the probability of overlap between the two matrices is computed [@anselinToblerLawMultivariate2020]. 
 
+::: {.panel-tabset}
+
+### `R`
+
 ```{r}
 #| warning: false
 #| fig-width: 15
 #| fig-height: 10
 
-sf <- colGeometries(sfe)[[segmentation]]
+sf <- colGeometries(sfe)[[colGeometryName]]
 sf <- cbind(sf,  t(as.matrix(logcounts(sfe)[hvgs,])))
+# "-" gets replaced by "." so harmonise here
+hvgs <- gsub("-", ".", hvgs)
 
-nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 20)
+nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 6)
 
 sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
-p <- tm_shape(sf) + tm_fill(col = 'Cardinality')
-q <- tm_shape(sf) + tm_fill(col = 'Probability')  
+p <- tm_shape(sf) + tm_dots(col = 'Cardinality', size = 0.06 * plotsize)
+q <- tm_shape(sf) + tm_dots(col = 'Probability', size = 0.06 * plotsize)  
 
 tmap_arrange(p,q)
 ```
+
+### `Python`
+
+```{python}
+k = 20
+# Spatial grid neighbors
+df_neighbors_spatial = spatial_weights.to_adjlist()
+df_neighbors_features = KNN(KDTree(adata[:, adata.var["highly_variable"]].X.toarray(), distance_metric="euclidean"), k=k).to_adjlist()
+
+focal_points = sorted(set(df_neighbors_spatial.focal).intersection(df_neighbors_features.focal))
+focal_points_names = adata.obs_names[focal_points]
+
+df_neighborhood_match_test = pd.DataFrame(columns=["neighbors_match_count", "neighbors_match_fraction"], index=focal_points_names)
+
+for focal_point, focal_name in zip(focal_points, focal_points_names):
+    neighbors_spatial = set(df_neighbors_spatial[df_neighbors_spatial.focal == focal_point].neighbor)
+    neighbors_features = set(df_neighbors_features[df_neighbors_features.focal == focal_point].neighbor)
+    neighbors_match_count = len(neighbors_spatial.intersection(neighbors_features))
+    neighbors_match_fraction = neighbors_match_count / len(neighbors_spatial)
+    df_neighborhood_match_test.loc[focal_name] = [neighbors_match_count, neighbors_match_fraction]
+
+adata.obs["neighbors_match_count"] = df_neighborhood_match_test.loc[adata.obs_names, "neighbors_match_count"]
+adata.obs["neighbors_match_fraction"] = df_neighborhood_match_test.loc[adata.obs_names, "neighbors_match_fraction"]
+
+# plot the results
+neighborhood_match_test_features = ["neighbors_match_count", "neighbors_match_fraction"]
+fig, axes = plt.subplots(1, len(features), figsize=(len(neighborhood_match_test_features)*5, 5))
+for feature, ax in zip(neighborhood_match_test_features, axes):
+    title = feature.replace("_", " ").capitalize()
+    sq.pl.spatial_scatter(adata, color=feature, shape=None, size=20, cmap="YlOrBr", title=title, ax=ax, fig=fig, use_raw=False)
+    ax.set_axis_off()
+```
+
+::: 
 
 Cardinality is a measure of how many neighbours of the two matrices are common. Some regions show high cardinality with low probability and therefore share similarity on both attribute and physical space. In contrast to multivariate local Geary's $C$ this metric focuses directly on the distances and not on a weighted average. A problem of this approach is called the empty space problem which states that as the number of dimensions of the feature sets increase, the empty space between observations also increases [@anselinToblerLawMultivariate2020].
 
@@ -186,7 +408,9 @@ Cardinality is a measure of how many neighbours of the two matrices are common. 
 
 In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022; @cliff1981spatial].
 
-#### Implementation using `spdep`
+::: {.panel-tabset}
+
+### `R`
 
 First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data
 
@@ -207,16 +431,50 @@ We can visualise the clusters as follows:
 ```{r}
 plotSpatialFeature(sfe,
   "cluster",
-  colGeometryName = colGeometryName
+  colGeometryName = colGeometryName, size = plotsize - 1
 )
 ```
 
+### `Python`
+
+```{python, eval = FALSE}
+fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+sq.pl.spatial_scatter(
+    adata,
+    color="cluster",
+    palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["cluster"]))]),
+    shape=None,
+    library_id="spatial",
+    title="Clusters",
+    ax=ax,
+    fig=fig,
+    size=40,
+)
+ax.set_axis_off()
+```
+
+::: 
+
 The join count statistic is calculated as follows:
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 joincount.multi(colData(sfe)$cluster,
              colGraph(sfe, colGraphName))
 ```
+
+### `Python`
+
+```{python, eval = FALSE}
+sq.gr.interaction_matrix(adata, "cluster", normalized=False, connectivity_key="spatial")
+df_join_counts_multivariate = pd.DataFrame(adata.uns["cluster_interactions"], columns=np.unique(adata.obs["cluster"]), index=np.unique(adata.obs["cluster"]))
+df_join_counts_multivariate
+```
+
+::: 
 
 The rows show different combinations of clusters that are in physical contact. E.g. $1:1$ means the cluster $1$ with itself. The column `Joincount` is the observed statistic whereas the column `Expected` is the expected value of the statistic for this combination. Like this, we can compare whether contacts among cluster combinations occur more frequently than expected at random [@cliff1981spatial].
 

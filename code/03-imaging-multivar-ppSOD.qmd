@@ -425,7 +425,10 @@ resCross <- calcCrossMetricPerFov(
 
 ```{r}
 resCross <- subset(resCross, sample_id %in% fov_sel)
-plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id')
+#create a unique plotting ID
+resCross$ID <- paste0(resCross$Animal_ID, '|', resCross$sample_id)
+#plot the result of the Dot function
+plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id', ID = "ID")
 ```
 
 The dot functions are useful summary statistics to analyse the dependence of one mark with all other marks. 
@@ -438,7 +441,7 @@ In our original dataset, we have a large number of different marks. We picked th
 
 The Mark or Type Equality function for a stationary multitype point process measures the correlation between types of two points separated by distance r. It is the sum of the mark connection function of all pairs of points of the same type.
 
-If k < 1, points at distance r are less likely than expected to be of the same type. If > 1, they are more likely to be of the same type. The value 1 indicates a lack of correlation [@baddeleySpatialPointPatterns2015, p. 603 ff].
+If $k < 1$, points at distance $r$ are less likely than expected to be of the same type. If $k > 1$, they are more likely to be of the same type. The value $1$ indicates a lack of correlation [@baddeleySpatialPointPatterns2015, p. 603 ff].
 
 ```{r}
 #| message: false
@@ -488,29 +491,6 @@ plotMarkCorr(pp_sel)
 ```
 
 We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. At around $r=265$ this behavior changes and it becomes slightly less likely to find the same type compared to by chance.
-
-<!-- ### I-function  -->
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- ic <- Iest(pp_sel) -->
-<!-- plot(ic) -->
-<!-- ``` -->
-
-<!-- ## Summary functions for non stationary processes -->
-
-<!-- The cross and dot functions described above assume a underlying stationary point process. If this assumption is not given, the interpretation of the result might be incorrect. -->
-
-<!-- The inhomogeneous equivalents of the described functions require the different intensities as inputs in `spatstat`. If they are not given the intensities are estimated using kernel smoothing.   -->
-
-<!-- ### Inhomogeneous L-function -->
-<!-- ```{r} -->
-<!-- plot(Lcross.inhom(pp_sel, "Microglia", "OD Mature", sigma=bw.diggle(pp_sel))) -->
-<!-- plot(Lcross.inhom(pp_sel, "Microglia", "OD Mature", sigma=bw.relrisk(pp_sel))) -->
-
-<!-- Lcross.inhom(pp_sel, "Microglia", "OD Mature") %>% plot() -->
-<!-- ``` -->
 
 # Tests of randomness and independence
 
@@ -591,8 +571,6 @@ plotEnvCross(pp_sel, fun = "Kcross.inhom",
              "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
 
-<!-- We have indication that the independence-of-components assumption should not be rejected. Therefore, we conclude that Ependymal and OD Mature cells are independent. -->
-
 # Assuming stationarity of the total pattern
 
 As outlined above, the homogeneous cross correlation and spacing functions assume stationarity, whereas the inhomogeneous functions only assume correlation stationarity. First-order stationarity is not given in our dataset, when we look at the different patterns individually. However, using the total (unmarked) pattern, we could assume first-order stationarity, since the intensity is the same across the pattern.
@@ -601,8 +579,7 @@ As outlined above, the homogeneous cross correlation and spacing functions assum
 plot(density(unmark(pp)))
 ```
 
-Let's look at the homogeneous cross K-function.
-
+Let's look at the homogeneous cross $K$-function.
 
 ```{r}
 #| fig-width: 15

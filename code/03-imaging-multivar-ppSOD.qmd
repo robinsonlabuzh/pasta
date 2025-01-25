@@ -576,7 +576,7 @@ plotEnvCross(pp_sel, fun = "Kcross.inhom",
 As outlined above, the homogeneous cross correlation and spacing functions assume stationarity, whereas the inhomogeneous functions only assume correlation stationarity. First-order stationarity is not given in our dataset, when we look at the different patterns individually. However, using the total (unmarked) pattern, we could assume first-order stationarity, since the intensity is the same across the pattern.
 
 ```{r}
-plot(density(unmark(pp)))
+plot(density(unmark(pp), sigma = bw.diggle))
 ```
 
 Let's look at the homogeneous cross $K$-function.

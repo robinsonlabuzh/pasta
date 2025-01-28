@@ -60,9 +60,9 @@ Until now, we have considered the cells to be represented in a point pattern. Ho
 
 For this representation of the cells we will rely on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package. For preprocessing of the dataset and code examples we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `r BiocStyle::Biocpkg('voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('voyager')` package provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object.
 
-::: {.panel-tabset}
-
 ## Setup and Preprocessing
+
+::: {.panel-tabset}
 
 ### `R`
 
@@ -135,7 +135,7 @@ pointsize <- 1.5
 ```{python}
 # predefine genes
 features = ["KRT17", "TAGLN"]
-figsize = (len(features)*15, 10)
+figsize = (len(features)*10, 7)
 ```
 
 :::

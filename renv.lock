@@ -3149,13 +3149,13 @@
     },
     "spatialFDA": {
       "Package": "spatialFDA",
-      "Version": "0.99.4",
+      "Version": "0.99.5",
       "Source": "GitHub",
       "RemoteType": "github",
       "RemoteHost": "api.github.com",
       "RemoteRepo": "spatialFDA",
       "RemoteUsername": "mjemons",
-      "RemoteSha": "752ff4640e69bbd5595d4fac27637afa7e31c862",
+      "RemoteSha": "bef8d03b1eae852026f4c61734ca075eb9d32619",
       "Requirements": [
         "R",
         "SpatialExperiment",
@@ -3175,7 +3175,7 @@
         "stats",
         "tidyr"
       ],
-      "Hash": "abe5919ec82adb1a2e1049515785fbfe"
+      "Hash": "50b847bf9a219dbd94dc0f0799182613"
     },
     "spatstat": {
       "Package": "spatstat",

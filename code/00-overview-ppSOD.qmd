@@ -28,7 +28,7 @@ On this central object, various `r BiocStyle::CRANpkg('spatstat')` metrics can b
 
 ### `SpatialExperiment` Object
 
-![Structure of a `SpatialExperiment` object as introduced by Righelli et al.](https://raw.githubusercontent.com/drighelli/SpatialExperiment/devel/vignettes/SPE.png)
+![Structure of a `SpatialExperiment` object as introduced by @righelliSpatialExperimentInfrastructureSpatiallyresolved2022 ](https://raw.githubusercontent.com/drighelli/SpatialExperiment/devel/vignettes/SPE.png)
 
 Often, the starting point in spatial omics data analysis is a `r BiocStyle::Biocpkg('SpatialExperiment')` (or similar) object in `R` with Bioconductor. The data we consider here is a MERFISH assay of a mouse preoptic hypothalamus [@chenSpatiallyResolvedHighly2015; @moffittMolecularSpatialFunctional2018].
 
@@ -174,7 +174,7 @@ gex <- assay(sub)[genes, ] |>
 marks(pp_sub) <- gex
 ```
 
-Now that we have points with multivariate continuous marks
+Now we have points with multivariate continuous marks:
 
 ```{r, fig.height=5, fig.width=10}
 # create a dataframe in long format for plotting
@@ -241,7 +241,7 @@ ggplot(pp_df, aes(x, y, colour = log(Esr1 + 1))) +
   scale_color_continuous(type = "viridis")
 ```
 
-We note that the gene `Esr1` is differentially distributed across the slices of the 3D sample.
+We note that the expression of gene `Esr1` is differentially distributed across the slices of the 3D sample.
 
 #### Correlation
 
@@ -302,7 +302,7 @@ The strongest estimate of association between oligodendrocytes is found for the 
 
 Same can be done for the arrangement of `Microglia` cells across these three sections.
 
-```{r, eval=FALSE}
+```{r, eval=TRUE}
 res <- calcMetricPerFov(
   spe,
   'Microglia',
@@ -326,7 +326,7 @@ plotMetricPerFov(
 
 We note that the Microglia cells are distributed close to a Poisson Process across the different slices.
 
-A similar analysis can be performed for continuous marks. As an exercise, try to calculated a mark weighted correlation function `markcorr`. You get more information on this function by typing `?markcorr`. The mark weighted correlation function is defined as:
+A similar analysis can be performed for continuous marks. We calculate a mark weighted correlation function `markcorr`. The mark weighted correlation function is defined as:
 
 $$
 k_f(r) =  \frac{\mathbb{E}[f(m(u),m(v))|u,v \in X]}{\mathbb{E}[f(M,M')]}
@@ -363,7 +363,7 @@ We note that at very small radii the expression of the gene `Esr1` shows a high 
 
 ##### Local Measures
 
-Next to observation window metrics, we can calculate point level statistics as well. One such option is the local indicators of spatial association (LISA). This gives one curve per point in the field of view [@baddeleySpatialPointPatterns2015 pp. 247-248].
+Next to observation window metrics, we can calculate point level statistics as well. One such option is the local indicators of spatial association (LISA). This gives one curve per point in the field of view [@baddeleySpatialPointPatterns2015 pp. 247-248; @anselinLocalIndicatorsSpatial1995].
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10, results='hide'}
 pp <- subset(pp_ls[["0.01"]], marks %in% "OD Mature")
@@ -400,7 +400,7 @@ These curves could be analysed using tools from functional data analysis such as
 
 ### Cross Mark Comparison
 
-The same analyses as above can be performed between two cell types. The corresponding functions are called cross functions [@baddeleySpatialPointPatterns2015 pp. 594 ff.]. As an exercise, try to implement (similar to the analyses above) a cross comparison between two cell types of interest. With the provided functions this is possible, just give a function you like as input and a vector with two cell types you wish to compare. You can look at functions in the documentation of `r BiocStyle::CRANpkg('spatstat.explore')`. We provide an example below:
+The same analyses as above can be performed between two cell types. The corresponding functions are called cross functions [@baddeleySpatialPointPatterns2015 pp. 594 ff.]. We implement (similar to the analyses above) a cross comparison between two cell types of interest. The provided functions enable this by giving a function and a vector with two cell types as input.
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # select OD Mature and Microglia cells

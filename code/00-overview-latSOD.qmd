@@ -364,7 +364,7 @@ print("Myh2:", "I:", moran_myh2.I, "p-value:", moran_myh2.p_sim)
 
 ::: 
 
-As we can see, the Moran's $I$ values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
+As we can see, the Moran's $I$ values both indicate significant positive spatial autocorrelation. *Myh2* shows a stronger correlation according to Moran's $I$ than *Calr*. 
 
 ## Local Measures for Univariate Data
 

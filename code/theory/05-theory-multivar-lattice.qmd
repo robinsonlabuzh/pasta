@@ -6,7 +6,7 @@ For two continous variables the global bivariate Moran's $I$ is defined as [@war
 
 $$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
 
-where $x_i$ and $y_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
+where $x_i$ and $y_j$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
 
 The global bivariate Moran's $I$ is a measure of correlation between the variables $x$ and $y$ where $y$ has a spatial lag. The result might overestimate the spatial autocorrelation of the variables due to the non-spatial correlation of $x$ and $y$ [@bivandPackagesAnalyzingSpatial2022].
 
@@ -176,7 +176,7 @@ sq.pl.spatial_scatter(
     title=f"Local bivariate Moran's I: {features[0]}"+ r"$\rightarrow$" + f"{features[1]}",
     ax=ax,
     fig=fig,
-    size=40,
+    size=pointsize,
 )
 ax.set_axis_off()
 ```
@@ -232,7 +232,7 @@ sq.pl.spatial_scatter(
     title=f"Local Lees's Ls: {features[0]}"+ r"$\leftrightarrow$" + f"{features[1]}",
     ax=ax,
     fig=fig,
-    size=40,
+    size=pointsize,
 )
 ax.set_axis_off()
 ```
@@ -327,7 +327,7 @@ sq.pl.spatial_scatter(
     title=["Geary's local multivariate C", "Simulated $-log_{10}(p_{adjusted})$"],
     ax=ax,
     fig=fig,
-    size=35,
+    size=pointsize,
 )
 for ax in ax:
     ax.set_axis_off()
@@ -394,7 +394,7 @@ neighborhood_match_test_features = ["neighbors_match_count", "neighbors_match_fr
 fig, axes = plt.subplots(1, len(neighborhood_match_test_features), figsize=(len(neighborhood_match_test_features)*5, 5))
 for feature, ax in zip(neighborhood_match_test_features, axes):
     title = feature.replace("_", " ").capitalize()
-    sq.pl.spatial_scatter(adata, color=feature, shape=None, size=20, cmap="YlOrBr", title=title, ax=ax, fig=fig, use_raw=False)
+    sq.pl.spatial_scatter(adata, color=feature, shape=None, size=pointsize, cmap="YlOrBr", title=title, ax=ax, fig=fig, use_raw=False)
     ax.set_axis_off()
 ```
 
@@ -442,7 +442,7 @@ sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
 #compute leiden clustering
 sc.tl.leiden(adata, resolution = 0.3)
 
-fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+fig, ax = plt.subplots(1, 1, figsize=figsize)
 sq.pl.spatial_scatter(
     adata,
     color="leiden",
@@ -452,7 +452,7 @@ sq.pl.spatial_scatter(
     title="Clusters",
     ax=ax,
     fig=fig,
-    size=40,
+    size=pointsize,
 )
 ax.set_axis_off()
 ```

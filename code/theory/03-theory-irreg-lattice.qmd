@@ -61,8 +61,28 @@ colGraph(sfe, "binary") <-
 ```{python}
 spatial_weights = KNN(KDTree(adata.obsm['spatial']), 5)
 adata.obsp['spatial_connectivities'] = spatial_weights.sparse
+```
 
-fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+::: 
+
+The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
+
+::: {.panel-tabset}
+
+### `R`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 10
+p1 + p2
+```
+
+### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 sq.pl.spatial_scatter(
     adata[adata.obsp["spatial_connectivities"].nonzero()[0], :],
     connectivity_key="spatial_connectivities",
@@ -74,15 +94,8 @@ sq.pl.spatial_scatter(
     library_id="spatial",
     ax=ax,
     fig=fig,
+    crop_coord = (3500, 3999, 10000, 8999)
 )
 ```
 
-::: 
-
-The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
-
-```{r}
-#| fig-width: 15
-#| fig-height: 10
-p1 + p2
-```
+:::

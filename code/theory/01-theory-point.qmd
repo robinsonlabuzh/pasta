@@ -84,7 +84,8 @@ A Poisson process that is spatially varying in its average density of points is 
 $$
 \mu = \int_{B} \lambda(u) du.
 \label{eq:expected_number_inhomogeneous}
-$$
+$$ 
+
 ### Confounding between clustering and inhomogeneity
 
 Often, it is hard to distinguish inhomogeneous intensity from genuine clustering of points. Patterns can arise from an inhomogeneous process or a clustered process and it is not straightforward to distinguish them: one is governed by different (inhomogeoenous) intensities whereas the other is due to interactions (clustering) between points [@baddeleySpatialPointPatterns2015, p. 151 ff.]. One way this can occur is if cells of different sizes are treated as points instead of considering their entire volume [@baddeleySpatialPointPatterns2015, p. 210 ff.].
@@ -101,7 +102,7 @@ A point process is called isotropic, if its statistical properties are invariant
 
 If a process is not correlation stationary, so the estimates of the inhomogeneous metric vary between locations, locally-scaled versions of the metric are applicable. This means that in subregions, the process is still stationary and isotropic, but there is a rescaling factor that can vary across the total process [@baddeleySpatialPointPatterns2015, pp. 246-247].
 
-To test the assumption of inhomogeneity, we can use a permutation test. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. Given our chosen patterns are not independent but result as marks from an overall point-pattern, the permutation approach is questionable [@baddeleySpatialPointPatterns2015, pp. 689-693].
+To test the assumption of inhomogeneity, we can use a permutation test. In this scenario, we split the patterns into quadrats and compare the estimated functions between the quadrats. It should be noted that this test depends on the arbitrary definition of the quadrats. The chosen patterns are not independent but result as marks from an overall point-pattern. Therefore, the permutation approach is questionable [@baddeleySpatialPointPatterns2015, pp. 689-693].
 
 ```{r, warning=FALSE, include=FALSE,eval=FALSE}
 # This function performs permutation test for different point patterns

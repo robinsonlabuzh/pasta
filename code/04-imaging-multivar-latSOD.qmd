@@ -122,13 +122,13 @@ adata
 
 <!-- Markers: KRT17 (basal cells), C1QA (macrophages), IL7R (T cells), TAGLN (Smooth muscle cells) -->
 
-In this vignette we are highlighting lattice data analysis approaches for multivariate observations. We will show the metrics related to a ligand-receptor pair, CEACAM6 and EGFR which was identified in the original publication of the CosMx dataset [@heHighplexImagingRNA2022].
+In this vignette we are highlighting lattice data analysis approaches for multivariate observations. We will show the metrics related to *KRT17* (basal cells) and *TAGLN* (Smooth muscle cells) [@heHighplexImagingRNA2022].
 
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
-plotSpatialFeature(sfe, c("CEACAM6"),
+plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", 
                    ncol = 2, size = 2, scattermore = FALSE) + 
   theme_void()
@@ -138,7 +138,7 @@ plotSpatialFeature(sfe, c("CEACAM6"),
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
-plotSpatialFeature(sfe, c("EGFR"),
+plotSpatialFeature(sfe, c("TAGLN"),
                    colGeometryName = "centroids", 
                    ncol = 2, size = 2, scattermore = FALSE) + 
   theme_void()
@@ -155,7 +155,7 @@ features <- c("KRT17", "TAGLN")
 colGraphName <- "knn5"
 colGeometryName <- "centroids"
 segmentation <- "cellSeg"
-plotsize = 1.25
+plotsize = 1.5
 ```
 
 ### `Python`
@@ -163,7 +163,8 @@ plotsize = 1.25
 ```{python}
 # predefine genes
 features = ["KRT17", "TAGLN"]
-figsize = (len(features)*15, 10)
+figsize = (10, 10)
+pointsize = 12
 ```
 
 :::

@@ -14,7 +14,7 @@ The global Moran's $I$ [@moranNotesContinuousStochastic1950] coefficient is a me
 
 $$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_i (x_i - \bar{x})^2}.$$
 
-where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Moran's I can be interpreted as the Pearson correlation between the value at location $i$ and the average value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Moran's $I$ can be interpreted as the Pearson correlation between the value at location $i$ and the average value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
 
 ::: {.panel-tabset}
 
@@ -86,10 +86,6 @@ res <- rowData(sfe)[features,]
 res
 ```
 
-The result of global Geary's $C$ for the gene `r features[[1]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][1], digits = 3)`. This means that gene `r features[[1]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
-
-The result of global Geary's $C$ for the gene `r features[[2]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][2], digits = 3)`. This means that gene `r features[[2]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
-
 #### `Python`
 
 ```{python}
@@ -103,6 +99,10 @@ for key in filter(lambda x: x.startswith("geary_"), adata.uns.keys()):
 ```
 
 :::
+
+The result of global Geary's $C$ for the gene `r features[[1]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][1], digits = 3)`. This means that gene `r features[[1]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
+
+The result of global Geary's $C$ for the gene `r features[[2]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][2], digits = 3)`. This means that gene `r features[[2]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
 
 ### Global Getis-Ord $G$ statistic
 
@@ -131,8 +131,6 @@ res <- spdep::globalG.test(x = logcounts(sfe)[features[1],],
 res 
 ```
 
-The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the z-statistic is `r round(res$statistic[[1]], digits = 5)` the associated p-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
-
 #### `Python`
 
 ```{python}
@@ -146,13 +144,15 @@ for feature in features:
 
 :::
 
+The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the z-statistic is `r round(res$statistic[[1]], digits = 5)` the associated p-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
+
 ## Local measures
 
 Unlike global measures that give an overview over the entire field of view, local measures report information about the statistic at each location (cell). There exist local analogs of Moran's $I$ and Geary's $C$ for which the global statistic can be represented as a weighted sum of the local statistics. As above, the local coefficients are based on both the spatial weights matrix and the values of the measurement of interest [@anselinLocalIndicatorsSpatial1995].
 
 ### Local Moran's $I$ coefficient
 
-The local Moran's $I$ coefficient [@anselinLocalIndicatorsSpatial1995] is a measure of spatial autocorrelation on each location of interest. It is defined as:
+The local Moran's $I$ coefficient [@anselinLocalIndicatorsSpatial1995] is a measure of spatial autocorrelation at each location of interest. It is defined as:
 
 $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
 
@@ -180,6 +180,9 @@ plotLocalResult(sfe, "localmoran",
 #### `Python`
 
 ```{python}
+#| fig-width: 15
+#| fig-height: 10
+
 for feature in features:
     local_moran = Moran_Local(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transformation="r", permutations=100, seed=3407)
     adata.obs[f"local_moran_{feature}"] = local_moran.Is
@@ -199,7 +202,7 @@ for feature, ax in zip(features, axes):
         title=f"Local Moran's Is: {feature}",
         ax=ax,
         fig=fig,
-        size=10,
+        size=20,
     )
     ax.set_axis_off()
 ```
@@ -236,6 +239,9 @@ plotLocalResult(sfe, "localC",
 #### `Python`
 
 ```{python}
+#| fig-width: 15
+#| fig-height: 10
+
 for feature in features:
     local_geary = Geary_Local(connectivity=spatial_weights, permutations=100, seed=3407)
     local_geary_result = local_geary.fit(adata[:, feature].X.toarray().astype(np.float64))
@@ -256,7 +262,7 @@ for feature, ax in zip(features, axes):
         title=f"Local Geary's Cs: {feature}",
         ax=ax,
         fig=fig,
-        size=10,
+        size=20,
     )
     ax.set_axis_off()
 ```
@@ -297,6 +303,9 @@ plotLocalResult(sfe, "localG",
 #### `Python`
 
 ```{python}
+#| fig-width: 15
+#| fig-height: 10
+
 for feature in features:
     local_getis_ord = G_Local(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transform="B", star=False, permutations=1000, seed=3407)
     adata.obs[f"local_getis_ord_{feature}"] = local_getis_ord.Zs
@@ -316,7 +325,7 @@ for feature, ax in zip(features, axes):
         title=f"Local Getis-Ord $G_i$: {feature}",
         ax=ax,
         fig=fig,
-        size=10,
+        size=20
     )
     ax.set_axis_off()
 ```
@@ -366,6 +375,9 @@ plotLocalResult(sfe, "LOSH",
 #### `Python`
 
 ```{python}
+#| fig-width: 15
+#| fig-height: 10
+
 for feature in features:
     losh = LOSH(connectivity=spatial_weights,  inference="chi-square")
     losh_result = losh.fit(adata[:, feature].X.toarray().astype(np.float64))
@@ -384,7 +396,7 @@ for feature, ax in zip(features, axes):
         title=f"Local spatial heteroscedasticity: {feature}",
         ax=ax,
         fig=fig,
-        size=10,
+        size=20,
     )
     ax.set_axis_off()
 ```

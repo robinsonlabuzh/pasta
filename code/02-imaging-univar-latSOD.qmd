@@ -92,7 +92,7 @@ colData(sfe)$CenterY_global_px <- spatialCoords(sfe)[,2]
 For some examples we will show a subset of the tissue.
 
 ```{r}
-bbox_use <- st_as_sfc(st_bbox(c(xmin = 3500, xmax = 14000, ymin = 157200, ymax = 162200)))
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
 ```
 
 ```{r}
@@ -146,7 +146,7 @@ figsize = (len(features)*10, 7)
 
 ```{r}
 #| fig-width: 15
-#| fig-height: 10
+#| fig-height: 20
 plotSpatialFeature(sfe, features,
                    colGeometryName = "centroids", 
                    nrow = 2, size = 2, scattermore = FALSE) +
@@ -156,6 +156,8 @@ plotSpatialFeature(sfe, features,
 ### `Python`
 
 ```{python}
+#| fig-width: 15
+#| fig-height: 20
 fig, axes = plt.subplots(len(features), 1, figsize=(10, 10))
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(adata, color=feature, shape=None, size=10, cmap="Blues", ax=ax, fig=fig, use_raw=False)

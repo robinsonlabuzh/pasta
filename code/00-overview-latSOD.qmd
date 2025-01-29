@@ -657,7 +657,7 @@ joincount.multi(colData(sfe_tissue)$cluster,
 ```{python}
 sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
 df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
-df_join_counts_multivariate
+df_join_counts_multivariate/2
 ```
 
 ::: 

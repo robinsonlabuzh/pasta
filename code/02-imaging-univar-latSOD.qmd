@@ -8,9 +8,15 @@ In this vignette we will show:
 
 - The use case is a CosMx data set from @heHighplexImagingRNA2022.
 
-- Complementary resources using this data and methods are found in the [Voyager CosMx, vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html).
+- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using this data and methods are found in the [Voyager CosMx, vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html).
+
+- `Python` implementations rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. Data representation rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 
 ## Dependencies
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| label: load-libs
@@ -21,9 +27,44 @@ source("utils.R")
 theme_set(theme_minimal())
 ```
 
+### `Python`
+
+```{python}
+import numpy as np
+import scanpy as sc
+import squidpy as sq
+from esda.moran import Moran, Moran_Local
+from esda.geary import Geary
+from esda import Geary_Local, G_Local, LOSH
+from esda.getisord import G
+from scipy.stats import false_discovery_control
+from libpysal.weights import W, KNN
+from libpysal.cg import KDTree
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+import warnings
+
+warnings.filterwarnings("ignore")
+
+plt.rcParams['font.family'] = 'Futura'
+df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
+df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
+cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
+cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
+```
+
+::: 
+
 Until now, we have considered the cells to be represented in a point pattern. However, as cells have a shape and area, this might be an oversimplification in some cases. Alternatively, we can rely on the segmentation of individual cells that are available for various datasets. The outline of each cell is represented by a polygon and the collection of all cells can be seen as an irregular lattice. Unlike a regular lattice (e.g., spot-based spatial transcriptomics data), the sample areas in an irregular lattice can have different sizes and are not necessarily regularly distributed over the sample space.
 
 For this representation of the cells we will rely on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package. For preprocessing of the dataset and code examples we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `r BiocStyle::Biocpkg('voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('voyager')` package provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object.
+
+## Setup and Preprocessing
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #taken from https://pachterlab.github.io/voyager/articles/vig4_cosmx.html
@@ -42,45 +83,91 @@ sfe <- sfe[,!sfe$is_empty & sfe$prop_neg < 0.1]
 rowData(sfe)$is_neg <- neg_inds
 # log Counts
 sfe <- logNormCounts(sfe)
+
+# save for python
+colData(sfe)$CenterX_global_px <- spatialCoords(sfe)[,1]
+colData(sfe)$CenterY_global_px <- spatialCoords(sfe)[,2]
 ```
 
 For some examples we will show a subset of the tissue.
 
 ```{r}
-bbox_use <- st_as_sfc(st_bbox(c(xmin = 3500, xmax = 14000, ymin = 157200, ymax = 162200)))
+bbox_use <- st_as_sfc(st_bbox(c(xmin = 3200, xmax = 16800, ymin = 155200, ymax = 166200)))
 ```
 
 ```{r}
 sfe <- sfe[,st_intersects(colGeometries(sfe)$centroids, bbox_use, sparse = FALSE)]
+ann <-  zellkonverter::SCE2AnnData(sfe, X_name = "counts")
+anndata::write_h5ad(ann, "../data/imaging_sfe.h5ad")
 ```
 
-In this vignette, we will show the metrics related to two marker genes: _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells).
+### `Python`
 
-```{r}
-#| fig-width: 15
-#| fig-height: 10
-plotSpatialFeature(sfe, c("KRT17"),
-                   colGeometryName = "centroids", 
-                   ncol = 2, size = 2, scattermore = FALSE) +
-  theme_void()
-
-plotSpatialFeature(sfe, c("TAGLN"),
-                   colGeometryName = "centroids", 
-                   ncol = 2, size = 2, scattermore = FALSE) + 
-  theme_void()
+```{python}
+adata = sc.read_h5ad("../data/imaging_sfe.h5ad")
+adata.obsm["spatial"] = np.column_stack([adata.obs["CenterX_global_px"], adata.obs["CenterY_global_px"]])
+# normalise counts
+adata.raw = adata.copy()
+sc.pp.normalize_total(adata)
+sc.pp.log1p(adata)
+# invert the spatial coordinates
+adata.obsm["spatial"][:, 1] = adata.obsm["spatial"][:, 1].max() - adata.obsm["spatial"][:, 1]
+adata
 ```
 
+:::
 
-{{< include theory/03-theory-irreg-lattice.qmd >}}
+Here we set the arguments for the examples below. We will continue with the two features *KRT17* (basal cells) and *TAGLN* (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
 
-Here we set the arguments for the examples below. We will continue with the two features _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 features <- c("KRT17", "TAGLN")
 colGraphName <- "knn5"
 colGeometryName <- "centroids"
+pointsize <- 1
 ```
 
+### `Python`
+
+```{python}
+# predefine genes
+features = ["KRT17", "TAGLN"]
+figsize = (len(features)*10, 10)
+pointsize = 30
+```
+
+:::
+
+::: {.panel-tabset}
+
+### `R`
+
+```{r}
+#| fig-width: 15
+#| fig-height: 20
+plotSpatialFeature(sfe, features,
+                   colGeometryName = "centroids", 
+                   nrow = 2, size = 2, scattermore = FALSE) +
+  theme_void()
+```
+
+### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 20
+fig, axes = plt.subplots(len(features), 1, figsize=(10, 15), layout = "tight")
+for feature, ax in zip(features, axes):
+    sq.pl.spatial_scatter(adata, color=feature, shape=None, size=10, cmap="Blues", ax=ax, fig=fig, use_raw=False)
+    ax.set_axis_off()
+```
+
+:::
+
+{{< include theory/03-theory-irreg-lattice.qmd >}}
 
 {{< include theory/04-theory-univar-lattice.qmd >}}
 

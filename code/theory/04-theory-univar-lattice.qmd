@@ -14,9 +14,11 @@ The global Moran's $I$ [@moranNotesContinuousStochastic1950] coefficient is a me
 
 $$I = \frac{n}{\sum_i\sum_j w_{ij}} \frac{\sum_i\sum_j w_{ij}(x_i - \bar{x})(x_j - \bar{x})}{\sum_i (x_i - \bar{x})^2}.$$
 
-where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Moran's I can be interpreted as the Pearson correlation between the value at location $i$ and the average value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
+where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$ and $w_{ij}$ is the spatial weight between the locations of $i$ and $j$. The expected value is close to $0$ for large $n$ ($\mathbb{E}(I) = -1/(n-1)$), whereas a value higher than this expectation indicates spatial autocorrelation. Negative values indicate negative autocorrelation. Moran's $I$ can be interpreted as the Pearson correlation between the value at location $i$ and the average value of the neigbours of $i$, (neighbours as defined in the weight matrix $W$) [@moranNotesContinuousStochastic1950; @pebesmaAppliedSpatialDataAnalysis2013, pp. 258-261; @cliff1981spatial, p. 21].
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 resMoran <- calculateMoransI(
@@ -41,6 +43,20 @@ res <- rowData(sfe)[features,]
 res
 ```
 
+### `Python`
+
+```{python}
+for feature in features:
+    moran = Moran(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transformation="r", permutations=100)
+    adata.uns[f"moran_{feature}"] = moran.I
+    adata.uns[f"moran_{feature}_p_sim"] = moran.p_sim
+
+for key in filter(lambda x: x.startswith("moran_"), adata.uns.keys()):
+    print(f"{key}: {adata.uns[key].round(4)}")
+```
+
+:::
+
 The result of global Moran's $I$ for the gene `r features[[1]]` is `r round(resMoran$moran[1], digits = 3)`, the associated p-values is `r round(res[[paste0('moran.mc_p.value_', unique(sfe$sample_id))]][1], digits = 3)`. This means that gene `r features[[1]]` shows `r if(resMoran$moran[1]>0){'positive autocorrelation'}else{'negative autocorrelation'}`
 
 The result of global Moran's $I$ for the gene `r features[[2]]` is `r round(resMoran$moran[2], digits = 3)`, the associated p-values is `r round(res[[paste0('moran.mc_p.value_', unique(sfe$sample_id))]][2], digits = 3)`. This means that gene `r features[[2]]` shows `r if(resMoran$moran[2]>0){'positive autocorrelation'}else{'negative autocorrelation'}`
@@ -55,7 +71,9 @@ $$C = \frac{(n-1) \sum_i \sum_j w_{ij}(x_i-x_j)^2}{2\sum_i \sum_j w_{ij}\sum_i(x
 
 where $x_i$ and $x_j$ represent the values of the variable of interest at locations $i$ and $j$, $\bar{x}$ is the mean of all $x$, $w_{ij}$ is the spatial weight between the locations of $i$ and $j$ and $n$ the total number of locations. The interpretation is opposite to Moran's $I$: a value smaller than $1$ indicates positive autocorrelation whereas a value greater than $1$ represents negative autocorrelation [@cliff1981spatial, p. 17; @pebesmaSpatialDataScience2023; @fischer2010handbook, pp. 255-265].
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+#### `R`
 
 ```{r}
 sfe <- runUnivariate(sfe,
@@ -68,10 +86,23 @@ res <- rowData(sfe)[features,]
 res
 ```
 
+#### `Python`
+
+```{python}
+for feature in features:
+    geary = Geary(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transformation="r", permutations=100)
+    adata.uns[f"geary_{feature}"] = geary.C
+    adata.uns[f"geary_{feature}_p_sim"] = geary.p_sim
+
+for key in filter(lambda x: x.startswith("geary_"), adata.uns.keys()):
+    print(f"{key}: {adata.uns[key].round(4)}")
+```
+
+:::
+
 The result of global Geary's $C$ for the gene `r features[[1]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][1], digits = 3)`. This means that gene `r features[[1]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][1]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
 
 The result of global Geary's $C$ for the gene `r features[[2]]` is `r round(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2], digits = 3)`, the associated p-values is `r round(res[[paste0('geary.mc_p.value_', unique(sfe$sample_id))]][2], digits = 3)`. This means that gene `r features[[2]]` shows `r if(res[[paste0('geary.mc_statistic_', unique(sfe$sample_id))]][2]<1){'positive autocorrelation'}else{'negative autocorrelation'}`
-
 
 ### Global Getis-Ord $G$ statistic
 
@@ -85,18 +116,35 @@ The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G
 
 This framework was established for binary weights but can be extended to nonbinary weights as well [@ordLocalSpatialAutocorrelation1995]. We will use the `spdep` package directly to calculate the global $G$ statistic.
 
+::: {.panel-tabset}
+
+#### `R`
+
 ```{r}
 # Get the weight matrix from sfe object
-weights_neighbourhoods_binary <- colGraph(sfe, colGraphName)
+weights_neighbourhoods_binary <- colGraph(sfe, 'binary')
 # Change it to binary weights
 weights_neighbourhoods_binary$style <- "B" 
 # Calculate the global G statistic
-res <- spdep::globalG.test(x = counts(sfe)[features[1],], 
+res <- spdep::globalG.test(x = logcounts(sfe)[features[1],], 
                     listw = weights_neighbourhoods_binary)
 res 
 ```
 
-The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the associated p-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
+#### `Python`
+
+```{python}
+for feature in features:
+    getisord = G(adata[:, feature].X.toarray(), spatial_weights, permutations=0)
+    print("Global G statistic", feature, getisord.z_norm)
+    print("Global G statistic (raw)", feature, getisord.G)
+    print("Global G statistic (expected)", feature, getisord.EG)
+    print("p_norm", feature, getisord.p_norm)
+```
+
+:::
+
+The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the z-statistic is `r round(res$statistic[[1]], digits = 5)` the associated p-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
 
 ## Local measures
 
@@ -104,13 +152,15 @@ Unlike global measures that give an overview over the entire field of view, loca
 
 ### Local Moran's $I$ coefficient
 
-The local Moran's $I$ coefficient [@anselinLocalIndicatorsSpatial1995] is a measure of spatial autocorrelation on each location of interest. It is defined as:
+The local Moran's $I$ coefficient [@anselinLocalIndicatorsSpatial1995] is a measure of spatial autocorrelation at each location of interest. It is defined as:
 
 $$I_i = \frac{x_i - \bar{x}}{\sum_{k=1}^n(x_k-\bar{x})^2/(n-1)} \sum_{j=1}^n w_{ij}(x_j - \bar{x})$$
 
 where the index $i$ refers to the location for which the measure is calculated. The interpretation is analogous to the global Moran's $I$ where a value of $I_i$ higher than $\mathbb{E}(I_i) = -w_i/(n-1)$ indicates spatial autocorrelation; smaller values indicate negative autocorrelation [@anselinLocalIndicatorsSpatial1995]. It is important to note that, as for the global counterpart, the value of local Moran's $I$ could be a result from both the high or low end of the values. Since we measure and test a large number of locations simultaneously, we need to correct for multiple testing (e.g., using the Benjamini-Hochberg procedure [@benjamini_hochberg1995fdr]) [@pebesmaSpatialDataScience2023].
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+#### `R`
 
 ```{r}
 #| fig-width: 15
@@ -124,8 +174,41 @@ sfe <- runUnivariate(sfe,
 plotLocalResult(sfe, "localmoran",
                 features = features, ncol = 2,
                 colGeometryName = colGeometryName,
-                divergent = TRUE, diverge_center = 0)
+                divergent = TRUE, diverge_center = 0, size = pointsize)
 ```
+
+#### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+
+for feature in features:
+    local_moran = Moran_Local(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transformation="r", permutations=100, seed=3407)
+    adata.obs[f"local_moran_{feature}"] = local_moran.Is
+    adata.obs[f"local_moran_{feature}_p"] = -np.log10(false_discovery_control(local_moran.p_z_sim*2))
+    
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
+for feature, ax in zip(features, axes):
+    sq.pl.spatial_scatter(
+        adata,
+        color=f"local_moran_{feature}",
+        cmap=cmap_continuous,
+        vmin=-adata.obs[f"local_moran_{feature}"].abs().max(),
+        vmax=adata.obs[f"local_moran_{feature}"].abs().max(),
+        vcenter=0,
+        shape=None,
+        library_id="spatial",
+        title=f"Local Moran's Is: {feature}",
+        ax=ax,
+        fig=fig,
+        size=pointsize,
+        scalebar_kwargs={"height_fraction":0.5}
+     )
+    ax.set_axis_off()
+```
+
+:::
 
 ### Local Geary's $C$ coefficient
 
@@ -135,7 +218,9 @@ $$C_i = \sum_{j=1}^n w_{ij}(x_i-x_j)^2$$
 
 The interpretation is analogous to the global Geary's $C$ (value less than $1$ indicates positive autocorrelation, a value greater than $1$ highlights negative autocorrelation) [@anselinLocalIndicatorsSpatial1995].
 
-#### Implementation using `Voyager`
+::: {.panel-tabset}
+
+#### `R`
 
 ```{r}
 #| fig-width: 15
@@ -149,8 +234,41 @@ sfe <- runUnivariate(sfe,
 plotLocalResult(sfe, "localC",
                 features = features, ncol = 2,
                 colGeometryName = colGeometryName,
-                divergent = TRUE, diverge_center = 0)
+                divergent = TRUE, diverge_center = 0, size = pointsize)
 ```
+
+#### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+
+for feature in features:
+    local_geary = Geary_Local(connectivity=spatial_weights, permutations=100, seed=3407)
+    local_geary_result = local_geary.fit(adata[:, feature].X.toarray().astype(np.float64))
+    adata.obs[f"local_geary_{feature}"] = local_geary_result.localG
+    adata.obs[f"local_geary_{feature}_p"] = -np.log10(false_discovery_control(local_geary_result.p_sim))
+    
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
+for feature, ax in zip(features, axes):
+    sq.pl.spatial_scatter(
+        adata,
+        color=f"local_geary_{feature}",
+        cmap=cmap_continuous,
+        vmin=-adata.obs[f"local_geary_{feature}"].abs().max(),
+        vmax=adata.obs[f"local_geary_{feature}"].abs().max(),
+        vcenter=0,
+        shape=None,
+        library_id="spatial",
+        title=f"Local Geary's Cs: {feature}",
+        ax=ax,
+        fig=fig,
+        size=pointsize
+    )
+    ax.set_axis_off()
+```
+
+::: 
 
 ### Local Getis-Ord statistic
 
@@ -162,7 +280,9 @@ There is a variant of this statistic, $G_i^*(d)$, which is the same as $G_i(d)$ 
 
 The interpretation of the local Getis-Ord statistic $G_i(d)$ is the same as for the global variant. The easiest is to calculate a z-statistic. If this value is positive, we call the region a hotspot, if it is negative, we call it a cold spot [@anselin2024introduction].
 
-#### Implementation using `voyager`
+::: {.panel-tabset}
+
+#### `R`
 
 ```{r}
 #| fig-width: 15
@@ -170,16 +290,48 @@ The interpretation of the local Getis-Ord statistic $G_i(d)$ is the same as for 
 
 sfe <- runUnivariate(sfe,
                      features = features,
-                     #include_self = TRUE, # this would specify G_i^*(d),
-                     colGraphName = colGraphName,
+                     include_self = FALSE, # this would specify G_i^*(d),
+                     colGraphName = "binary",
                      type = "localG")
 
 plotLocalResult(sfe, "localG",
                 features = features,
                 ncol = 2,
                 colGeometryName = colGeometryName,
-                divergent = TRUE, diverge_center = 0)
+                divergent = TRUE, diverge_center = 0, size = pointsize)
 ```
+
+#### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+
+for feature in features:
+    local_getis_ord = G_Local(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transform="B", star=False, permutations=1000, seed=3407)
+    adata.obs[f"local_getis_ord_{feature}"] = local_getis_ord.Zs
+    adata.obs[f"local_getis_ord_{feature}_p"] = -np.log10(false_discovery_control(local_getis_ord.p_norm))
+    
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
+for feature, ax in zip(features, axes):
+    sq.pl.spatial_scatter(
+        adata,
+        color=f"local_getis_ord_{feature}",
+        cmap=cmap_continuous,
+        vmin=-adata.obs[f"local_getis_ord_{feature}"].abs().max(),
+        vmax=adata.obs[f"local_getis_ord_{feature}"].abs().max(),
+        vcenter=0,
+        shape=None,
+        library_id="spatial",
+        title=f"Local Getis-Ord $G_i$: {feature}",
+        ax=ax,
+        fig=fig,
+        size=pointsize
+    )
+    ax.set_axis_off()
+```
+
+:::
 
 The results above give an estimate of the local Getis-Ord statistic for each cell, but no significance value. This can be done by using a permutation approach using the `localG_perm` argument.
 
@@ -200,7 +352,9 @@ The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ s
 | large $\|G_i^*\|$       | A hot spot with heterogeneous local conditions                                | A hot spot with similar surrounding areas; the map would indicate whether the affected region is larger than the single “cell” |
 | small $\|G_i^*\|$ | Heterogeneous local conditions but at a low average level (an unlikely event) | Homogeneous local conditions and a low average level                                                                           |
 
-#### Implementation using `Voyager`
+::: {.panel-tabset}
+
+#### `R`
 
 ```{r}
 #| fig-width: 15
@@ -208,16 +362,47 @@ The LOSH should be interpreted in combination with the local Getis-Ord $G_i^*$ s
 
 # run localG with permutation test
 sfe <- runUnivariate(sfe,
-                     features = features[1],
+                     features = features,
                      colGraphName = colGraphName,
                      type = "LOSH")
 
 
 plotLocalResult(sfe, "LOSH",
-                features = features[1],
+                features = features,
                 colGeometryName = colGeometryName,
-                size = 2)
+                size = pointsize)
 ```
+
+#### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+
+for feature in features:
+    losh = LOSH(connectivity=spatial_weights,  inference="chi-square")
+    losh_result = losh.fit(adata[:, feature].X.toarray().astype(np.float64))
+    adata.obs[f"losh_{feature}"] = losh_result.Hi
+    
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
+for feature, ax in zip(features, axes):
+    sq.pl.spatial_scatter(
+        adata,
+        color=f"losh_{feature}",
+        cmap="Blues",
+        vmin=0,
+        vmax=adata.obs[f"losh_{feature}"].abs().max(),
+        shape=None,
+        library_id="spatial",
+        title=f"Local spatial heteroscedasticity: {feature}",
+        ax=ax,
+        fig=fig,
+        size=pointsize
+    )
+    ax.set_axis_off()
+```
+
+:::
 
 ## A note of caution
 

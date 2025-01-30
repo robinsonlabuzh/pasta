@@ -1,5 +1,5 @@
 # Contact
-`pasta` is being developed by the [Mark D. Robinson's lab](https://robinsonlabuzh.github.io/).
+`pasta` is being developed by [Mark D. Robinson's lab](https://robinsonlabuzh.github.io/).
 
 ## About us
 We are located in the [Department of Molecular Life Sciences](https://www.mls.uzh.ch/en.html) within the [Faculty of Science](https://www.mnf.uzh.ch/en.html) at the [University of Zurich](https://www.uzh.ch/en.html).
@@ -9,7 +9,7 @@ Research in our laboratory is focused on creating, comparing and understanding s
 ## Team
 Authors: [Martin Emons](https://www.mls.uzh.ch/en/research/robinson/groupmembers/martin-emons.html), [Samuel Gunz](https://www.mls.uzh.ch/en/research/robinson/groupmembers/samuel-gunz.html), [Malte Kuehl](https://www.au.dk/en/malte.kuehl@clin.au.dk) (Python examples), [Mark D. Robinson](https://www.mls.uzh.ch/en/research/robinson/professor-robinson.html) \
 
-We thank all members of the Robinsonlab for constructive feedback on this work. We thank Peiying Cai, Helena L. Crowell, Alice Driessen, Reinhard Furrer, Reto Gerber, Pierre-Luc Germain, Maruša Kodermann, Vladyslav Korobeynyk, Siyuan Luo, Izskun Mallona, Giulia Moro, Emanuel Sonder, Jiayi Wang and David Wissel for their careful reading and input to the vignette.
+We thank all members of the Robinsonlab for constructive feedback on this work. We thank Peiying Cai, Helena L. Crowell, Alice Driessen, Reinhard Furrer, Reto Gerber, Pierre-Luc Germain, Maruša Kodermann, Vladyslav Korobeynyk, Siyuan Luo, Izaskun Mallona, Giulia Moro, Emanuel Sonder, Jiayi Wang and David Wissel for their careful reading and input to the vignette.
 
 ## Contact
 E-mail: `mark.robinson (at) mls.uzh.ch`

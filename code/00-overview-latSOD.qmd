@@ -88,6 +88,9 @@ sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
 # Convert counts log-transformed normalized expression values
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 
+ann <-  zellkonverter::SCE2AnnData(sfe_tissue)
+anndata::write_h5ad(ann, "../data/McKellarMuscleData_processed.h5ad")
+
 features <- c("Myh2", "Calr")
 ```
 
@@ -182,6 +185,7 @@ For Visium, the most straightforward way is to take the direct neighbours of eac
 
 ```{r}
 colGraph(sfe_tissue, "visium") <- findVisiumGraph(sfe_tissue)
+colGraph(sfe_tissue, "binary") <- findVisiumGraph(sfe_tissue, style = "B")
 ```
 
 ```{r}
@@ -334,7 +338,9 @@ print("Calr:", moran_calr.I, "Myh2:", moran_myh2.I)
 
 We can further use permutation testing to get a significance of our estimates.
 
-:::
+::: {.panel-tabset}
+
+## `R`
 
 ```{r}
 sfe_tissue <- runUnivariate(sfe_tissue,
@@ -348,13 +354,17 @@ sfe_tissue <- runUnivariate(sfe_tissue,
 rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features,]
 ```
 
+## `Python`
+
 ```{python}
 moran_calr.p_sim, moran_myh2.p_sim
 print("Calr:", "I:", moran_calr.I, "p-value:", moran_calr.p_sim)
 print("Myh2:", "I:", moran_myh2.I, "p-value:", moran_myh2.p_sim)
 ```
 
-As we can see, the Moran's $I$ values both indicate positive spatial autocorrelation and are highly significant. This means that regions with similar count and number of measured gene values tend to cluster together. This is an interesting finding and was observed in other spatial transcriptomic datasets, see [@bhuvaLibrarySizeConfounds2024].
+::: 
+
+As we can see, the Moran's $I$ values both indicate significant positive spatial autocorrelation. *Myh2* shows a stronger correlation according to Moran's $I$ than *Calr*. 
 
 ## Local Measures for Univariate Data
 
@@ -544,9 +554,7 @@ pKnn5 <- plotLocalResult(sfe_tissue, "knn5", "area",
   divergent = TRUE, diverge_center = 0
 ) + labs(title = "Local Moran's I (li)\n5 Nearest Neighbours", 
          fill = "li(area)")
-```
 
-```{r}
 annotGraph(sfe_tissue, "knn10") <-
   findSpatialNeighbors(sfe_tissue,
     type = "myofiber_simplified",
@@ -569,9 +577,7 @@ pKnn10 <- plotLocalResult(sfe_tissue, "knn10", "area",
   divergent = TRUE, diverge_center = 0
 ) + labs(title = "Local Moran's I (li)\n10 Nearest Neighbours", 
          fill = "li(area)")
-```
 
-```{r}
 pPoly + pKnn5 + pKnn10
 ```
 
@@ -579,21 +585,39 @@ The overall pattern of spatial autocorrelation is similar across the different w
 
 ## Measures for categorical data
 
-There also exist methods to detect spatial autocorrelation of categorical variables. As we have no categorical measurements in this dataset, we will perform non-spatial clustering using Leiden clustering on the PCA space.
+There also exist methods to detect spatial autocorrelation of categorical variables. As we have no categorical measurements in this dataset, we perform non-spatial clustering using Leiden clustering on the PCA space [@traag2019louvain].
 
-```{r}
+::: {.panel-tabset}
+
+## `R`
+
+```{r, eval = TRUE}
 # Run PCA on the sample
-sfe <- runPCA(sfe_tissue)
+sfe <- runPCA(sfe_tissue, ncomponents = 50)
 # Cluster based on first 20 PC's and using leiden
 colData(sfe_tissue)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
-                                    BLUSPARAM = SNNGraphParam(
-                                        cluster.fun = "leiden",
-                                        cluster.args = list(
-                                            resolution_parameter = 0.3,
-                                            objective_function = "modularity")))
+                                    BLUSPARAM = KNNGraphParam(
+                                      k = 20,
+                                      cluster.fun = "leiden",
+                                      cluster.args = list(
+                                          resolution_parameter = 0.3,
+                                          objective_function = "modularity")))
 ```
 
 We can visually inspect the spatial arrangement of the clusters. We see that they are spatially "clustered".
+
+## `Python`
+
+```{python}
+#compute a PCA on the 
+sc.pp.pca(adata, n_comps = 50)
+#compute the neighbours
+sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
+#compute leiden clustering
+sc.tl.leiden(adata, resolution = 0.3)
+```
+
+:::
 
 ::: {.panel-tabset}
 
@@ -609,7 +633,7 @@ plotSpatialFeature(sfe_tissue,
 ## `Python`
 
 ```{python}
-sq.pl.spatial_scatter(adata, color="cluster", palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["cluster"]))]), library_id="spatial", title="Clusters", shape=None, size=55)
+sq.pl.spatial_scatter(adata, color="leiden", palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["leiden"]))]), library_id="spatial", title="Clusters", shape=None, size=55)
 plt.gca().set_axis_off()
 ```
 
@@ -619,10 +643,25 @@ Metrics such as the join count statistics can be use to analysis spatial arrange
 
 Here we will use an extension to multiple categories `joincount.multi`. The test gives information if the different clusters are in contact with itself and each other. The output shows the calculated number of contacts vs. the expected number, i.e., if the clusters were randomly assigned to the locations. The function does not report p-values, but they can be calculated at a specified significance level using the z-values.
 
+::: {.panel-tabset}
+
+## `R`
+
 ```{r}
 joincount.multi(colData(sfe_tissue)$cluster,
-             colGraph(sfe_tissue, "visium"))
+             colGraph(sfe_tissue, "binary"))
 ```
+
+## `Python`
+
+```{python}
+sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
+df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
+df_join_counts_multivariate/2
+```
+
+::: 
+
 For example, we can see here that the calculated number of contacts of clusters 1 and 3 is far below the expected value. On the other hand all clusters are in contact with itself more often than expected at random.
 
 # Summary and Considerations

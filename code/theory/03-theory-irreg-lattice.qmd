@@ -28,6 +28,10 @@ p1 <- plotColGraph(sfe,
 
 Alternatively, we can use a $k$-nearest neighbours approach. The choice of the number $k$ is somewhat arbitrary.
 
+::: {.panel-tabset}
+
+### `R`
+
 ```{r}
 colGraph(sfe, "knn5") <-
   findSpatialNeighbors(sfe,
@@ -41,12 +45,57 @@ p2 <- plotColGraph(sfe,
   colGeometryName = "cellSeg",
   bbox = c(xmin = 3500, xmax = 10000, ymin = 157200, ymax = 162200)
 ) + theme_void()
+
+#calculate binary nearest neighbour weight matrix too
+colGraph(sfe, "binary") <-
+  findSpatialNeighbors(sfe,
+    method = "knearneigh", # wraps the spdep function with the same name
+    k = 5,
+    zero.policy = TRUE,
+    style = "B"
+  )
 ```
 
+### `Python`
+
+```{python}
+spatial_weights = KNN(KDTree(adata.obsm['spatial']), 5)
+adata.obsp['spatial_connectivities'] = spatial_weights.sparse
+```
+
+::: 
+
 The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
+
+::: {.panel-tabset}
+
+### `R`
 
 ```{r}
 #| fig-width: 15
 #| fig-height: 10
 p1 + p2
 ```
+
+### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
+sq.pl.spatial_scatter(
+    adata[adata.obsp["spatial_connectivities"].nonzero()[0], :],
+    connectivity_key="spatial_connectivities",
+    size=0.1,
+    na_color="black",
+    edges_color="black",
+    edges_width=0.1,
+    shape=None,
+    library_id="spatial",
+    ax=ax,
+    fig=fig,
+    crop_coord = (3500, 3999, 10000, 8999)
+)
+```
+
+:::

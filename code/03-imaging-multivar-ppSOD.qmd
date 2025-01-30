@@ -8,7 +8,9 @@ In this vignette we will show:
 
 - The use case is a MERFISH data set from @moffittMolecularSpatialFunctional2018.
 
-- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.  
+- For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.
+
+- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
 
 ```{r}
 #| include: false
@@ -77,7 +79,7 @@ The stationarity assumption is not appropriate in all cases. To assess first-ord
 #| fig-width: 15
 #| fig-height: 7.5
 ppls <- split(pp_sel) # split by mark
-plot(density(ppls))
+plot(density(ppls, sigma = bw.diggle))
 ```
 
 Ependymal and OD Mature cells are cleary inhomogeneous, while for Microglia cells it is not so clear and we could assume homogeneity, especially since the window extends beyond the tissue boundary, with a visible border at the bottom center.
@@ -104,7 +106,7 @@ all(im_sum==1)
 The `relrisk` function also gives us the dominant mark for different regions of the tissue of interest. This could be interesting in the annotation or comparison of spatial domains. It indicates the most likely cell type to occur at each location.
 
 ```{r}
-#| fig-width: 5
+#| fig-width: 10
 #| fig-height: 5
 rpd <- relrisk(pp_sel, diggle = TRUE)
 dom <- im.apply(rpd, which.max)
@@ -117,9 +119,9 @@ plot(dom,las=2,main="Dominant mark")
 
 ## Nearest neighbourhood contingency
 
-To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by [-@dixonNearestneighborContingencyTable2002]. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
+To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by @dixonNearestneighborContingencyTable2002. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
 
-The measure of segregation $S$ is defined in [-@dixonNearestneighborContingencyTable2002] as 
+The measure of segregation $S$ is defined in @dixonNearestneighborContingencyTable2002 as 
 
 $$S_{i,j}= \frac{\log[(N_{i,j}/(N_i−N_{i,j})]}{[(N_i−1)/(N−N_i)]}$$
 where $N_i$ is the number of individuals $i$, $N_{i,j}$ is the number of individuals of type $i$ with a nearest neighbor of type $j$, and $N$ is the total number of individuals. 
@@ -131,6 +133,7 @@ A value of $S=0$ is consistent with random labeling. A value larger than 0 indic
 #| echo: false
 #| message: false
 #| warning: false
+#| results: false
 out <- dixon(as.data.frame(pp_sel), nsim = 99)
 ```
 
@@ -149,17 +152,17 @@ OD Mature cells show this interesting characteristic that they are clustered in 
 
 Similar to the simple case without marks, it is possible to estimate summary functions. In particular, summary functions *between* different marks can be calculated. Note that the canonical functions assume that the multi-type process is stationary.
 
-### Cross K-function
+### Cross $K$-function
 
-The cross K-function is a summary function that measures the average number of points of type $j$ within a distance $r$ of a point of type $i$. The formula is given by: 
+The cross $K$-function is a summary function that measures the average number of points of type $j$ within a distance $r$ of a point of type $i$. The formula is given by: 
 
 $$
 K(r) = \frac{1}{\lambda_j} \mathbb{E} [t(u,r,X^{j}) \mid u \in X^{i}],
 $$
 
-where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross K-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between [section about local scaling](theory/01-theory-point.qmd### Confounding dbetween clustering and inhomogeneity) [@baddeleySpatialPointPatterns2015, pp. 151-152]. 
+where $X^{i}$ is the point pattern of type $i$ and $t(u,r,X^{j})$ is the number of points of type $j$ in a circle of radius $r$ around $u$ [@baddeleySpatialPointPatterns2015, pp. 594-595]. It is important to remember that the homogeneous cross $K$-function assumes that the multitype process is stationary. If this is not the case, there is a risk in misinterpreting the results. The problem is the confounding between [section about local scaling](theory/01-theory-point.qmd### Confounding dbetween clustering and inhomogeneity) [@baddeleySpatialPointPatterns2015, pp. 151-152]. 
 
-First, we plot an overview of the cross K function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross K function.
+First, we plot an overview of the cross $K$-function for the different types. As we have seen before the assumption of stationarity might be not valid. We will therefore use the inhomogeneous version of the cross $K$-function.
 
 ```{r, echo=FALSE}
 #| fig-width: 15
@@ -172,7 +175,8 @@ resCross <- calcCrossMetricPerFov(
   fun = 'Kcross.inhom',
   marks = 'cluster_id',
   rSeq = seq(0, 500, length.out = 100),
-  by = c('Animal_ID', 'sample_id')
+  by = c('Animal_ID', 'sample_id'),
+  correction = 'isotropic'
 )
 resCross <- subset(resCross, sample_id %in% fov_sel)
 ```
@@ -191,13 +195,11 @@ plotCrossMetricPerFov(
 )
 ```
 
-<!-- [MR: given that these plots are somewhat redundant .. like, the upper diagonal is basically the same as the lower diagonal, maybe it's worth having a more compact representation, e.g., one plot for each cell type, with multiple lines plotted? Also, doesn't the Ependymal-Ependymal function appear to be less than the CSR line? Is that the opposite of what we've seen before?] -->
-
-The diagonal of the inhomogeneous cross K-function plot shows the K-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected K-function but does not imply that the individual marks follow a Poisson process. If the processes of the types are independent, we assume that they are also uncorrelated.
+The diagonal of the inhomogeneous cross $K$-function plot shows the $K$-function for the different marks (indication of Poisson or non-Poisson point processes). Off-diagonal panels give indication of independence of points when the number of points follows the expected $K$-function but does not imply that the individual marks follow a Poisson process. If the processes of the types are independent, we assume that they are also uncorrelated.
 
 In the example above, assuming that the process is inhomogeneous, the Ependymals cells appear to be regularly spaced, which seems counter intuitive. However, this is the result of the pattern being inhomogeneous with spatially varying intensity. When accounting for this, the pattern is more regular than expected under an inhomogeneous point process. The estimation of the inhomogeneous cross functions is not straightforward and results change based on the estimation of the local intensity and the edge correction, c.f. [@baddeleySpatialPointPatterns2015, p. 605].
 
-Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross K-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross K-function. Note that the option to calculate confidence intervals is not yet implemented in `spatialFDA` and we will therefore use a custom method below.
+Let's focus a bit more on the relationship between Ependymal and the other two cell types. We will also calculate confidence intervals for the different cross $K$-functions. We have already seen that our dataset most likely does not satisfy the assumption of stationarity. For this reason, we will calculate the inhomogeneous cross $K$-function. Note that the option to calculate confidence intervals is not yet implemented in `r BiocStyle::Biocpkg('spatialFDA')` and we will therefore use a custom method below.
 
 ```{r}
 #| include: true
@@ -236,8 +238,8 @@ p_epen_od + p_epend_micro
 
 Remember that the dashed line represents the assumption of a multitype Poisson process. If the line lies above the dotted line, there is indication of attraction while if the line is below the dotted line there is indication of repulsion. In the plot above we can see that there is indication of attraction between Ependymal and OD Mature cells (above Poisson line) while there is indication of repulsion between Ependymal and Microglia cells (below Poisson line).
 
-### Cross L-function 
-Alternatively the L cross function with similar interpretation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns2015, pp. 596ff].
+### Cross $L$-function 
+Alternatively the $L$ cross function with similar interpretation can be calculated using the `Lcross` function [@baddeleySpatialPointPatterns2015, pp. 596ff].
 
 ```{r}
 #| fig-width: 15
@@ -354,44 +356,31 @@ plotCrossMetricPerFov(
 ```
 
 
-<!-- [MR: wondering .. should these above all be put on the same scale? And, same question as above. Could we think about a more compact representation?] -->
+The dashed lines indicate expected values under random labeling. The values measure dependence (or association) between the different labelled points. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it it could be the case for the Microglia cells. Furthermore, as the calculation is based on the $K$-function, the mark connection function assumes homogenity.
 
-The dashed lines indicate expected values under random labeling. The values measure dependence (or association) between the different labelled points. Positive values indicate that nearby points are more likely to have different types than expected by chance. This positive association between different cell types does not necessarily imply dependence, as it could be influenced by a negative association between cells of the same type, as it it could be the case for the Microglia cells. Furthermore, as the calculation is based on the $K$ function, the mark connection function assumes homogenity.
+### Cross $F$-function (empty space function), cross $G$-function (Nearest-neighbor function) and cross $J$-function
 
-### Cross F-function (empty space function), cross G-function (Nearest-neighbor function) and cross J-function
-
-The cross F-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
+The cross $F$-function is the cumulative distribution function of the distance from a location to the nearest point of the same type. For each type $i$, it is defined as:
 
 $$F_i(r) = \mathbb{P}\{d(u,X^{i}\leq r)\}$$
 
-The cross G-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
+The cross $G$-function is the cumulative distribution function of the distance from a location to the nearest point of another type and is defined as:
 
 $$G_{ij}(r) = \mathbb{P}\{d(x,X^{(j)} \setminus u \leq r \mid X^{(i)} \ \text{has a point at u})\}.$$
 
-If the points are independent of each other, the G and F function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying, for which we oly assume correlation stationarity.
+If the points are independent of each other, the $G$- and $F$-function are identical. Both assume that the process is stationary. There are inhomogenous alternatives, in case the intensity is varying, for which we only assume correlation stationarity.
 
-There exists a difference in the interpretation of the theoretical values of the K-cross and the G-cross function. For the K-cross, the theoretical value indicates independence between marks while for the G-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$ [@baddeleySpatialPointPatterns2015, p. 597 ff].
+There exists a difference in the interpretation of the theoretical values of the $K$-cross and the $G$-cross function. For the $K$-cross, the theoretical value indicates independence between marks while for the $G$-cross the theoretical value is consistent with the assumption that the points of type `j` are Poisson in addition to being independent of the points of type $i$ [@baddeleySpatialPointPatterns2015, p. 597 ff].
 
-The cross J-function is defined as:
+The cross $J$-function is defined as:
 
 $$J_{ij}(r) = \frac{1-G_{ij}(r)}{1-F_{j}(r)}$$
 
-and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the G-function is equivalent to the F-function and the J-function is equal to 1 [@baddeleySpatialPointPatterns2015, p. 597 ff]. 
-
-<!-- ### Cross J-function  -->
-
-<!-- The value of 1 is consistent with CSR and independence between different points. -->
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- jc <- alltypes(pp_sel, Jcross) -->
-<!-- plot(jc) -->
-<!-- ``` -->
+and summarizes the inter point dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the $G$-function is equivalent to the $F$-function and the $J$-function is equal to $1$ [@baddeleySpatialPointPatterns2015, p. 597 ff]. 
 
 ### Dot functions
 
-For each K-, G- and J- function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For expample, the K-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns2015, p. 600 ff]. 
+For each $K$-, $G$- and $J$-function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For example, the $K$-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns2015, p. 600 ff]. 
 
 ```{r}
 #| eval: false
@@ -422,6 +411,9 @@ resCross <- calcCrossMetricPerFov(
 
 ```{r}
 resCross <- subset(resCross, sample_id %in% fov_sel)
+#create a unique plotting ID
+resCross$ID <- paste0(resCross$Animal_ID, '|', resCross$sample_id)
+#plot the result of the Dot function
 plotMetricPerFov(resCross, theo = TRUE, correction = "iso", x = "r", imageId = 'sample_id', ID = "ID")
 ```
 
@@ -435,7 +427,7 @@ In our original dataset, we have a large number of different marks. We picked th
 
 The Mark or Type Equality function for a stationary multitype point process measures the correlation between types of two points separated by distance r. It is the sum of the mark connection function of all pairs of points of the same type.
 
-If k < 1, points at distance r are less likely than expected to be of the same type. If > 1, they are more likely to be of the same type. The value 1 indicates a lack of correlation [@baddeleySpatialPointPatterns2015, p. 603 ff].
+If $k < 1$, points at distance $r$ are less likely than expected to be of the same type. If $k > 1$, they are more likely to be of the same type. The value $1$ indicates a lack of correlation [@baddeleySpatialPointPatterns2015, p. 603 ff].
 
 ```{r}
 #| message: false
@@ -485,29 +477,6 @@ plotMarkCorr(pp_sel)
 ```
 
 We can see that in our dataset that it the more likely it is to find points of the same type at shorter distances. At around $r=265$ this behavior changes and it becomes slightly less likely to find the same type compared to by chance.
-
-<!-- ### I-function  -->
-
-<!-- ```{r} -->
-<!-- #| fig-width: 10 -->
-<!-- #| fig-height: 10 -->
-<!-- ic <- Iest(pp_sel) -->
-<!-- plot(ic) -->
-<!-- ``` -->
-
-<!-- ## Summary functions for non stationary processes -->
-
-<!-- The cross and dot functions described above assume a underlying stationary point process. If this assumption is not given, the interpretation of the result might be incorrect. -->
-
-<!-- The inhomogeneous equivalents of the described functions require the different intensities as inputs in `spatstat`. If they are not given the intensities are estimated using kernel smoothing.   -->
-
-<!-- ### Inhomogeneous L-function -->
-<!-- ```{r} -->
-<!-- plot(Lcross.inhom(pp_sel, "Microglia", "OD Mature", sigma=bw.diggle(pp_sel))) -->
-<!-- plot(Lcross.inhom(pp_sel, "Microglia", "OD Mature", sigma=bw.relrisk(pp_sel))) -->
-
-<!-- Lcross.inhom(pp_sel, "Microglia", "OD Mature") %>% plot() -->
-<!-- ``` -->
 
 # Tests of randomness and independence
 
@@ -588,18 +557,15 @@ plotEnvCross(pp_sel, fun = "Kcross.inhom",
              "Ependymal", "OD Mature", nsim = 39, radius = 150, global = TRUE)
 ```
 
-<!-- We have indication that the independence-of-components assumption should not be rejected. Therefore, we conclude that Ependymal and OD Mature cells are independent. -->
-
 # Assuming stationarity of the total pattern
 
 As outlined above, the homogeneous cross correlation and spacing functions assume stationarity, whereas the inhomogeneous functions only assume correlation stationarity. First-order stationarity is not given in our dataset, when we look at the different patterns individually. However, using the total (unmarked) pattern, we could assume first-order stationarity, since the intensity is the same across the pattern.
 
 ```{r}
-plot(density(unmark(pp)))
+plot(density(unmark(pp), sigma = bw.diggle))
 ```
 
-Let's look at the homogeneous cross K-function.
-
+Let's look at the homogeneous cross $K$-function.
 
 ```{r}
 #| fig-width: 15

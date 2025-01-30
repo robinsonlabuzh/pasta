@@ -126,7 +126,7 @@ plotsize = 3
 # predefine genes
 features = ["Slc5a12", "Calr"]
 figsize = (len(features)*5, 7)
-pointsize = 20
+pointsize = 30
 ```
 
 :::

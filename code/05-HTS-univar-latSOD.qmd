@@ -120,6 +120,7 @@ pointsize <- 3
 # predefine genes
 features = ["Slc5a12", "Calr"]
 figsize = (len(features)*5, 5)
+pointsize = 25
 ```
 
 :::

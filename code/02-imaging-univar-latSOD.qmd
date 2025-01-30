@@ -117,7 +117,7 @@ adata
 
 :::
 
-Here we set the arguments for the examples below. We will continue with the two features _KRT17_ (basal cells) and _TAGLN_ (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
+Here we set the arguments for the examples below. We will continue with the two features *KRT17* (basal cells) and *TAGLN* (smooth muscle cells) and specify a $k$-nearest neighbour weight matrix with $k=5$.
 
 ::: {.panel-tabset}
 
@@ -127,7 +127,7 @@ Here we set the arguments for the examples below. We will continue with the two 
 features <- c("KRT17", "TAGLN")
 colGraphName <- "knn5"
 colGeometryName <- "centroids"
-pointsize <- 1.5
+pointsize <- 1
 ```
 
 ### `Python`
@@ -135,7 +135,8 @@ pointsize <- 1.5
 ```{python}
 # predefine genes
 features = ["KRT17", "TAGLN"]
-figsize = (len(features)*10, 7)
+figsize = (len(features)*10, 10)
+pointsize = 30
 ```
 
 :::
@@ -158,7 +159,7 @@ plotSpatialFeature(sfe, features,
 ```{python}
 #| fig-width: 15
 #| fig-height: 20
-fig, axes = plt.subplots(len(features), 1, figsize=(10, 10))
+fig, axes = plt.subplots(len(features), 1, figsize=(10, 15), layout = "tight")
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(adata, color=feature, shape=None, size=10, cmap="Blues", ax=ax, fig=fig, use_raw=False)
     ax.set_axis_off()

@@ -501,7 +501,7 @@ $$
 J(r) = \frac{1-G(r)}{1-F(r)}.
 $$
 
-For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and \$J(r) \< 1 represents a clustered process [@baddeleySpatialPointPatterns2015 pp. 275-277].
+For a CSR process, $J_{pois} \equiv 1$, whereas values of $J(r) > 1$ are consistent with a regular (e.g., repelling) pattern, and $J(r) < 1$ represents a clustered process [@baddeleySpatialPointPatterns2015 pp. 275-277].
 
 ```{r, fig.height = 10, fig.width = 7}
 res_ls <- lapply(list('Gest', 'Fest', 'Jest'), function(fun) {
@@ -604,7 +604,7 @@ The values of $\phi$ correspond to the orientation of the original point pattern
 
 an easier representation of the above metric can be plotted as a rose diagram
 
-```{r, fig.width=6, fig.height=6}
+```{r, message=FALSE, warning=FALSE, fig.width=6, fig.height=6}
 par(1,3)
 lapply(pp, function(x){rose(nnorient(x))})
 dev.off()
@@ -662,7 +662,7 @@ The function `pairs` from `spatstat` generates a scatterplot of the counts of th
 pairs(as.data.frame(pp), panel = panel.smooth, pch=".")
 ```
 
-We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of Esr1 and Pgr are positively associated, indicating a dependence of these two marks.
+We find that the counts of the three genes are very evenly distributed along the $x$ and $y$ coordinate, indicating a homogeneous distribution. The counts of *Esr1* and *Pgr* are positively associated, indicating a dependence of these two marks.
 
 NN interpolations uses the nearest mark to measure the intensity at each spatial location. This is conceptually similar to taking a very small bandwidth for Gaussian kernel smoothing [@baddeleySpatialPointPatterns2015 pp. 642].
 
@@ -670,7 +670,7 @@ NN interpolations uses the nearest mark to measure the intensity at each spatial
 plot(nnmark(pp))
 ```
 
-We see that there is e.g. a clear spatial structure in the expression of e.g. `Esr1`. It shows a half moon shape.
+We see that there is e.g. a clear spatial structure in the expression of e.g. *Esr1*. It shows a half moon shape.
 
 ## Summary functions for continuous marks
 
@@ -706,7 +706,7 @@ p <- plotMetricPerFov(
 p
 ```
 
-From this plot we show that all genes show a positive correlation at small distances which decline with increasing radius $r$. The association is strongest for the Slc18a2 gene. We can calculate simulation envelopes to estimate the significance of this association. This is not shown for brevity.
+From this plot we show that all genes show a positive correlation at small distances which decline with increasing radius $r$. The association is strongest for the *Slc18a2* gene. We can calculate simulation envelopes to estimate the significance of this association. This is not shown for brevity.
 
 ### Mark-weighted $K$-function
 
@@ -746,7 +746,7 @@ p
 
 It is important to note that the theoretical value of the $K$-function is not very informative since it represents the $K$-function of a Poisson point process and the underlying point process might not be Poisson. Therefore we compare the mark-weighted with its unmarked analogue. Like this, we can assess whether the points weighted by a continuous mark are more or less correlated than their unmarked analogues [@baddeleySpatialPointPatterns2015 pp. 647].
 
-Here we will compare the $L$-functions weighted by the mark of the gene Esr1 and the unmarked $L$-function.
+Here we will compare the $L$-functions weighted by the mark of the gene *Esr1* and the unmarked $L$-function.
 
 ```{r}
 ppEsr1 <- subset(pp, select = 'Esr1')
@@ -755,7 +755,7 @@ Lest.ppEsr1 <- Lest(ppEsr1, nlarge=7000)
 plot(eval.fv(L.Esr1L - Lest.ppEsr1))
 ```
 
-We note that the difference between $L$-function weighted by the expression of Esr1 minus the unmarked $L$-function is positively different to the poisson difference, meaning that the expression of the continuous mark Esr1 is correlated among itself.
+We note that the difference between $L$-function weighted by the expression of *Esr1* minus the unmarked $L$-function is positively different to the poisson difference, meaning that the expression of the continuous mark *Esr1* is correlated among itself.
 
 # Summary
 

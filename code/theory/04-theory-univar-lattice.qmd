@@ -188,7 +188,7 @@ for feature in features:
     adata.obs[f"local_moran_{feature}"] = local_moran.Is
     adata.obs[f"local_moran_{feature}_p"] = -np.log10(false_discovery_control(local_moran.p_z_sim*2))
     
-fig, axes = plt.subplots(1, len(features), figsize=figsize)
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(
         adata,
@@ -202,8 +202,9 @@ for feature, ax in zip(features, axes):
         title=f"Local Moran's Is: {feature}",
         ax=ax,
         fig=fig,
-        size=20,
-    )
+        size=pointsize,
+        scalebar_kwargs={"height_fraction":0.5}
+     )
     ax.set_axis_off()
 ```
 
@@ -248,7 +249,7 @@ for feature in features:
     adata.obs[f"local_geary_{feature}"] = local_geary_result.localG
     adata.obs[f"local_geary_{feature}_p"] = -np.log10(false_discovery_control(local_geary_result.p_sim))
     
-fig, axes = plt.subplots(1, len(features), figsize=figsize)
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(
         adata,
@@ -262,7 +263,7 @@ for feature, ax in zip(features, axes):
         title=f"Local Geary's Cs: {feature}",
         ax=ax,
         fig=fig,
-        size=20,
+        size=pointsize
     )
     ax.set_axis_off()
 ```
@@ -311,7 +312,7 @@ for feature in features:
     adata.obs[f"local_getis_ord_{feature}"] = local_getis_ord.Zs
     adata.obs[f"local_getis_ord_{feature}_p"] = -np.log10(false_discovery_control(local_getis_ord.p_norm))
     
-fig, axes = plt.subplots(1, len(features), figsize=figsize)
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(
         adata,
@@ -325,7 +326,7 @@ for feature, ax in zip(features, axes):
         title=f"Local Getis-Ord $G_i$: {feature}",
         ax=ax,
         fig=fig,
-        size=20
+        size=pointsize
     )
     ax.set_axis_off()
 ```
@@ -383,7 +384,7 @@ for feature in features:
     losh_result = losh.fit(adata[:, feature].X.toarray().astype(np.float64))
     adata.obs[f"losh_{feature}"] = losh_result.Hi
     
-fig, axes = plt.subplots(1, len(features), figsize=figsize)
+fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):
     sq.pl.spatial_scatter(
         adata,
@@ -396,7 +397,7 @@ for feature, ax in zip(features, axes):
         title=f"Local spatial heteroscedasticity: {feature}",
         ax=ax,
         fig=fig,
-        size=20,
+        size=pointsize
     )
     ax.set_axis_off()
 ```

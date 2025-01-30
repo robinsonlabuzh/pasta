@@ -51,7 +51,7 @@ spatial_weights = W.from_sparse(adata.obsp["spatial_connectivities"])
 sq.gr.spatial_neighbors(adata, n_neighs=50, coord_type="grid", key_added="wide_spatial")
 spatial_weights_wide = W.from_sparse(adata.obsp["wide_spatial_connectivities"])
 
-fig, ax = plt.subplots(1, 1, figsize=(5, 5))
+fig, ax = plt.subplots(1, 1, figsize=(7, 7), layout = "tight")
 sq.pl.spatial_scatter(
     adata[adata.obsp["spatial_connectivities"].nonzero()[0], :],
     connectivity_key="spatial_connectivities",

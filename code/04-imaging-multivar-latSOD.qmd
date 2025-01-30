@@ -163,7 +163,7 @@ plotsize = 1.5
 ```{python}
 # predefine genes
 features = ["KRT17", "TAGLN"]
-figsize = (10, 10)
+figsize = (10, 7)
 pointsize = 12
 ```
 

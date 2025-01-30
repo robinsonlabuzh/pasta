@@ -376,11 +376,11 @@ The cross $J$-function is defined as:
 
 $$J_{ij}(r) = \frac{1-G_{ij}(r)}{1-F_{j}(r)}$$
 
-and summarizes the interpoint dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the $G$-function is equivalent to the $F$-function and the $J$-function is equal to 1 [@baddeleySpatialPointPatterns2015, p. 597 ff]. 
+and summarizes the inter point dependence between type $i$ and $j$. Under the hypothesis of independent components, i.e., that the point processes of each type are independent, the $G$-function is equivalent to the $F$-function and the $J$-function is equal to $1$ [@baddeleySpatialPointPatterns2015, p. 597 ff]. 
 
 ### Dot functions
 
-For each $K$-, $G$- and $J$- function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For expample, the $K$-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns2015, p. 600 ff]. 
+For each $K$-, $G$- and $J$-function, there also exist *dot* functions, which measure distances from points of one type to points of any type. These functions allow us to measure the dependence of one mark with all other marks at once.  For example, the $K$-dot function represents the expected number of an other point within distance $r$ of a typical point of type $i$ [@baddeleySpatialPointPatterns2015, p. 600 ff]. 
 
 ```{r}
 #| eval: false

@@ -163,7 +163,7 @@ local_moran_bv = Moran_Local_BV(
 adata.obs[f"local_moran_bv_{features[0]}_{features[1]}"] = local_moran_bv.Is
 adata.obs[f"local_moran_bv_{features[0]}_{features[1]}_p_sim"] = local_moran_bv.p_sim
 
-fig, ax = plt.subplots(1, 1, figsize=figsize)
+fig, ax = plt.subplots(1, 1, figsize=figsize, layout = "tight")
 sq.pl.spatial_scatter(
     adata,
     color=f"local_moran_bv_{features[0]}_{features[1]}",
@@ -219,7 +219,7 @@ local_lees_l_estimator.fit(
 )
 adata.obs[f"local_lees_l_{features[0]}_{features[1]}"] = local_lees_l_estimator.associations_
 
-fig, ax = plt.subplots(1, 1, figsize=figsize)
+fig, ax = plt.subplots(1, 1, figsize=figsize, layout = "tight")
 sq.pl.spatial_scatter(
     adata,
     color=f"local_lees_l_{features[0]}_{features[1]}",
@@ -316,7 +316,7 @@ spatialReducedDim(sfe, "localC_perm_multi",  c(1, 11), size = plotsize/2)
 ### `Python`
 
 ```{python}
-fig, ax = plt.subplots(1, 2, figsize=(len(features)*7, 7))
+fig, ax = plt.subplots(1, 2, figsize=(len(features)*7, 7), layout = "tight")
 sq.pl.spatial_scatter(
     adata,
     color=["local_geary_mv", "local_geary_mv_p"],
@@ -327,7 +327,7 @@ sq.pl.spatial_scatter(
     title=["Geary's local multivariate C", "Simulated $-log_{10}(p_{adjusted})$"],
     ax=ax,
     fig=fig,
-    size=pointsize,
+    size=pointsize
 )
 for ax in ax:
     ax.set_axis_off()
@@ -391,10 +391,18 @@ adata.obs["neighbors_match_fraction"] = df_neighborhood_match_test.loc[adata.obs
 
 # plot the results
 neighborhood_match_test_features = ["neighbors_match_count", "neighbors_match_fraction"]
-fig, axes = plt.subplots(1, len(neighborhood_match_test_features), figsize=(len(neighborhood_match_test_features)*5, 5))
+fig, axes = plt.subplots(1, len(neighborhood_match_test_features), figsize=(len(neighborhood_match_test_features)*5, 5), layout = "tight")
 for feature, ax in zip(neighborhood_match_test_features, axes):
     title = feature.replace("_", " ").capitalize()
-    sq.pl.spatial_scatter(adata, color=feature, shape=None, size=pointsize, cmap="YlOrBr", title=title, ax=ax, fig=fig, use_raw=False)
+    sq.pl.spatial_scatter(adata,
+    color=feature, 
+    shape=None, 
+    size=pointsize, 
+    cmap="YlOrBr", 
+    title=title, 
+    ax=ax, 
+    fig=fig,
+    use_raw=False)
     ax.set_axis_off()
 ```
 
@@ -442,7 +450,7 @@ sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
 #compute leiden clustering
 sc.tl.leiden(adata, resolution = 0.3)
 
-fig, ax = plt.subplots(1, 1, figsize=figsize)
+fig, ax = plt.subplots(1, 1, figsize=figsize, layout = "tight")
 sq.pl.spatial_scatter(
     adata,
     color="leiden",
@@ -452,7 +460,7 @@ sq.pl.spatial_scatter(
     title="Clusters",
     ax=ax,
     fig=fig,
-    size=pointsize,
+    size=pointsize
 )
 ax.set_axis_off()
 ```

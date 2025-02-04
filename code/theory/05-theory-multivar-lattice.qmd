@@ -501,7 +501,7 @@ np.triu(array_join_counts)
 
 ::: 
 
-The `Python` function `sq.gr.interaction_matrix` counts the interaction for each pair twice, while the `R` function `joincount.multi` counts each interaction only once. Therefore, in `Python` we add the lower triangular matrix to the upper triangle (without the diagonal) and divide the resulting interaction matrix by 2. Since there are differences in the implementation of the priciple component calculcation (namely in the SVD decomposition of the sparse logcounts matrix), the results are not perfectly corresponding, c.f. @richImpactPackageSelection2024.
+The `Python` function `sq.gr.interaction_matrix` counts the interaction for each pair twice, while the `R` function `joincount.multi` counts each interaction only once. Therefore, in `Python` we add the lower triangular matrix to the upper triangle (without the diagonal) and divide the resulting interaction matrix by 2. Since there are differences in the implementation of the principal component calculcation (namely in the SVD decomposition of the sparse logcounts matrix), the results are not perfectly corresponding, c.f. @richImpactPackageSelection2024.
 
 The rows show different combinations of clusters that are in physical contact. E.g. $1:1$ means the cluster $1$ with itself. The column `Joincount` is the observed statistic whereas the column `Expected` is the expected value of the statistic for this combination. Like this, we can compare whether contacts among cluster combinations occur more frequently than expected at random [@cliff1981spatial].
 

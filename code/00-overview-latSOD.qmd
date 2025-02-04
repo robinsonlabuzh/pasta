@@ -612,9 +612,9 @@ We can visually inspect the spatial arrangement of the clusters. We see that the
 #compute a PCA on the 
 sc.pp.pca(adata, n_comps = 50)
 #compute the neighbours
-sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10)
+sc.pp.neighbors(adata, n_neighbors = 20, knn = True, n_pcs = 10, transformer = "pynndescent")
 #compute leiden clustering
-sc.tl.leiden(adata, resolution = 0.3)
+sc.tl.leiden(adata, resolution = 0.3, flavor = "igraph")
 ```
 
 :::
@@ -656,13 +656,18 @@ joincount.multi(colData(sfe_tissue)$cluster,
 
 ```{python}
 sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
-df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
-df_join_counts_multivariate/2
+df_interactions = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
+# add lower triangular matrix (w/o diagonal) to the dataframe and divide by 2
+array_join_counts = (df_interactions + np.tril(df_interactions, k = -1).T)/2
+#only print the upper triangular matrix
+np.triu(array_join_counts)
 ```
 
 ::: 
 
 For example, we can see here that the calculated number of contacts of clusters 1 and 3 is far below the expected value. On the other hand all clusters are in contact with itself more often than expected at random.
+
+Therefore, in `Python` we add the lower triangular matrix to the upper triangle (without the diagonal) and divide the resulting interaction matrix by 2 as the interactions in `R` are undirected.
 
 # Summary and Considerations
 

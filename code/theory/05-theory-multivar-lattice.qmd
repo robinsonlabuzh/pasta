@@ -423,6 +423,9 @@ First, we need to get categorical marks for each data point. We do so by running
 ### `R`
 
 ```{r}
+#| warning: false
+#| fig-width: 15
+#| fig-height: 10
 # Run PCA on the sample
 sfe <- runPCA(sfe, ncomponents = 50)
 # Cluster based on first 20 PC's and using leiden
@@ -436,7 +439,7 @@ colData(sfe)$cluster <- clusterRows(reducedDim(sfe, "PCA")[,1:10],
 
 plotSpatialFeature(sfe,
   "cluster",
-  colGeometryName = colGeometryName, size = plotsize - 1
+  colGeometryName = colGeometryName, size = plotsize
 )
 ```
 
@@ -481,13 +484,16 @@ joincount.multi(colData(sfe)$cluster,
 
 ```{python, eval = TRUE}
 sq.gr.interaction_matrix(adata, "leiden", normalized = False, connectivity_key="spatial", weights = False)
-df_join_counts_multivariate = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
-df_join_counts_multivariate/2
+df_interactions = pd.DataFrame(adata.uns["leiden_interactions"], columns=np.unique(adata.obs["leiden"]), index=np.unique(adata.obs["leiden"]))
+# add lower triangular matrix (w/o diagonal) to the dataframe and divide by 2
+array_join_counts = (df_interactions + np.tril(df_interactions, k = -1).T)/2
+#only print the upper triangular matrix
+np.triu(array_join_counts)
 ```
 
 ::: 
 
-The `Python` function `sq.gr.interaction_matrix` counts the interaction for each pair twice, while the `R` function `joincount.multi` counts each interaction only once. Therefore, we divide the resulting interaction matrix in `Python` by 2. Since highly variable gene selection and clustering might have different implementations, the results are not perfectly corresponding, c.f. @richImpactPackageSelection2024.
+The `Python` function `sq.gr.interaction_matrix` counts the interaction for each pair twice, while the `R` function `joincount.multi` counts each interaction only once. Therefore, in `Python` we add the lower triangular matrix to the upper triangle (without the diagonal) and divide the resulting interaction matrix by 2. Since highly variable gene selection and clustering might have different implementations, the results are not perfectly corresponding, c.f. @richImpactPackageSelection2024.
 
 The rows show different combinations of clusters that are in physical contact. E.g. $1:1$ means the cluster $1$ with itself. The column `Joincount` is the observed statistic whereas the column `Expected` is the expected value of the statistic for this combination. Like this, we can compare whether contacts among cluster combinations occur more frequently than expected at random [@cliff1981spatial].
 

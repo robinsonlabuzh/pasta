@@ -23,3 +23,10 @@ To get a (hopefully) working environment:
 
 Disclaimer: This was so far only tested on `3.10.12 | packaged by conda-forge` and `macOS Sonoma 14.7.1 - aarch64-apple-darwin20 (64-bit)`.
 
+## Contributions 
+Contributions are welcome. Please open an issue to start contributing.
+
+## License
+© 2024 The `pasta` authors. Content is published under [Creative Commons CC-BY-4.0 License](https://creativecommons.org/licenses/by/4.0/) for the text and [GPL-3 License](https://www.gnu.org/licenses/gpl-3.0.html) for any code.
+
+

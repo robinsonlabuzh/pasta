@@ -88,9 +88,6 @@ sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
 # Convert counts log-transformed normalized expression values
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 
-ann <-  zellkonverter::SCE2AnnData(sfe_tissue)
-anndata::write_h5ad(ann, "../data/McKellarMuscleData_processed.h5ad")
-
 features <- c("Myh2", "Calr")
 ```
 
@@ -98,10 +95,6 @@ features <- c("Myh2", "Calr")
 
 ```{python}
 adata = sc.read_h5ad("../data/McKellarMuscleData_processed.h5ad")
-adata.obsm['spatial'] = np.array(list(zip((adata.obs['x'] * -1), adata.obs['y'])))
-adata.var_names = adata.var["symbol"]
-adata.raw = adata.copy()
-adata.X = adata.layers["logcounts"].astype(np.float64) # necessary for Local Moran to work
 ```
 
 ::: 

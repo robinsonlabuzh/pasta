@@ -51,15 +51,6 @@ df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
 df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
 cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
 cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
-
-#load the dataset and store as anndata object
-adata = sq.datasets.visium("Visium_FFPE_Mouse_Kidney")
-# normalise counts already here that both R and python have same values
-adata.raw = adata.copy()
-sc.pp.normalize_total(adata)
-sc.pp.log1p(adata)
-# save file as h5ad
-adata.write("../data/adata_neighbors.h5ad")
 ```
 
 :::
@@ -72,25 +63,14 @@ adata.write("../data/adata_neighbors.h5ad")
 
 ```{r}
 #| label: load-data
-library(SpatialExperiment)
-
-sce <- zellkonverter::readH5AD("../data/adata_neighbors.h5ad")
-colnames(reducedDim(sce, "spatial")) <- c("x", "y")
-spe <- toSpatialExperiment(sce)
-
-spatialCoords(spe) <- reducedDim(sce, "spatial")
-
-sfe <- SpatialFeatureExperiment::toSpatialFeatureExperiment(spe)
-
-# the counts are already normalised
-assayNames(sfe) <- "logcounts"
-
-sfe
+sfe <- readRDS("../data/sfe_Visium_Mouse_Kidney.rds")
 ```
 
 ### `Python`
 
 ```{python}
+#load the dataset and store as anndata object
+adata = sc.read_h5ad("../data/adata_neighbors.h5ad")
 # invert the spatial coordinates
 adata.obsm["spatial"][:, 1] = adata.obsm["spatial"][:, 1].max() - adata.obsm["spatial"][:, 1]
 adata

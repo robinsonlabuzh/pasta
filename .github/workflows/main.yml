@@ -24,6 +24,10 @@ jobs:
         with:
           python-version: '3.10'
           cache: 'pip'
+      - name: pip install reqs
+        shell: bash
+        run: |
+          pip install -r requirements.txt
       - name: Check env and python version
         run: |
           python --version
@@ -35,29 +39,23 @@ jobs:
           r-version: '4.3.1'
       - name: Set up renv and install renv.lock packages (BioC 3.17)
         uses: r-lib/actions/setup-renv@v2
-      - name: Set RENV_PATHS_ROOT
-        shell: bash
-        run: |
-          echo "RENV_PATHS_ROOT=${{ runner.temp }}/renv" >> $GITHUB_ENV
-      # - name: Install and activate renv
-      #   run: |
-      #     install.packages("renv")
-      #     renv::activate()
-      #     shell: Rscript {0}
-      - name: Check R and OS version
+      - name: Check R and python versions
         id: get-version
-        run: |
-          cat("##[set-output name=os-version;]", sessionInfo()$running, "\n", sep = "")
-          cat("##[set-output name=r-version;]", R.Version()$version.string, sep = "")
-          shell: Rscript {0}
-      # - name: Restore Renv package cache
-      #   uses: actions/cache@v4
-      #   with:
-      #     path: ${{ env.RENV_PATHS_ROOT }}
-      #     key: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{ inputs.cache-version }}-${{ hashFiles('renv.lock') }}
-      #     restore-keys: ${{ steps.get-version.outputs.os-version }}-${{ steps.get-version.outputs.r-version }}-${{inputs.cache-version }}-
-      - name: Check python version - from subshell and renv
         shell: Rscript {0}
         run: |
+          sessionInfo()$running
+          R.Version()$version.string
           renv::status()
           system('python --version')
+      - name: Overwrite spatialFD with github's main - regardless of renv
+        shell: Rscript {0}
+        run: |
+          devtools::install_github("mjemons/spatialFDA")
+      - name: Install rmarkdown (how are the vignettes being built?)
+        shell: Rscript {0}
+        run: |
+          install.packages('rmarkdown')        
+      - name: Attempt to render the vignettes (how is this suposed to work?)
+        shell: Rscript {0}
+        run: |
+          rmarkdown::render('code/00-about.qmd')

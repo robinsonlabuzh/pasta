@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Set up R (no python)
         uses: r-lib/actions/setup-r@v2
-      - bname: Set up renv
+      - name: Set up renv
         uses: r-lib/actions/setup-renv@v2
       - name: Set RENV_PATHS_ROOT
         shell: bash

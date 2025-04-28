@@ -3791,7 +3791,7 @@
     },
     "zellkonverter": {
       "Package": "zellkonverter",
-      "Version": "1.9.0",
+      "Version": "1.10.1", # "1.9.0",
       "Source": "Bioconductor",
       "Requirements": [
         "DelayedArray",
@@ -3804,8 +3804,7 @@
         "methods",
         "reticulate",
         "utils"
-      ],
-      "Hash": "302b263a2325fb14393ca2c23a4e4a09"
+      ]
     },
     "zlibbioc": {
       "Package": "zlibbioc",

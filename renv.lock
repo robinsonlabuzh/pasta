@@ -1009,7 +1009,7 @@
     },
     "basilisk": {
       "Package": "basilisk",
-      "Version": "1.11.2",
+      "Version": "1.20.0", # because this is not available "1.11.2",
       "Source": "Bioconductor",
       "Requirements": [
         "basilisk.utils",
@@ -1018,20 +1018,18 @@
         "parallel",
         "reticulate",
         "utils"
-      ],
-      "Hash": "c4ba9e63025d8a198d40156d34f66a34"
+      ]
     },
     "basilisk.utils": {
       "Package": "basilisk.utils",
-      "Version": "1.12.1",
+      "Version": "1.20.0",
       "Source": "Bioconductor",
       "Requirements": [
         "dir.expiry",
         "methods",
         "tools",
         "utils"
-      ],
-      "Hash": "5a49d9ce90b472c39735494ebf942dc9"
+      ]
     },
     "beachmat": {
       "Package": "beachmat",

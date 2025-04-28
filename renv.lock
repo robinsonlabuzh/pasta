@@ -2324,12 +2324,11 @@
     },
     "metapod": {
       "Package": "metapod",
-      "Version": "1.7.0",
+      "Version": "1.8.0", # "1.7.0",
       "Source": "Bioconductor",
       "Requirements": [
         "Rcpp"
-      ],
-      "Hash": "22e354f7a3252a68620ee333c3377a1f"
+      ]
     },
     "mgcv": {
       "Package": "mgcv",

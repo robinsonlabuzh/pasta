@@ -1009,7 +1009,7 @@
     },
     "basilisk": {
       "Package": "basilisk",
-      "Version": "1.20.0", # because this is not available "1.11.2",
+      "Version": "1.12.1", # because this is not available "1.11.2",
       "Source": "Bioconductor",
       "Requirements": [
         "basilisk.utils",
@@ -1022,7 +1022,7 @@
     },
     "basilisk.utils": {
       "Package": "basilisk.utils",
-      "Version": "1.20.0",
+      "Version": "1.12.1",
       "Source": "Bioconductor",
       "Requirements": [
         "dir.expiry",

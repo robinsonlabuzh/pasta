@@ -63,7 +63,7 @@ jobs:
       #     rmarkdown::render('code/00-home.qmd') #  code/00-overview-latSOD.qmd')
       - name: Install quarto
         uses: quarto-dev/quarto-actions/setup@v2
-      - name: Install quarto CRAN (how are the vignettes being built?)
+      - name: Install quarto CRAN
         shell: Rscript {0}
         run: |
           renv::install('quarto')
@@ -73,17 +73,11 @@ jobs:
       #  shell: Rscript {0}
       #  run: |
       #    quarto::quarto_render('code/00-overview-latSOD.qmd')
-      - name: Fake HTML generation
+      - name: simple html generated
         run: |
-          quarto check &> docs/00-overview-latSOD.html
-      - name: Debug updated renv
-        shell: Rscript {0}
-        run: |
-          renv::status()
-          library(quarto)
-          .libPaths()       
+          quarto render code/00-about.qmd
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
           name: home
-          path: docs/00-overview-latSOD.html
+          path: docs/00-about.html

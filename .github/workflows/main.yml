@@ -12,7 +12,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-24.04]
         python-version: ["3.11", "3.12", "3.13"]
         r-version: ["4.5.0"]
-        requirements: ["requirements.txt", "requirements_versionless.txt"]
+        requirements: ["requirements.txt", "requirements_versionless.txt", "requirements_semipinned.txt"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -26,7 +26,8 @@ jobs:
             zlib1g-dev libglpk-dev libjpeg-dev libmagick++-dev gsfonts \
             cmake libpng-dev libtiff-dev python3 libglu1-mesa-dev libgl1-mesa-dev \
             libgdal-dev gdal-bin libgeos-dev libproj-dev libsqlite3-dev libsodium-dev \
-            libicu-dev tcl tk tk-dev tk-table libfribidi-dev libharfbuzz-dev libudunits2-dev
+            libicu-dev tcl tk tk-dev tk-table libfribidi-dev libharfbuzz-dev libudunits2-dev \
+            libfftw3-dev
       - name: Set up python
         uses: actions/setup-python@v5
         with:
@@ -55,10 +56,10 @@ jobs:
           R.Version()$version.string
           renv::status()
           system('python --version')
-      - name: Install rmarkdown (how are the vignettes being built?)
-        shell: Rscript {0}
-        run: |
-          install.packages('rmarkdown')        
+      # - name: Install rmarkdown (how are the vignettes being built?)
+      #   shell: Rscript {0}
+      #   run: |
+      #     install.packages('rmarkdown')          
       - name: Attempt to render the vignettes with rmarkdown
         shell: Rscript {0}
         run: |

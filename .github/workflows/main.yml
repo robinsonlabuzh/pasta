@@ -66,11 +66,22 @@ jobs:
       - name: Install quarto CRAN (how are the vignettes being built?)
         shell: Rscript {0}
         run: |
-          install.packages('quarto') 
-      - name: Attempt to render the vignettes with quarto
+          renv::install('quarto')
+          renv::status()
+          .libPaths()
+      # - name: Attempt to render the vignettes with quarto
+      #  shell: Rscript {0}
+      #  run: |
+      #    quarto::quarto_render('code/00-overview-latSOD.qmd')
+      - name: Fake HTML generation
+        run: |
+          quarto check &> docs/00-overview-latSOD.html
+      - name: Debug updated renv
         shell: Rscript {0}
         run: |
-          quarto::quarto_render('code/00-overview-latSOD.qmd')
+          renv::status()
+          library(quarto)
+          .libPaths()       
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:

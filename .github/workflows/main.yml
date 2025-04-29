@@ -1,11 +1,16 @@
 ---
-name: build_using_renv__R_4.3.1__py_3.10__bioC_3.17
+name: build_using_renv__R_4.5.0__py_3.11__bioC_3.21
+
+env:
+  RVERSION: 4.5.0
+  PYVERSION: 3.11
+  
 on:
   workflow_dispatch: null
   pull_request:
 
 jobs:
-  build_ubuntu_latest:
+  build_ubuntu_24:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -19,10 +24,10 @@ jobs:
             cmake libpng-dev libtiff-dev python3 libglu1-mesa-dev libgl1-mesa-dev \
             libgdal-dev gdal-bin libgeos-dev libproj-dev libsqlite3-dev libsodium-dev \
             libicu-dev tcl tk tk-dev tk-table libfribidi-dev libharfbuzz-dev libudunits2-dev
-      - name: Set up python (pinned version 3.10)
+      - name: Set up python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "$PYVERSION"
           cache: 'pip'
       - name: pip install reqs
         shell: bash
@@ -33,11 +38,11 @@ jobs:
           python --version
           echo -e '\n\n'
           env
-      - name: Set up R (pinned version 4.3.1)
+      - name: Set up R
         uses: r-lib/actions/setup-r@v2
         with:
-          r-version: '4.3.1'
-      - name: Set up renv and install renv.lock packages (BioC 3.17)
+          r-version: '$RVERSION'
+      - name: Set up renv and install renv.lock packages
         uses: r-lib/actions/setup-renv@v2
       - name: Check R and python versions
         id: get-version
@@ -47,10 +52,6 @@ jobs:
           R.Version()$version.string
           renv::status()
           system('python --version')
-      - name: Overwrite spatialFD with github's main - regardless of renv
-        shell: Rscript {0}
-        run: |
-          devtools::install_github("mjemons/spatialFDA")
       - name: Install rmarkdown (how are the vignettes being built?)
         shell: Rscript {0}
         run: |

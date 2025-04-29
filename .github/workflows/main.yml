@@ -1,17 +1,18 @@
 ---
-name: build_using_renv__R_4.5.0__py_3.11__bioC_3.21
+name: render_vignettes
 
 on:
   workflow_dispatch: null
   pull_request:
 
 jobs:
-  build_ubuntu_24:
+  build:
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, ubuntu-24.04]
         python-version: ["3.11", "3.12", "3.13"]
         r-version: ["4.5.0"]
+        requirements: ["requirements.txt", "requirements_versionless.txt"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -19,7 +20,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Install sys deps
         run: |
-          sudo apt update && sudo apt install -y libcurl4-openssl-dev \
+          sudo apt update && sudo apt install -y pandoc libcurl4-openssl-dev \
             libcairo2-dev libssl-dev make  unixodbc-dev libnode-dev \
             libxml2-dev libx11-dev git libfontconfig1-dev libfreetype6-dev \
             zlib1g-dev libglpk-dev libjpeg-dev libmagick++-dev gsfonts \
@@ -34,7 +35,7 @@ jobs:
       - name: pip install reqs
         shell: bash
         run: |
-          pip install -r requirements.txt
+          pip install -r ${{ matrix.requirements }}
       - name: Check env and python version
         run: |
           python --version
@@ -58,7 +59,15 @@ jobs:
         shell: Rscript {0}
         run: |
           install.packages('rmarkdown')        
-      - name: Attempt to render the vignettes (how is this suposed to work?)
+      - name: Attempt to render the vignettes with rmarkdown
         shell: Rscript {0}
         run: |
           rmarkdown::render('code/00-about.qmd')
+      - name: Install quarto 
+        shell: Rscript {0}
+        run: |
+          install.packages('quarto')       
+      - name: Attempt to render the vignettes with quarto
+        shell: Rscript {0}
+        run: |
+          quarto::quarto_render('code/00-overview-latSOD.qmd')

@@ -41,6 +41,9 @@ suppressPackageStartupMessages({
 
 theme_set(theme_light())
 
+roma_colors <- data.frame(roma_colors = scico(256, palette = 'roma'))
+write.csv(roma_colors , "../misc/roma_colors.csv")
+
 source('utils.R')
 ```
 
@@ -62,10 +65,8 @@ from scipy.stats import false_discovery_control
 warnings.filterwarnings("ignore")
 
 plt.rcParams['font.family'] = 'Futura'
-df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
 df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
-cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
-cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
+cmap_continuous = LinearSegmentedColormap.from_list("roma", list(df_cmap_continuous["roma_colors"])).reversed()
 ```
 
 ::: 

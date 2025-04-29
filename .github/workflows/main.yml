@@ -56,22 +56,23 @@ jobs:
           R.Version()$version.string
           renv::status()
           system('python --version')
-      # - name: Install rmarkdown (how are the vignettes being built?)
-      #   shell: Rscript {0}
-      #   run: |
-      #     install.packages('rmarkdown')          
+      #          
       # - name: Attempt to render the vignettes with rmarkdown
       #   shell: Rscript {0}
       #   run: |
       #     rmarkdown::render('code/00-home.qmd') #  code/00-overview-latSOD.qmd')
       - name: Install quarto
         uses: quarto-dev/quarto-actions/setup@v2
+      - name: Install quarto CRAN (how are the vignettes being built?)
+        shell: Rscript {0}
+        run: |
+          install.packages('quarto') 
       - name: Attempt to render the vignettes with quarto
         shell: Rscript {0}
         run: |
-          quarto::quarto_render('code/00-home.qmd') # code/00-overview-latSOD.qmd')
+          quarto::quarto_render('code/00-overview-latSOD.qmd')
       - name: Archive code coverage results
         uses: actions/upload-artifact@v4
         with:
           name: home
-          path: code/00-home.html
+          path: docs/00-overview-latSOD.html

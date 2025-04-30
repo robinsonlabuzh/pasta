@@ -12,7 +12,7 @@ jobs:
         os: [ubuntu-22.04, ubuntu-24.04]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
         r-version: ["4.5.0"]
-        requirements: ["requirements", "requirements_semipinned"]
+        # requirements: ["requirements", "requirements_semipinned"]
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -36,7 +36,14 @@ jobs:
       - name: pip install reqs
         shell: bash
         run: |
-          pip install -r ${{ matrix.requirements }}.txt
+          pip install -r requirements.txt
+        if: matrix.python-version == '3.10' || matrix.python-version == '3.11' || matrix.python-version == '3.12'
+      - name: pip install loose reqs and freeze result
+        shell: bash
+        run: |
+          pip install -r requirements_semipinned.txt
+          pip freeze > solved_requirements.txt
+        if: matrix.python-version == '3.13'
       - name: Check env and python version
         run: |
           python --version
@@ -67,9 +74,16 @@ jobs:
       - name: Render all
         run: |
           quarto render code/
-      - name: Upload
+      - name: Upload HTMLs
         uses: actions/upload-artifact@v4
         with:
-          name: vignette-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}-reqs-${{ matrix.requirements }}
+          name: vignette-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
           path: docs/
           retention-days: 10
+      - name: Upload python 3.11 semipinned requirements
+        uses: actions/upload-artifact@v4
+        if: matrix.python-version == '3.13'
+        with:
+          name: pip-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
+          path: solved_requirements.txt
+          retention-days: 10  

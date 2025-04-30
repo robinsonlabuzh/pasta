@@ -451,13 +451,11 @@ plotSpatialFeature(sfe,
 ### `Python`
 
 ```{python}
-from sklearn_ann.kneighbors.annoy import AnnoyTransformer
-
 np.random.seed(123)
 #compute a PCA on the 
 sc.pp.pca(adata, n_comps = 50, zero_center = True, svd_solver = "arpack")
 #compute the neighbours
-sc.pp.neighbors(adata, use_rep = "X_pca", knn = True, n_pcs = 10, transformer=AnnoyTransformer(n_neighbors=20, n_trees=50))
+sc.pp.neighbors(adata, use_rep = "X_pca", knn = True, n_pcs = 10)
 #compute leiden clustering
 sc.tl.leiden(adata, resolution = 0.3, flavor = "igraph", objective_function = "modularity")
 
@@ -465,7 +463,6 @@ fig, ax = plt.subplots(1, 1, figsize=figsize, layout = "tight")
 sq.pl.spatial_scatter(
     adata,
     color="leiden",
-    palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["leiden"]))]),
     shape=None,
     library_id="spatial",
     title="Clusters",

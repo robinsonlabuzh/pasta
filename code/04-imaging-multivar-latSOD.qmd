@@ -24,6 +24,10 @@ In this vignette we will show:
 #| warning: false
 #| results: hide
 source("utils.R")
+
+roma_colors <- data.frame(roma_colors = scico::scico(256, palette = 'roma'))
+write.csv(roma_colors , "../misc/roma_colors.csv")
+
 theme_set(theme_light())
 ```
 
@@ -48,10 +52,8 @@ import warnings
 warnings.filterwarnings("ignore")
 
 plt.rcParams['font.family'] = 'Futura'
-df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
 df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
-cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
-cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
+cmap_continuous = LinearSegmentedColormap.from_list("roma", list(df_cmap_continuous["roma_colors"])).reversed()
 ```
 
 For this representation of cells, we will rely on the `SpatialFeatureExperiment` package. For preprocessing of the dataset, we refer the reader to the [vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html) of the `voyager` package.

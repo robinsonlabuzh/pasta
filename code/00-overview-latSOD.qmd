@@ -65,7 +65,6 @@ from scipy.stats import false_discovery_control
 
 warnings.filterwarnings("ignore")
 
-plt.rcParams['font.family'] = 'Futura'
 df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
 cmap_continuous = LinearSegmentedColormap.from_list("roma", list(df_cmap_continuous["roma_colors"])).reversed()
 ```

@@ -7,7 +7,7 @@ We are located in the [Department of Molecular Life Sciences](https://www.mls.uz
 Research in our laboratory is focused on creating, comparing and understanding statistical methods and data science tools for processing and interpreting various types of genomic data.
 
 ## Team
-Authors: [Martin Emons](https://www.mls.uzh.ch/en/research/robinson/groupmembers/martin-emons.html), [Samuel Gunz](https://www.mls.uzh.ch/en/research/robinson/groupmembers/samuel-gunz.html), [Malte Kuehl](https://www.au.dk/en/malte.kuehl@clin.au.dk) (Python examples), [Mark D. Robinson](https://www.mls.uzh.ch/en/research/robinson/professor-robinson.html) \
+Authors: [Martin Emons](https://www.mls.uzh.ch/en/research/robinson/groupmembers/martin-emons.html), [Samuel Gunz](https://www.mls.uzh.ch/en/research/robinson/groupmembers/samuel-gunz.html), [Malte Kuehl](https://www.au.dk/en/malte.kuehl@clin.au.dk) (Python examples), [Izaskun Mallon](https://orcid.org/0000-0002-2853-7526), [Mark D. Robinson](https://www.mls.uzh.ch/en/research/robinson/professor-robinson.html) \
 
 We thank all members of the Robinsonlab for constructive feedback on this work. We thank Peiying Cai, Helena L. Crowell, Alice Driessen, Reinhard Furrer, Reto Gerber, Pierre-Luc Germain, Maruša Kodermann, Vladyslav Korobeynyk, Siyuan Luo, Izaskun Mallona, Giulia Moro, Emanuel Sonder, Jiayi Wang and David Wissel for their careful reading and input to the vignette.
 

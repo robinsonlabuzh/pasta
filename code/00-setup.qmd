@@ -1,4 +1,116 @@
-# Preamble
+# Technology for analysis
+
+R and Python have become the most popular languages for analysis of (spatial) omics data over the last few years. Traditionally, R has been the main language used in Statistics and therefore the number of Statistics libraries is still larger compared to Python. Python, however, has become the language of choice for tasks such as image analysis and machine learning where R lacks behind [@mosesMuseumSpatialTranscriptomics2022].
+
+Our goal is to use the best of both worlds. In this spirit, we try to show analyses in both R and Python where possible. Especially in point pattern analysis however, the existing libraries in Python lack behind such that we focus on the analysis in R in this chapter.
+
+To facilitate the transition between R and Python, we will show how to convert objects between the languages such that analysis can be transitioned from one language to another.
+
+In R we will use `r BiocStyle::Biocpkg('SpatialExperiment')` and  `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` objects [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022, @mosesVoyagerExploratorySinglecell2023]. The latter is an extension to the first and additionally contains geometric annotations that are encoded as simple features of the `r BiocStyle::CRANpkg('sf')` library [@pebesmaSpatialDataScience2023].
+
+In Python we will use the `anndata` object [@virshup2024anndata].
+
+## Conversion form R to Python
+
+```{r}
+suppressPackageStartupMessages({
+  library(SpatialFeatureExperiment)
+  library(SFEData)
+  library(scater)
+})
+```
+
+Here we will load a dataset by [@mckellarLargescaleIntegrationSinglecell2021] as a `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` from the package `r BiocStyle::Biocpkg('SFEData')`.
+
+```{r}
+# Load the dataset
+sfe <- SFEData::McKellarMuscleData(dataset = "full")
+# Take spots that are covered with tissue
+sfe_tissue <- sfe[, colData(sfe)$in_tissue]
+# Filter out genes with no counts
+sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
+# Convert counts log-transformed normalized expression values
+sfe_tissue <- scater::logNormCounts(sfe_tissue)
+```
+
+For the conversion from a `SingleCellExperiment` to a `AnnData` object we will use `r BiocStyle::Biocpkg('zellkonverter')` package. More details can be found in their vignettes. Note that the `SpatialExperiment` and `SpatialFeatureExperiment` objects inherit from the `SingleCellExperiment` class, therefore we can use the function `SCE2AnnData`. 
+
+```{r}
+# Convert to AnnData object
+ann <-  zellkonverter::SCE2AnnData(sfe_tissue)
+anndata::write_h5ad(ann, "../data/McKellarMuscleData.h5ad")
+```
+
+The spatial coordinates however are not directly converted and stored as `x` and `y` in the `obs` data frame.
+
+```{python}
+import numpy as np
+import scanpy as sc
+import squidpy as sq
+
+# Read AnnData object
+adata = sc.read_h5ad("../data/McKellarMuscleData.h5ad")
+# Create the spatial coordinates in AnnData
+adata.obsm['spatial'] = np.array(list(zip((adata.obs['x'] * -1), adata.obs['y'])))
+```
+
+We preform more preprocessing such that we can use all function of the packages [esda](https://pysal.org/esda/) and [pysal](https://pysal.org/).
+
+```{python}
+adata.var_names = adata.var["symbol"]
+adata.raw = adata.copy()
+# Necessary for Local Moran function to work
+adata.X = adata.layers["logcounts"].astype(np.float64) 
+# Save for later use
+adata.write("../data/McKellarMuscleData_processed.h5ad")
+```
+
+## Conversion form Python to R
+
+Here we will use 10x Visium data set from @10xgenomicsAdultMouseKidney2021 downloaded from the [squidpy visium datasets](https://squidpy.readthedocs.io/en/stable/api/squidpy.datasets.visium.html) [@pallaSquidpyScalableFramework2022].
+
+```{python}
+import numpy as np
+import scanpy as sc
+
+#load the dataset and store as anndata object
+adata = sq.datasets.visium("Visium_FFPE_Mouse_Kidney")
+# normalise counts already here that both R and python have same values
+adata.raw = adata.copy()
+sc.pp.normalize_total(adata)
+sc.pp.log1p(adata)
+# save file as h5ad
+adata.write("../data/adata_neighbors.h5ad")
+```
+
+For the conversion from a `AnnData` to a `SingleCellExperiment` object we will again use the `r BiocStyle::Biocpkg('zellkonverter')` package.
+
+```{r}
+library(SpatialFeatureExperiment)
+library(SpatialExperiment)
+
+sce <- zellkonverter::readH5AD("../data/adata_neighbors.h5ad")
+colnames(reducedDim(sce, "spatial")) <- c("x", "y")
+```
+
+Now we have to convert to a `SpatialExperiment` / `SpatialFeatureExperiment` object.
+
+```{r}
+spe <- toSpatialExperiment(sce)
+# Reduced dimension to spatial coords
+spatialCoords(spe) <- reducedDim(sce, "spatial")
+# SpatialExperiment to SpatialFeatureExperiment
+sfe <- SpatialFeatureExperiment::toSpatialFeatureExperiment(spe)
+# the counts were already normalised in Python
+assayNames(sfe) <- "logcounts"
+saveRDS(sfe, "../data/sfe_Visium_Mouse_Kidney.rds")
+```
+
+## Conversion from Seurat to Bioconductor objects
+
+Another popular analysis framework for single cell and spatial omics in R is [Seurat](https://satijalab.org/seurat/). To convert from `Seurat` object so `SpatialExperiment` you can use `Seurat::as.SingleCellExperiment(x)`. For more details please have a look at this [vignette](https://satijalab.org/seurat/archive/v3.1/conversion_vignette). From there on you can convert to a `SpatialExperiment` object using `toSpatialExperiment()`.
+
+# Datasets
 
 ## Dependencies
 
@@ -15,7 +127,11 @@ library(STexampleData)
 
 # Molecule-based dataset
 
+Here we will process the MERFISH data from @moffittMolecularSpatialFunctional2018 to be used as a `SpatialExperimentObject` `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022] in our vigenttes.
+
 ## Setup
+
+The dataset is loaded from ExperimentHub
 
 ```{r}
 #| label: load-data

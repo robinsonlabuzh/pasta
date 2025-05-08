@@ -21,6 +21,8 @@ suppressPackageStartupMessages({
   library(magrittr)
   library(bluster)
   library(dixon)
+  library(ExperimentHub)
+  library(STexampleData)
 })
 
 set.seed(12345)
@@ -42,6 +44,48 @@ set.seed(12345)
       "'rownames(.)' or 'names(colData(.))'")
   }
   ppp(xy[, 1], xy[, 2], window = w, marks = factor(m))
+}
+
+# Check if the directory exists, and create it if it doesn't
+if (!file.exists("../data/spe.rds")) {
+  eh <- ExperimentHub()
+  q <- query(eh, "MERFISH")
+  df <- eh[["EH7546"]]
+  # extract cell metadata
+  i <- seq_len(9)
+  cd <- data.frame(df[, i], row.names = 1)
+  
+  # set sample identifiers
+  id <- grep("Bregma", names(cd))
+  names(cd)[id] <- "sample_id"
+  
+  # rename spatial coordinates
+  xy <- grep("Centroid", names(cd))
+  xy <- names(cd)[xy] <- c("x", "y")
+  
+  # simplify annotations
+  cd$cluster_id <- cd$Cell_class
+  for (. in c("Endothelial", "OD Mature", "OD Immature"))
+    cd$cluster_id[grep(., cd$cluster_id)] <- .
+  
+  # extract & sparsify assay data
+  y <- data.frame(df[, -i], row.names = df[, 1])
+  y <- as(t(as.matrix(y)), "dgCMatrix")
+  
+  # construct SPE
+  (spe <- SpatialExperiment(
+    assays = list(exprs  = y),
+    spatialCoordsNames = xy,
+    colData = cd))
+  
+  
+  dir_path <- "../data"
+  
+  # Check if the directory exists, and create it if it doesn't
+  if (!dir.exists(dir_path)) {
+    dir.create(dir_path)
+  }
+  saveRDS(spe, "../data/spe.rds")
 }
 
 

@@ -37,9 +37,13 @@ suppressPackageStartupMessages({
   library(magrittr)
   library(scater)
   library(bluster)
+  library(scico)
 })
 
 theme_set(theme_light())
+
+roma_colors <- data.frame(roma_colors = scico::scico(256, palette = 'roma'))
+write.csv(roma_colors , "../misc/roma_colors.csv")
 
 source('utils.R')
 ```
@@ -61,11 +65,8 @@ from scipy.stats import false_discovery_control
 
 warnings.filterwarnings("ignore")
 
-plt.rcParams['font.family'] = 'Futura'
-df_cmap_discrete = pd.read_csv("../misc/ditto_colors.csv", index_col=0)
 df_cmap_continuous = pd.read_csv("../misc/roma_colors.csv", index_col=0)
-cmap_discrete = ListedColormap(df_cmap_discrete["ditto_colors"].values, "ditto")
-cmap_continuous = LinearSegmentedColormap.from_list("roma", df_cmap_continuous["roma_colors"]).reversed()
+cmap_continuous = LinearSegmentedColormap.from_list("roma", list(df_cmap_continuous["roma_colors"])).reversed()
 ```
 
 ::: 
@@ -89,6 +90,12 @@ sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 
 ann <-  zellkonverter::SCE2AnnData(sfe_tissue)
+# Define the directory and file paths
+dir_path <- "../data"
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+}
 anndata::write_h5ad(ann, "../data/McKellarMuscleData_processed.h5ad")
 
 features <- c("Myh2", "Calr")
@@ -614,13 +621,11 @@ We can visually inspect the spatial arrangement of the clusters. We see that the
 ## `Python`
 
 ```{python}
-from sklearn_ann.kneighbors.annoy import AnnoyTransformer
-
 np.random.seed(123)
 #compute a PCA on the 
 sc.pp.pca(adata, n_comps = 50, zero_center = True, svd_solver = "arpack")
 #compute the neighbours
-sc.pp.neighbors(adata, use_rep = "X_pca", knn = True, n_pcs = 10, transformer=AnnoyTransformer(n_neighbors=20, n_trees=50))
+sc.pp.neighbors(adata, use_rep = "X_pca", knn = True, n_pcs = 10)
 #compute leiden clustering
 sc.tl.leiden(adata, resolution = 0.3, flavor = "igraph", objective_function = "modularity")
 ```
@@ -641,7 +646,7 @@ plotSpatialFeature(sfe_tissue,
 ## `Python`
 
 ```{python}
-sq.pl.spatial_scatter(adata, color="leiden", palette=ListedColormap(cmap_discrete.colors[:len(np.unique(adata.obs["leiden"]))]), library_id="spatial", title="Clusters", shape=None, size=55)
+sq.pl.spatial_scatter(adata, color="leiden", library_id="spatial", title="Clusters", shape=None, size=55)
 plt.gca().set_axis_off()
 plt.show()
 ```

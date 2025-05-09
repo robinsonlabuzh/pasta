@@ -9,7 +9,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
+        os: [ubuntu-22.04] #, ubuntu-24.04
         python-version: ["3.12", "3.13"] #3.10", "3.11", 
         r-version: ["4.5.0"]
         # requirements: ["requirements", "requirements_semipinned"]
@@ -87,3 +87,9 @@ jobs:
           name: pip-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
           path: solved_requirements.txt
           retention-days: 10  
+      - name: Upload test docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: vignette-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
+          path: misc/test
+          retention-days: 10

@@ -477,3 +477,17 @@ Translation correction:
 ```{r}
 sessionInfo()
 ```
+
+```{r, include = FALSE}
+# Define the directory and file paths
+dir_path <- "../misc/test"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+}
+
+res |> 
+  write.csv("../misc/test/test-00-overview-pp-R.csv")
+```
+

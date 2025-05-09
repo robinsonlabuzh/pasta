@@ -10,7 +10,7 @@ In R we will use `r BiocStyle::Biocpkg('SpatialExperiment')` and  `r BiocStyle::
 
 In Python we will use the `anndata` object [@virshup2024anndata].
 
-## Conversion form R to Python
+## Conversion from R to Python
 
 ```{r}
 suppressPackageStartupMessages({
@@ -65,7 +65,7 @@ adata.X = adata.layers["logcounts"].astype(np.float64)
 adata.write("../data/McKellarMuscleData_processed.h5ad")
 ```
 
-## Conversion form Python to R
+## Conversion from Python to R
 
 Here we will use 10x Visium data set from @10xgenomicsAdultMouseKidney2021 downloaded from the [squidpy visium datasets](https://squidpy.readthedocs.io/en/stable/api/squidpy.datasets.visium.html) [@pallaSquidpyScalableFramework2022].
 

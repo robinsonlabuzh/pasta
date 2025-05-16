@@ -3,7 +3,7 @@ project:
   execute-dir: file
   output-dir: ../docs
   render:
-    - "*.qmd"
+    - "00-*.qmd"
     - "!theory/"
 bibliography: ../misc/PASTA.bib
 
@@ -94,13 +94,13 @@ website:
       background: light
       collapse-level: 2
       contents: 
-        - text: "---"
-        - section: "Univariate Methods"
-        - text: "Lattice-based Methods"
-          file: 05-HTS-univar-latSOD.qmd
-        - text: "---"
-        - section: "Multivariate Methods"
-        - text: "Lattice-based Methods"
-          file: 06-HTS-multivar-latSOD.qmd
+       - text: "---"
+       - section: "Univariate Methods"
+       - text: "Lattice-based Methods"
+         file: 05-HTS-univar-latSOD.qmd
+       - text: "---"
+       - section: "Multivariate Methods"
+       - text: "Lattice-based Methods"
+         file: 06-HTS-multivar-latSOD.qmd
 
 date: last-modified	

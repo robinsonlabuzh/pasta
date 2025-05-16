@@ -701,11 +701,13 @@ sessionInfo()
 
 ```{r, include=FALSE}
 # Define the directory and file paths
-dir_path <- "../misc/test"
+dir_path <- "../tests/"
+dir_path_out <- "../tests/out"
 
 # Check if the directory exists, and create it if it doesn't
 if (!dir.exists(dir_path)) {
   dir.create(dir_path)
+  dir.create(dir_path_out)
 }
 ```
 
@@ -714,7 +716,7 @@ if (!dir.exists(dir_path)) {
 moran_calr_res = moran_calr.I
 moran_myh2_res = moran_myh2.I
 # save for testing the runs later
-adata.obs.to_csv("../misc/test/test-00-overview-lat-Python.csv")
+adata.obs.to_csv("../tests/out/test-00-overview-lat-Python.csv")
 ```
 
 ```{r, include=FALSE}
@@ -722,7 +724,7 @@ adata.obs.to_csv("../misc/test/test-00-overview-lat-Python.csv")
 library(reticulate)
 
 localResults(sfe)[[1]] |> as.data.frame() |> 
-  write.csv("../misc/test/test-00-overview-lat-R.csv")
+  write.csv("../tests/out/test-00-overview-lat-R.csv")
 
 pyRes <- c(py$moran_calr_res, py$moran_myh2_res)
 rRes <- rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features, "moran_Vis5A"]
@@ -730,7 +732,7 @@ rRes <- rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features, "moran_Vis
 test <- round(pyRes,6) == round(rRes,6)
 
 data.frame(test = c("Morans_I_calr", "Morans_I_myh2"), identical = test) |> 
-  write.csv("../misc/test/test-00-overview-lat-R-Python-compare.csv")
+  write.csv("../tests/out/test-00-overview-lat-R-Python-compare.csv")
 ```
 
 

@@ -360,8 +360,8 @@ nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 6)
 sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
-p <- tm_shape(sf) + tm_dots(col = 'Cardinality', size = 0.06 * plotsize)
-q <- tm_shape(sf) + tm_dots(col = 'Probability', size = 0.06 * plotsize)  
+p <- tm_shape(sf) + tm_dots(col = 'Cardinality', size = 0.5 * plotsize)
+q <- tm_shape(sf) + tm_dots(col = 'Probability', size = 0.5 * plotsize)  
 
 tmap_arrange(p,q)
 ```

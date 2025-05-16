@@ -74,6 +74,12 @@ jobs:
       - name: Render all
         run: |
           quarto render code/
+      - name: Run tests
+        run: |
+          echo 'Diff of expected (in) vs. generated files (out)'
+
+          diff tests/out \
+              tests/in
       - name: Upload HTMLs
         uses: actions/upload-artifact@v4
         with:
@@ -87,12 +93,12 @@ jobs:
           name: pip-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
           path: solved_requirements.txt
           retention-days: 10  
-      - name: Upload test docs
-        uses: actions/upload-artifact@v4
-        with:
-          name: tests-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
-          path: misc/test/
-          retention-days: 10
+#      - name: Upload test docs
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: tests-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
+#          path: misc/test/
+#          retention-days: 10
       - name: Upload static files as artifact
         id: deployment
         uses: actions/upload-pages-artifact@v3 

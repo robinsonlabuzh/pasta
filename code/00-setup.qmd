@@ -2,7 +2,7 @@
 
 R and Python have become the most popular languages for analysis of (spatial) omics data over the last few years. Traditionally, R has been the main language used in Statistics and therefore the number of Statistics libraries is still larger compared to Python. Python, however, has become the language of choice for tasks such as image analysis and machine learning where R lacks behind [@mosesMuseumSpatialTranscriptomics2022].
 
-Our goal is to use the best of both worlds. In this spirit, we try to show analyses in both R and Python where possible. Especially in point pattern analysis however, the existing libraries in Python lack behind such that we focus on the analysis in R in this chapter.
+Our goal is to use the best of both worlds. In this spirit, we try to show analyses in both R and Python where possible. Especially in point pattern analysis however, the existing libraries in Python lack behind such that we focus on the analysis in R in these chapters.
 
 To facilitate the transition between R and Python, we will show how to convert objects between the languages such that analysis can be transitioned from one language to another.
 
@@ -110,6 +110,8 @@ saveRDS(sfe, "../data/sfe_Visium_Mouse_Kidney.rds")
 
 Another popular analysis framework for single cell and spatial omics in R is [Seurat](https://satijalab.org/seurat/). To convert from `Seurat` object so `SpatialExperiment` you can use `Seurat::as.SingleCellExperiment(x)`. For more details please have a look at this [vignette](https://satijalab.org/seurat/archive/v3.1/conversion_vignette). From there on you can convert to a `SpatialExperiment` object using `toSpatialExperiment()`.
 
+Alternatively, to convert from `Seurat` to `SpatialFeatureExperiment` one can use the `toSpatialFeatureExperiment` function as specified in the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [vignette](https://bioconductor.org/packages/release/bioc/vignettes/SpatialFeatureExperiment/inst/doc/SFE.html#38_Coercion_from_Seurat).
+
 # Datasets
 
 ## Dependencies
@@ -127,7 +129,7 @@ library(STexampleData)
 
 # Molecule-based dataset
 
-Here we will process the MERFISH data from @moffittMolecularSpatialFunctional2018 to be used as a `SpatialExperimentObject` `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022] in our vigenttes.
+Here we will process the MERFISH data from @moffittMolecularSpatialFunctional2018 to be used as a `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022] in our vigenttes.
 
 ## Setup
 
@@ -198,6 +200,102 @@ if (!dir.exists(dir_path)) {
 
 saveRDS(spe, "../data/spe.rds")
 ```
+
+# Packages and helpful functions for later use
+
+```{r}
+suppressPackageStartupMessages({
+  library(SpatialExperiment)
+  library(spatstat)
+  library(dplyr)
+  library(ggplot2)
+  library(rlang)
+  library(stats)
+  library(STexampleData)
+  library(patchwork)
+  library(reshape2)
+  library(sf)
+  library(rgeoda)
+  library(Voyager)
+  library(SpatialFeatureExperiment)
+  library(SFEData)
+  library(scran)
+  library(scater)
+  library(tmap)
+  library(spdep)
+  library(stringr)
+  library(magrittr)
+  library(bluster)
+  library(dixon)
+  library(ExperimentHub)
+  library(STexampleData)
+})
+```
+
+
+```{r}
+.ppp <- \(spe, marks = NULL) {
+  xy <- spatialCoords(spe)
+  w <- owin(range(xy[, 1]), range(xy[, 2]))
+  m <- if (is.character(marks)) {
+    stopifnot(
+      length(marks) == 1,
+      marks %in% c(
+        gs <- rownames(spe),
+        cd <- names(colData(spe))))
+    if (marks %in% gs) {
+      assay(spe)[marks, ]
+    } else if (marks %in% cd) {
+      spe[[marks]]
+    } else stop("'marks' should be in ",
+      "'rownames(.)' or 'names(colData(.))'")
+  }
+  ppp(xy[, 1], xy[, 2], window = w, marks = factor(m))
+}
+```
+
+
+```{r}
+pValuesHotspotMarks <- function(pp, alpha = 0.05){
+  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
+  
+  # Significant p-values assumming normality of the Poisson process
+  ## relrisk() computes standard errors based on asymptotic theory, assuming a Poisson process
+  # call relative risk function
+  f1 <- relrisk(pp_sel,se=TRUE)
+  
+  z <- qnorm(alpha/2, lower.tail = F)     # z-statistic
+  f1$u <- f1$estimate + z*f1$SE           # Upper CIs
+  f1$l <- f1$estimate - z*f1$SE           # Lower CIs
+  mu_0 <- as.vector(table(spatstat.geom::marks(pp))/pp$n) # null expectations by type
+  f1$p <- f1$estimate # copy structure of pixels, replace values
+  for (i in 1:length(f1$p)) {
+    f1$p[[i]]$v <- factor(ifelse(mu_0[i] > f1$u[[i]]$v, "lower",
+                                ifelse( mu_0[i] < f1$l[[i]]$v, "higher", "none")),
+                          levels = c("lower", "none", "higher"))
+  }
+  return(f1)
+}
+
+pValuesHotspot <- function(pp, alpha = 0.05){
+  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
+  # density estimate for all marks
+  f1 <- density(unmark(pp), se = TRUE)
+  # Significant p-values assumming normality of the Poisson process
+  z <- qnorm(alpha/2, lower.tail = F)     # z-statistic
+  f1$u <- f1$estimate + z*f1$SE           # Upper CIs
+  f1$l <- f1$estimate - z*f1$SE           # Lower CIs
+  mu_0 <- intensity(unmark(pp)) # null expectations by type
+  f1$p <- f1$estimate # copy structure of pixels, replace values
+  f1$p$v <- factor(ifelse(mu_0 > f1$u$v, "lower",
+                          ifelse( mu_0 < f1$l$v, "higher", "none")),
+                   levels = c("lower", "none", "higher"))
+  
+  return(f1)
+}
+```
+
+
 
 # Appendix
 

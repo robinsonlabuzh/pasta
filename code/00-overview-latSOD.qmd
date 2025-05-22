@@ -8,7 +8,7 @@ In this vignette we will show:
 
 - The use case is a 10x Visium data set from @mckellarLargescaleIntegrationSinglecell2021.
 
-- This overview is in parts based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
+- This overview is in parts based on the corresponding [Voyager 10x Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
 
 # Introduction
 

@@ -3,7 +3,7 @@ project:
   execute-dir: file
   output-dir: ../docs
   render:
-    - "00-*.qmd"
+    - "*.qmd"
     - "!theory/"
 bibliography: ../misc/PASTA.bib
 

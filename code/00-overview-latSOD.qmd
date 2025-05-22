@@ -8,13 +8,13 @@ In this vignette we will show:
 
 - The use case is a 10x Visium data set from @mckellarLargescaleIntegrationSinglecell2021.
 
-- This overview is in parts based on the corresponding [Voyager 10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
+- This overview is in parts based on the corresponding [Voyager 10x Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html).
 
 # Introduction
 
 In contrast to point pattern based methods, we can view the location of cells or spots as a fixed lattice and measure the corresponding marker expression at each location. HTS-based spatial transcriptomic technologies often produce data on a regular lattice (i.e., approximately evenly spaced spots or beads of uniform size and shape), whereas imaging-based technologies yield irregular lattice structures (i.e., with variable cell sizes and shapes, and non-uniform spacing).
 
-For this representation of the cells, we will rely in `R` on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `Voyager` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `SpatialFeatureExperiment` object. The package `spdep` is designed for the analysis of spatial data with lattice structure.
+For the representation of the cells, we will rely in `R` on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('Voyager')` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object. The package `r BiocStyle::CRANpkg('spdep')` is designed for the analysis of spatial data with lattice structure.
 
 For the implementation in `Python` we will rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. For the data representation we rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 
@@ -476,7 +476,7 @@ There exists a bivariate version of Moran's $I$ as well.
 
 For two continuous observations the global bivariate Moran's $I$ is defined as [@wartenbergMultivariateSpatialCorrelation1985 ; @bivandPackagesAnalyzingSpatial2022]
 
-$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}b_j\times a_i})}{\Sigma_i{b_i^2}}$$
+$$I_B = \frac{\sum_i(\sum_j{w_{ij}b_j\times a_i})}{\sum_i{b_i^2}}$$
 
 where $a_i$ and $b_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$. It is a measure of the correlation of the variables $a$ with the average of the neighboring values for variable $b$ (also called the spatial lag of $b$).
 
@@ -698,5 +698,49 @@ Therefore, in `Python` we add the lower triangular matrix to the upper triangle 
 ```{r}
 sessionInfo()
 ```
+
+```{r, include=FALSE}
+# Define the directory and file paths
+dir_path <- "../tests/"
+dir_path_out <- "../tests/out"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+  dir.create(dir_path_out)
+}
+```
+
+```{python, include=FALSE}
+# export some Python results such that we can later compare between runs
+moran_calr_res = moran_calr.I
+moran_myh2_res = moran_myh2.I
+# save for testing the runs later
+adata.obs.to_csv("../tests/out/test-00-overview-lat-Python.csv")
+```
+
+```{r, include=FALSE}
+# export some R results such that we can later compare between runs
+library(reticulate)
+
+localResults(sfe)[[1]] |> as.data.frame() |> 
+  write.csv("../tests/out/test-00-overview-lat-R.csv")
+
+pyRes <- c(py$moran_calr_res, py$moran_myh2_res)
+rRes <- rowData(sfe_tissue)[rowData(sfe_tissue)$symbol %in% features, "moran_Vis5A"]
+
+test <- round(pyRes,6) == round(rRes,6)
+
+data.frame(test = c("Morans_I_calr", "Morans_I_myh2"), identical = test) |> 
+  write.csv("../tests/out/test-00-overview-lat-R-Python-compare.csv")
+```
+
+
+
+
+
+
+
+
 
 

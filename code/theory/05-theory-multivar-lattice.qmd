@@ -4,7 +4,7 @@
 
 For two continous variables the global bivariate Moran's $I$ is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
 
-$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
+$$I_B = \frac{\sum_i(\sum_j{w_{ij}y_j\times x_i})}{\sum_i{x_i^2}}$$
 
 where $x_i$ and $y_j$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
 

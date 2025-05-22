@@ -476,7 +476,7 @@ There exists a bivariate version of Moran's $I$ as well.
 
 For two continuous observations the global bivariate Moran's $I$ is defined as [@wartenbergMultivariateSpatialCorrelation1985 ; @bivandPackagesAnalyzingSpatial2022]
 
-$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}b_j\times a_i})}{\Sigma_i{b_i^2}}$$
+$$I_B = \frac{\sum_i(\sum_j{w_{ij}b_j\times a_i})}{\sum_i{b_i^2}}$$
 
 where $a_i$ and $b_i$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$. It is a measure of the correlation of the variables $a$ with the average of the neighboring values for variable $b$ (also called the spatial lag of $b$).
 

@@ -210,6 +210,153 @@ for feature, ax in zip(features, axes):
 
 :::
 
+### Moran's scatter plot
+
+Local autocorrelation metrics measure the similarity of a given value at a location to the average of its neighbours. Therefore, it is not possible to distinguish "hot spots", where high values are surrounded by high values, from "cold spots", where low values are surrounded by low values, using a local autocorrelation measure because both cases result in high local autocorrelation values.
+
+To overcome this problems one can use the Moran scatter plot [@anselin2019moran] to identify the type of interaction. The Moran scatter plot plots the value at each location versus the average of its neighbours. Taking the average expression as a reference on both axes, one can group each location into one of four different categories: *high-high* (upper right quadrant) representing "hot spots", *low-low* (lower left quadrant) representing "cold spots", *high-low* (lower-right quadrant) and *low-high* (upper-left quadrant).
+
+This information can be combined with significance scores of a local autocorrelation to identify significant hot and cold spots.
+
+
+::: {.panel-tabset}
+
+#### `R`
+
+```{r}
+#| fig-width: 7
+#| fig-height: 5
+
+sfe <- runUnivariate(
+  sfe,
+  features[1],
+  colGraphName = colGraphName,
+  type = "moran.plot"
+)
+```
+
+```{r}
+moranPlot(sfe,
+          features[1],
+          graphName = colGraphName,
+          swap_rownames = "symbol")
+```
+
+#### `Python`
+
+```{python}
+#| fig-width: 15
+#| fig-height: 10
+
+# Code adapted from ESDA package vignette "Exploratory Analysis of Spatial Data: Spatial Autocorrelation" (https://nbviewer.org/github/pysal/esda/blob/main/notebooks/Spatial%20Autocorrelation%20for%20Areal%20Unit%20Data.ipynb)
+import libpysal as lps
+
+feature = features[0]
+
+spatial_weights.transform = 'r'
+lag_expr = lps.weights.lag_spatial(spatial_weights, adata[:, feature].X.toarray().astype(np.float64))
+
+expr = adata[:, feature].X.toarray().astype(np.float64)
+b, a = np.polyfit(expr.flatten(), lag_expr.flatten(), 1)
+f, ax = plt.subplots(1, figsize=(9, 9))
+
+plt.plot(expr, lag_expr, '.', color='black')
+
+ # dashed vert at mean of the expr
+plt.vlines(expr.mean(), lag_expr.min(), lag_expr.max(), linestyle='--')
+ # dashed horizontal at mean of lagged expr 
+plt.hlines(lag_expr.mean(), expr.min(), expr.max(), linestyle='--')
+
+# red line of best least squared fit
+plt.plot(expr, a + b*expr, 'r')
+plt.title('Moran Scatterplot')
+plt.ylabel('Spatial Lag of Expression')
+plt.xlabel('Expression')
+plt.show()
+
+```
+:::
+
+
+::: {.panel-tabset}
+
+#### `R`
+
+```{r}
+plotLocalResult(
+  sfe,
+  name = "localmoran",
+  features = features[1],
+  attribute = "mean",
+  colGeometryName = "centroids",
+  size = 1.5
+)
+```
+
+We can combine the categories with significance of local Moran's $I$.
+
+```{r}
+localResults(sfe)[["localmoran"]][[1]] <- 
+  localResults(sfe)[["localmoran"]][[1]] |> 
+  mutate(locClust = ifelse(`-log10p_adj` > -log10(0.05), mean, "non-siginificant"))
+
+plotLocalResult(
+  sfe,
+  name = "localmoran",
+  features = features[1],
+  attribute = "locClust",
+  colGeometryName = "centroids",
+  size = 1.5
+)
+```
+
+#### `Python`
+
+```{python}
+# high-high = 1
+# low-high = 2
+# low-low = 3
+# high-low = 4
+
+sq.pl.spatial_scatter(
+  adata, 
+  color=f"local_moran_{feature}_q",
+  shape=None,
+  library_id="spatial",
+  title=f"Moran scatter plot categories: {feature}",
+  ax=ax,
+  fig=fig,
+  size=pointsize
+)
+plt.show()
+```
+We can combine the categories with significance levels of local Moran's $I$. 0 indicates non significant regions.
+
+```{python}
+q = adata.obs[f"local_moran_{feature}_q"].astype(int)
+sig = adata.obs[f"local_moran_{feature}_p"] > -np.log10(0.05)
+
+q_sig = q * sig
+
+adata.obs[f"local_moran_{feature}_q_sig"] = q_sig.astype(str)
+
+sq.pl.spatial_scatter(
+  adata, 
+  color=f"local_moran_{feature}_q_sig",
+  shape=None,
+  library_id="spatial",
+  title=f"Moran scatter plot categories\n with significance: {feature}",
+  ax=ax,
+  fig=fig,
+  size=pointsize
+)
+plt.show()
+
+```
+
+::: 
+
+
 ### Local Geary's $C$ coefficient
 
 Similar to local Moran's $I$, there is a local Geary's $C$ [@anselinLocalIndicatorsSpatial1995] coefficient. It is defined as

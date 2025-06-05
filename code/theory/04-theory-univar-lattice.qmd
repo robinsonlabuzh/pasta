@@ -289,7 +289,7 @@ plotLocalResult(
   features = features[1],
   attribute = "mean",
   colGeometryName = "centroids",
-  size = 1.5
+  size = pointsize
 )
 ```
 
@@ -306,7 +306,7 @@ plotLocalResult(
   features = features[1],
   attribute = "locClust",
   colGeometryName = "centroids",
-  size = 1.5
+  size = pointsize
 )
 ```
 
@@ -328,7 +328,7 @@ sq.pl.spatial_scatter(
   fig=fig,
   size=pointsize
 )
-plt.show()
+ax.set_axis_off()
 ```
 We can combine the categories with significance levels of local Moran's $I$. 0 indicates non significant regions.
 
@@ -350,8 +350,7 @@ sq.pl.spatial_scatter(
   fig=fig,
   size=pointsize
 )
-plt.show()
-
+ax.set_axis_off()
 ```
 
 ::: 
@@ -395,6 +394,7 @@ for feature in features:
     local_geary_result = local_geary.fit(adata[:, feature].X.toarray().astype(np.float64))
     adata.obs[f"local_geary_{feature}"] = local_geary_result.localG
     adata.obs[f"local_geary_{feature}_p"] = -np.log10(false_discovery_control(local_geary_result.p_sim))
+    adata.obs[f"local_moran_{feature}_q"] = local_moran.q.astype(str)
     
 fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):

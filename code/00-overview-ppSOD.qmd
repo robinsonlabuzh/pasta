@@ -259,7 +259,7 @@ In the formula above we note a few things:
 
 -   The function is normalised by the number of points $n$ and the window size $|W|$
 
--   the term $e_{ij}(r)$ is an edge correction - see the section on `border corrections` further down in the vignette [@baddeleySpatialPointPatterns2015, pp. 204].
+-   the factor $e_{ij}(r)$ is an edge correction - see the section on `border corrections` further down in the vignette [@baddeleySpatialPointPatterns2015, pp. 204].
 
 Ripley's $K$ function can be variance stabilised, which is referred to as Besag's $L$ [@caneteSpicyRSpatialAnalysis2022; @besag1977contribution]. The idea behind variance stabilisation is to "uncouple" the relationship between mean and variance. By taking the square root of the function in question, the variance is nearly constant across the function [@bartlettUseTransformations1947].
 
@@ -477,3 +477,19 @@ Translation correction:
 ```{r}
 sessionInfo()
 ```
+
+```{r, include = FALSE}
+# Define the directory and file paths
+dir_path <- "../tests/"
+dir_path_out <- "../tests/out"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+  dir.create(dir_path_out)
+}
+
+res |> 
+  write.csv("../tests/out/test-00-overview-pp-R.csv")
+```
+

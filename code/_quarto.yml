@@ -19,21 +19,23 @@ format:
     toc-depth: 3
     standalone: true
     embed-resources: true
-    code-fold: true
+    code-fold: show
     code-summary: "Show the code"
-
+    code-tools: true
     
 editor_options: 
   chunk_output_type: console
 
 website:
-  announcement:    
-      icon: info-circle    
-      dismissable: false  
-      content: "This website is still under active development - all content subject to change"   
-      type: primary    
-      position: below-navbar
-      page-navigation: true
+  back-to-top-navigation: true
+  reader-mode: true
+#  announcement:    
+#      icon: info-circle    
+#      dismissable: false  
+#      content: "This website is still under active development - all content subject to change"   
+#      type: primary    
+#      position: below-navbar
+#      page-navigation: true
   body-footer: | 
     ©2024 The `pasta` authors.\n
     Content is published under [Creative Commons CC-BY-4.0 License](https://creativecommons.org/licenses/by/4.0/) for the text 
@@ -92,13 +94,13 @@ website:
       background: light
       collapse-level: 2
       contents: 
-        - text: "---"
-        - section: "Univariate Methods"
-        - text: "Lattice-based Methods"
-          file: 05-HTS-univar-latSOD.qmd
-        - text: "---"
-        - section: "Multivariate Methods"
-        - text: "Lattice-based Methods"
-          file: 06-HTS-multivar-latSOD.qmd
+       - text: "---"
+       - section: "Univariate Methods"
+       - text: "Lattice-based Methods"
+         file: 05-HTS-univar-latSOD.qmd
+       - text: "---"
+       - section: "Multivariate Methods"
+       - text: "Lattice-based Methods"
+         file: 06-HTS-multivar-latSOD.qmd
 
 date: last-modified	

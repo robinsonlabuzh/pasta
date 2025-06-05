@@ -318,7 +318,7 @@ plotLocalResult(
 # low-high = 2
 # low-low = 3
 # high-low = 4
-
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 sq.pl.spatial_scatter(
   adata, 
   color=f"local_moran_{feature}_q",
@@ -341,6 +341,7 @@ q_sig = q * sig
 
 adata.obs[f"local_moran_{feature}_q_sig"] = q_sig.astype(str)
 
+fig, ax = plt.subplots(1, 1, figsize=(10, 10))
 sq.pl.spatial_scatter(
   adata, 
   color=f"local_moran_{feature}_q_sig",

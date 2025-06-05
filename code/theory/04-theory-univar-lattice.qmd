@@ -187,6 +187,7 @@ for feature in features:
     local_moran = Moran_Local(adata[:, feature].X.toarray().astype(np.float64), spatial_weights, transformation="r", permutations=100, seed=3407)
     adata.obs[f"local_moran_{feature}"] = local_moran.Is
     adata.obs[f"local_moran_{feature}_p"] = -np.log10(false_discovery_control(local_moran.p_z_sim*2))
+    adata.obs[f"local_moran_{feature}_q"] = local_moran.q.astype(str)
     
 fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):
@@ -394,7 +395,6 @@ for feature in features:
     local_geary_result = local_geary.fit(adata[:, feature].X.toarray().astype(np.float64))
     adata.obs[f"local_geary_{feature}"] = local_geary_result.localG
     adata.obs[f"local_geary_{feature}_p"] = -np.log10(false_discovery_control(local_geary_result.p_sim))
-    adata.obs[f"local_moran_{feature}_q"] = local_moran.q.astype(str)
     
 fig, axes = plt.subplots(1, len(features), figsize=figsize, layout = "tight")
 for feature, ax in zip(features, axes):

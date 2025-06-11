@@ -249,7 +249,8 @@ moranPlot(sfe,
 #| fig-width: 15
 #| fig-height: 10
 
-# Code adapted from ESDA package vignette "Exploratory Analysis of Spatial Data: Spatial Autocorrelation" (https://nbviewer.org/github/pysal/esda/blob/main/notebooks/Spatial%20Autocorrelation%20for%20Areal%20Unit%20Data.ipynb)
+# Code adapted from ESDA package vignette "Exploratory Analysis of Spatial Data: Spatial Autocorrelation" from https://pysal.org/esda/, license: BSD 3
+# (https://nbviewer.org/github/pysal/esda/blob/main/notebooks/Spatial%20Autocorrelation%20for%20Areal%20Unit%20Data.ipynb) 
 import libpysal as lps
 
 feature = features[0]
@@ -264,12 +265,12 @@ f, ax = plt.subplots(1, figsize=(9, 9))
 plt.plot(expr, lag_expr, '.', color='black')
 
  # dashed vert at mean of the expr
-plt.vlines(expr.mean(), lag_expr.min(), lag_expr.max(), linestyle='--')
+plt.vlines(expr.mean(), lag_expr.min(), lag_expr.max(), linestyle='--', color = "gray")
  # dashed horizontal at mean of lagged expr 
-plt.hlines(lag_expr.mean(), expr.min(), expr.max(), linestyle='--')
+plt.hlines(lag_expr.mean(), expr.min(), expr.max(), linestyle='--', color = "gray")
 
 # red line of best least squares fit
-plt.plot(expr, a + b*expr, 'r')
+plt.plot(expr, a + b*expr, 'blue')
 plt.title('Moran Scatterplot')
 plt.ylabel('Spatial Lag of Expression')
 plt.xlabel('Expression')
@@ -284,22 +285,28 @@ plt.show()
 #### `R`
 
 ```{r}
+#| fig-width: 7.5
+#| fig-height: 5
+
 plotLocalResult(
   sfe,
   name = "localmoran",
   features = features[1],
   attribute = "mean",
   colGeometryName = "centroids",
-  size = pointsize
+  size = pointsize/2
 )
 ```
 
 We can combine the categories with significance of local Moran's $I$.
 
 ```{r}
+#| fig-width: 7.5
+#| fig-height: 5
+
 localResults(sfe)[["localmoran"]][[1]] <- 
   localResults(sfe)[["localmoran"]][[1]] |> 
-  mutate(locClust = ifelse(`-log10p_adj` > -log10(0.05), mean, "non-siginificant"))
+  mutate(locClust = ifelse(`-log10p_adj` > -log10(0.05), as.character(mean), "non-siginificant"))
 
 plotLocalResult(
   sfe,
@@ -307,7 +314,7 @@ plotLocalResult(
   features = features[1],
   attribute = "locClust",
   colGeometryName = "centroids",
-  size = pointsize
+  size = pointsize/2
 )
 ```
 
@@ -330,7 +337,9 @@ sq.pl.spatial_scatter(
   size=pointsize
 )
 ax.set_axis_off()
+plt.show()
 ```
+
 We can combine the categories with significance levels of local Moran's $I$. 0 indicates non significant regions.
 
 ```{python}
@@ -353,6 +362,7 @@ sq.pl.spatial_scatter(
   size=pointsize
 )
 ax.set_axis_off()
+plt.show()
 ```
 
 ::: 

@@ -112,7 +112,7 @@ Here we set the arguments for the examples below.
 features <- c("Slc5a12", "Calr")
 colGraphName <- "visium"
 colGeometryName <- "centroids"
-pointsize <- 3
+pointsize <- 2.5
 ```
 
 ### `Python`

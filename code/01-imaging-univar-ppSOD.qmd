@@ -12,7 +12,7 @@ In this vignette we will show:
 
 - For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
 
-# Discrete Marks
+# categorical Marks
 
 {{< include theory/01-theory-point.qmd >}}
 
@@ -627,7 +627,7 @@ pp <- pp[['0.01']]
 sub <- spe[, spe$sample_id == '0.01']
 ```
 
-In `spatstat`, a `mark` can basically take any value, discrete (e.g. cell types, as we have seen above) or continuous (e.g., gene expression) [@baddeleySpatialPointPatterns2015 pp. 637 ff.]. In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@moffittMolecularSpatialFunctional2018]. This is a typical numerical mark for points in a biological dataset. Here we will use all cell types for the analysis of numerical marks.
+In `spatstat`, a `mark` can basically take any value, categorical (e.g. cell types, as we have seen above) or continuous (e.g., gene expression) [@baddeleySpatialPointPatterns2015 pp. 637 ff.]. In our example, we take the gene expression of some marker genes from Fig. 6 of the original publication [@moffittMolecularSpatialFunctional2018]. This is a typical numerical mark for points in a biological dataset. Here we will use all cell types for the analysis of numerical marks.
 
 ```{r}
 #  Genes from Fig. 6 of Moffitt et al. (2018)
@@ -759,7 +759,7 @@ We note that the difference between $L$-function weighted by the expression of *
 
 # Summary
 
-In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be discrete (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
+In this chapter we have looked at point pattern methods that can be applied to univariate marks. These univariate marks can either be categorical (in a molecular biological context that could be celltypes) or continuous (e.g. expression of a gene). There are approaches that summarise correlative dependencies among points or that consider spacing functions.
 
 # Appendix
 

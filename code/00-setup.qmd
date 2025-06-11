@@ -1,6 +1,6 @@
 # Technology for analysis
 
-R and Python have become the most popular languages for analysis of (spatial) omics data over the last few years. Traditionally, R has been the main language used in Statistics and therefore the number of Statistics libraries is still larger compared to Python. Python, however, has become the language of choice for tasks such as image analysis and machine learning where R lacks behind [@mosesMuseumSpatialTranscriptomics2022].
+R and Python have become the most popular languages for analysis of (spatial) omics data over the last few years. Traditionally, R has been the main language used in statistics and therefore the number of statistics libraries is still larger compared to Python. Python, however, has become the language of choice for tasks such as image analysis and machine learning where R lacks behind [@mosesMuseumSpatialTranscriptomics2022].
 
 Our goal is to use the best of both worlds. In this spirit, we try to show analyses in both R and Python where possible. Especially in point pattern analysis however, the existing libraries in Python lack behind such that we focus on the analysis in R in these chapters.
 
@@ -54,7 +54,7 @@ adata = sc.read_h5ad("../data/McKellarMuscleData.h5ad")
 adata.obsm['spatial'] = np.array(list(zip((adata.obs['x'] * -1), adata.obs['y'])))
 ```
 
-We preform more preprocessing such that we can use all function of the packages [esda](https://pysal.org/esda/) and [pysal](https://pysal.org/).
+We preform more preprocessing such that we can use all function of the package [esda](https://pysal.org/esda/) a subpackage of [pysal](https://pysal.org/).
 
 ```{python}
 adata.var_names = adata.var["symbol"]
@@ -257,8 +257,8 @@ suppressPackageStartupMessages({
 
 ```{r}
 pValuesHotspotMarks <- function(pp, alpha = 0.05){
-  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
-  
+  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/ 
+  # License: CC-BY-SA
   # Significant p-values assumming normality of the Poisson process
   ## relrisk() computes standard errors based on asymptotic theory, assuming a Poisson process
   # call relative risk function
@@ -279,6 +279,7 @@ pValuesHotspotMarks <- function(pp, alpha = 0.05){
 
 pValuesHotspot <- function(pp, alpha = 0.05){
   # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
+  # License: CC-BY-SA
   # density estimate for all marks
   f1 <- density(unmark(pp), se = TRUE)
   # Significant p-values assumming normality of the Poisson process

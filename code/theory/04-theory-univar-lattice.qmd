@@ -268,7 +268,7 @@ plt.vlines(expr.mean(), lag_expr.min(), lag_expr.max(), linestyle='--')
  # dashed horizontal at mean of lagged expr 
 plt.hlines(lag_expr.mean(), expr.min(), expr.max(), linestyle='--')
 
-# red line of best least squared fit
+# red line of best least squares fit
 plt.plot(expr, a + b*expr, 'r')
 plt.title('Moran Scatterplot')
 plt.ylabel('Spatial Lag of Expression')

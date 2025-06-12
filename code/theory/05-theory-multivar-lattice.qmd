@@ -4,7 +4,7 @@
 
 For two continous variables the global bivariate Moran's $I$ is defined as [@wartenbergMultivariateSpatialCorrelation1985 ;@bivandPackagesAnalyzingSpatial2022]
 
-$$I_B = \frac{\Sigma_i(\Sigma_j{w_{ij}y_j\times x_i})}{\Sigma_i{x_i^2}}$$
+$$I_B = \frac{\sum_i(\sum_j{w_{ij}y_j\times x_i})}{\sum_i{x_i^2}}$$
 
 where $x_i$ and $y_j$ are the two variables of interest and $w_{ij}$ is the value of the spatial weights matrix for positions $i$ and $j$.
 
@@ -138,13 +138,13 @@ This can be interesting in the context of detection of coexpressed ligand-recept
 #| fig-width: 15
 #| fig-height: 10
 
-sfe_tissue <- runBivariate(sfe, type = "localmoran_bv",
+sfe <- runBivariate(sfe, type = "localmoran_bv",
                     feature1 = features[1], feature2 = features[2],
                     colGraphName = colGraphName,
                     nsim = 499)
 
-plotLocalResult(sfe_tissue, "localmoran_bv", 
-                 features = localResultFeatures(sfe_tissue, "localmoran_bv"),
+plotLocalResult(sfe, "localmoran_bv", 
+                 features = localResultFeatures(sfe, "localmoran_bv"),
                 ncol = 2, divergent = TRUE, diverge_center = 0,
                 colGeometryName = colGeometryName, size = plotsize) 
 ```
@@ -198,12 +198,12 @@ Local Lee's $L$ is a measure of spatial co-expression, when the variables of int
 #| fig-width: 15
 #| fig-height: 10
 
-sfe_tissue <- runBivariate(sfe, type = "locallee",
+sfe <- runBivariate(sfe, type = "locallee",
                     feature1 = features[1], feature2 = features[2],
                     colGraphName = colGraphName)
 
-plotLocalResult(sfe_tissue, "locallee", 
-                 features = localResultFeatures(sfe_tissue, "locallee"),
+plotLocalResult(sfe, "locallee", 
+                 features = localResultFeatures(sfe, "locallee"),
                 ncol = 2, divergent = TRUE, diverge_center = 0,
                 colGeometryName = colGeometryName, size = plotsize) 
 ```
@@ -266,12 +266,12 @@ To speed up computation we will use highly variable genes.
 hvgs <- getTopHVGs(sfe, n = 100)
 
 # Subset of the tissue
-sfe_tissue <- runMultivariate(sfe, type = "localC_multi",
+sfe <- runMultivariate(sfe, type = "localC_multi",
                     subset_row = hvgs,
                     colGraphName = colGraphName)
 
 # # Local C mutli is stored in colData so this is a workaround to plot it
-# plotSpatialFeature(sfe_tissue, "localC_multi", size = plotsize, scattermore = FALSE)
+# plotSpatialFeature(sfe, "localC_multi", size = plotsize, scattermore = FALSE)
 ```
 
 ### `Python`
@@ -360,10 +360,18 @@ nbr_test <- neighbor_match_test(sf[c(hvgs)], k = 6)
 sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
-p <- tm_shape(sf) + tm_dots(col = 'Cardinality', size = 0.06 * plotsize)
-q <- tm_shape(sf) + tm_dots(col = 'Probability', size = 0.06 * plotsize)  
+p <- ggplot() +
+  geom_sf(data = sf, aes(fill = Cardinality, color = Cardinality), size = plotsize * 0.65) +
+  theme_void() +
+  scale_color_viridis_b() +
+  scale_fill_viridis_b()
+q <- ggplot() +
+  geom_sf(data = sf, aes(fill = Probability, color = Probability), size = plotsize * 0.65)+
+  theme_void() +
+  scale_color_viridis_c(option = "C", direction = -1) +
+  scale_fill_viridis_c(option = "C", direction = -1)
 
-tmap_arrange(p,q)
+p + q
 ```
 
 ### `Python`

@@ -91,7 +91,7 @@ if (!file.exists("../data/spe.rds")) {
 
 pValuesHotspotMarks <- function(pp, alpha = 0.05){
   # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
-  
+  # License: CC-BY-SA
   # Significant p-values assumming normality of the Poisson process
   ## relrisk() computes standard errors based on asymptotic theory, assuming a Poisson process
   # call relative risk function
@@ -111,7 +111,8 @@ pValuesHotspotMarks <- function(pp, alpha = 0.05){
 }
 
 pValuesHotspot <- function(pp, alpha = 0.05){
-  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/
+  # Code source: https://idblr.rbind.io/post/pvalues-spatial-segregation/ 
+  # License: CC-BY-SA
   # density estimate for all marks
   f1 <- density(unmark(pp), se = TRUE)
   # Significant p-values assumming normality of the Poisson process

@@ -136,9 +136,9 @@ The next concept that defines a point pattern is that marks can be associated wi
 unmark(pp_sub) |> plot()
 ```
 
-Marks can be univariate or multivariate variables that are associated with the points [@baddeleySpatialPointPatterns2015, pp. 147]. In the context of cell biology we can distinguish between discrete marks (e.g. cell types) or continuous marks (e.g. gene expression).
+Marks can be univariate or multivariate variables that are associated with the points [@baddeleySpatialPointPatterns2015, pp. 147]. In the context of cell biology we can distinguish between categorical marks (e.g. cell types) or continuous marks (e.g. gene expression).
 
-#### Discrete Marks
+#### categorical Marks
 
 In our example, we have a multitype point pattern, meaning there are different cell types that serve as marks for the point pattern. Multitype means that we consider all marks together. The opposite is multivariate, where we consider the marks independently [@baddeleySpatialPointPatterns2015, pp. 564 ff.].
 
@@ -193,18 +193,18 @@ We note that the expression of the genes `Pgr` and `Slc18a2` is very evenly dist
 
 #### Within Mark Comparison
 
-We can compare patterns between marks of the same type. This is referred to as a within mark comparison in our vignette. We can compare discrete marks, so the distribution of one single mark, e.g. a cell type.
+We can compare patterns between marks of the same type. This is referred to as a within mark comparison in our vignette. We can compare categorical marks, so the distribution of one single mark, e.g. a cell type.
 
 ```{r, fig.height=5, fig.width=10}
 # create a dataframe from the point pattern
-pp_df_discrete <- lapply(zstack_list, function(x) {
+pp_df_categorical <- lapply(zstack_list, function(x) {
   df <- pp_ls[[x]] |> as.data.frame()
   df$stack <- x
   return(df)
 }) |> bind_rows()
 
 # select OD Mature cells
-pp_df_odmature <- pp_df_discrete[pp_df_discrete$marks == "OD Mature", ]
+pp_df_odmature <- pp_df_categorical[pp_df_categorical$marks == "OD Mature", ]
 
 ggplot(pp_df_odmature, aes(x, y, colour = marks)) +
   geom_point(size = 0.5) +
@@ -259,7 +259,7 @@ In the formula above we note a few things:
 
 -   The function is normalised by the number of points $n$ and the window size $|W|$
 
--   the term $e_{ij}(r)$ is an edge correction - see the section on `border corrections` further down in the vignette [@baddeleySpatialPointPatterns2015, pp. 204].
+-   the factor $e_{ij}(r)$ is an edge correction - see the section on `border corrections` further down in the vignette [@baddeleySpatialPointPatterns2015, pp. 204].
 
 Ripley's $K$ function can be variance stabilised, which is referred to as Besag's $L$ [@caneteSpicyRSpatialAnalysis2022; @besag1977contribution]. The idea behind variance stabilisation is to "uncouple" the relationship between mean and variance. By taking the square root of the function in question, the variance is nearly constant across the function [@bartlettUseTransformations1947].
 
@@ -404,7 +404,7 @@ The same analyses as above can be performed between two cell types. The correspo
 
 ```{r, message = FALSE, warning=FALSE, fig.height=5, fig.width=10}
 # select OD Mature and Microglia cells
-pp_df_odmature_microglia <- pp_df_discrete[pp_df_discrete$marks %in% c("OD Mature", "Microglia"), ]
+pp_df_odmature_microglia <- pp_df_categorical[pp_df_categorical$marks %in% c("OD Mature", "Microglia"), ]
 
 ggplot(pp_df_odmature_microglia, aes(x, y, colour = marks)) +
   geom_point(size = 0.5) +
@@ -477,3 +477,19 @@ Translation correction:
 ```{r}
 sessionInfo()
 ```
+
+```{r, include = FALSE}
+# Define the directory and file paths
+dir_path <- "../tests/"
+dir_path_out <- "../tests/out"
+
+# Check if the directory exists, and create it if it doesn't
+if (!dir.exists(dir_path)) {
+  dir.create(dir_path)
+  dir.create(dir_path_out)
+}
+
+res |> 
+  write.csv("../tests/out/test-00-overview-pp-R.csv")
+```
+

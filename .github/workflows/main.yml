@@ -9,8 +9,8 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-24.04]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-22.04] #, ubuntu-24.04
+        python-version: ["3.13"] #3.10", "3.11", "3.12" 
         r-version: ["4.5.0"]
         # requirements: ["requirements", "requirements_semipinned"]
       fail-fast: false
@@ -74,6 +74,12 @@ jobs:
       - name: Render all
         run: |
           quarto render code/
+      - name: Run tests
+        run: |
+          echo 'Diff of expected (in) vs. generated files (out)'
+
+          diff tests/out \
+              tests/in
       - name: Upload HTMLs
         uses: actions/upload-artifact@v4
         with:
@@ -87,3 +93,30 @@ jobs:
           name: pip-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
           path: solved_requirements.txt
           retention-days: 10  
+      - name: Upload static files as artifact
+        id: deployment
+        uses: actions/upload-pages-artifact@v3 
+        # define which version to upload
+        if: matrix.os == 'ubuntu-22.04' && matrix.python-version == '3.12' && matrix.r-version == '4.5.0' 
+        with:
+          path: docs/
+      - name: Upload test docs
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-${{ strategy.job-index }}-py-${{ matrix.python-version }}-os-${{ matrix.os }}-r-${{ matrix.r-version }}
+          path: tests/
+          retention-days: 10
+  # Deployment job
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      pages: write      # to deploy to gh pages
+      id-token: write   # needed for verification
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

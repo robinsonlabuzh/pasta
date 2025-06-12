@@ -62,6 +62,78 @@ separateMarks <- function(pp){
 pp_ls <- lapply(pp, separateMarks)
 ```
 
+An option to define arbitrary observation windows is to base them directly on the intensity of points. We do this using `r BiocStyle::Biocpkg('sosta')`. This package calculates an observation window based on an intensity threshold of points in space.
+
+```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
+library('sosta')
+### code adapted from https://bioconductor.org/packages/release/bioc/vignettes/sosta/inst/doc/StructureReconstructionVignette.html ###
+
+#subset to three images
+spe_sub <- subset(spe, ,sample_id %in% c('-0.09', '0.01', '0.21'))
+
+# first we select the intensity thresholds for the binarisation of the image
+n <- estimateReconstructionParametersSPE(
+    spe_sub,
+    marks = "cluster_id",
+    imageCol = "sample_id",
+    markSelect = NULL,
+    plotHist = FALSE
+)
+
+thresSPE <- mean(n$thres)
+bndwSPE <- mean(n$bndw)
+
+# calculate the observation window based on the density
+allStructs <- reconstructShapeDensitySPE(
+    spe_sub,
+    marks = "cluster_id",
+    imageCol = "sample_id",
+    markSelect = NULL,
+    bndw = bndwSPE,
+    thres = thresSPE,
+    nCores = 1
+)
+
+p_ls <- lapply(list('-0.09', '0.01', '0.21'), function(elem){
+    spe_sub <- subset(spe,,sample_id == elem)
+    allStructs_sub <- subset(allStructs, sample_id == elem)
+    p <- cbind(colData(spe_sub), spatialCoords(spe_sub)) |>
+    as.data.frame() |>
+    ggplot(aes(x = x, y = y)) +
+    geom_point(size = 0.25) +
+    geom_sf(
+      data = allStructs_sub,
+      fill = NA,
+      color = "red",
+      inherit.aes = FALSE, # this is important
+      linewidth = 0.8
+    ) +
+    facet_grid(~sample_id)+
+    theme_light()
+    return(p)
+})
+patchwork::wrap_plots(p_ls)
+```
+
+Alternatively, one can lend from the concept of inhomogeneit correction (discussed later). Here, we calculate the density of the unmarked point pattern which is then we scale the density by the step size of the image. This allows us to use inhomogeneous functions such as `Kinhom` with a custom intensity based on the unmarked point pattern as `lambdaX = dens_im_scaled`. Both the restriction of the observation window based on the density of points and the inhomogeneity correction via the scaled density of the unmarked point pattern are discussed in more detail in @emonsPastaPatternAnalysis2024
+
+```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
+ppDens <- SPE2ppp(spe,
+marks = "cluster_id", imageCol = "sample_id",
+imageId = "-0.09"
+)
+#dens_im <- density()
+dens_im <- density(unmark(ppDens))
+
+# calculate the scale as we have less points compared to unmarked
+scale <- sum(dens_im$v) / (dens_im$xstep * dens_im$ystep)
+
+# scale the density
+dens_im_scaled <- dens_im * scale
+
+plot(dens_im_scaled)
+```
+
 ### Complete Spatial Randomness
 
 Complete spatial randomness (CSR) is often used as the null model for various point patterns. It is the result of a Poisson process. A completely spatial random process is characterised by two properties, homogeneity and independence, as discussed below [@baddeleySpatialPointPatterns2015, pp. 132].

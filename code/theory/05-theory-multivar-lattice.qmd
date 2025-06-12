@@ -361,12 +361,12 @@ sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
 p <- ggplot() +
-  geom_sf(data = sf, aes(fill = Cardinality, color = Cardinality), size = plotsize * 0.8) +
+  geom_sf(data = sf, aes(fill = Cardinality, color = Cardinality), size = plotsize * 0.65) +
   theme_void() +
   scale_color_viridis_b() +
   scale_fill_viridis_b()
 q <- ggplot() +
-  geom_sf(data = sf, aes(fill = Probability, color = Probability), size = plotsize * 0.8)+
+  geom_sf(data = sf, aes(fill = Probability, color = Probability), size = plotsize * 0.65)+
   theme_void() +
   scale_color_viridis_c(option = "C", direction = -1) +
   scale_fill_viridis_c(option = "C", direction = -1)

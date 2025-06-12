@@ -247,7 +247,7 @@ p
 
 In the plot above we see all variants of the correlation metrics. The assumptions of either homogeneity (first row), inhomogeneity (second row) and local scaling (third row) change the interpretation of these example point patterns. In summary, in this example homogeneous variants show a positive association for all slices. Furthermore, homogeneous variants estimated clustering for all radii, whereas clustering in slice $0.21$ became stronger than in the other two slices past $r>350$. Inhomogeneity inferred a Poisson distribution for slice $0.21$. In addition, the inhomogeneous variant estimated repulsion for slices $-0.09$ and $0.01$. The locally scaled version showed positive associations for all slices and no crossing of curves over the radii.
 
-Deciding whether a pattern is homogeneous or inhomogeneous can be based on metrics as seen above. However, as the result of these metrics depend on the parameter choice (e.g., size of quadrants), the biological question can also be use to decide whether a pattern is assumed to be homogeneous or inhomogeneous. We provide some recommendations in the "Overview" vignettes.
+Deciding whether a pattern is homogeneous or inhomogeneous can be based on metrics as seen above. However, as the result of these metrics depend on the parameter choice (e.g., size of quadrants), the biological question can also be used to decide whether a pattern is assumed to be homogeneous or inhomogeneous. We provide some recommendations in the "Overview" vignettes.
 
 #### Local Indicators of Spatial Association
 

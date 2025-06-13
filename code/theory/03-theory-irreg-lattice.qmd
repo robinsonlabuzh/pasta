@@ -6,9 +6,9 @@ More details about lattices can be found on [here](05-HTS-univar-latSOD.qmd## Re
 
 ## Spatial weight matrix
 
-One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to define neighbours, such as contiguity-based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance-based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `spdep` provides an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html) [@bivandPackagesAnalyzingSpatial2022].
+One of the challenges when working with (irregular) lattice data is the construction of a [neighbourhood graph](https://r-spatial.org/book/14-Areal.html) [@pebesmaSpatialDataScience2023]. The main question is, what to consider as neighbours, as this will affect downstream analyses. Various methods exist to define neighbours, such as contiguity-based neighbours (neighbours in direct contact), graph-based neighbours (e.g., $k$-nearest neighbours), distance-based neighbours or higher order neighbours [@getisSpatialWeightsMatrices2009; @zuurAnalysingEcologicalData2007; @pebesmaSpatialDataScience2023]. The documentation of the package `r BiocStyle::CRANpkg('spdep')` provides an [overview of the different methods](https://r-spatial.github.io/spdep/articles/nb.html) [@bivandPackagesAnalyzingSpatial2022].
 
-We consider first contiguity-based neighbours. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance 20 or less as contiguous [@pebesmaSpatialDataScience2023; @wangCellSegmentationImage2019].
+We consider first contiguity-based neighbours. As cell segmentation is notoriously imperfect, we add a `snap` value, which means that we consider all cells with distance $20$ or less as contiguous [@pebesmaSpatialDataScience2023; @wangCellSegmentationImage2019].
 
 ```{r}
 colGraph(sfe, "poly2nb") <-
@@ -65,7 +65,7 @@ adata.obsp['spatial_connectivities'] = spatial_weights.sparse
 
 ::: 
 
-The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours (kNN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
+The graphs below show noticeable differences. In the contiguous neighbour graph on the left (neighbours in direct contact), we can see the formation of distinct patches that are not connected to the rest of the tissue. In addition, some cells do not have any direct neighbours. In contrast, the $k$-nearest neighbours ($k$NN) graph on the right reveals that these patches tend to be connected to the rest of the structure.
 
 ::: {.panel-tabset}
 

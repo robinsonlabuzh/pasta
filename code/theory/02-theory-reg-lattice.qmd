@@ -20,7 +20,7 @@ $$w_{ij} = \begin{cases} 1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}
 
 other options to specify the weight matrix $W$ are mentioned in @zuurAnalysingEcologicalData2007. 
 
-`Voyager` has a special function for the construction of the weight matrix in Visium data `findVisiumGraph`. This function defines the neigbours to be the surrounding spots.
+`r BiocStyle::Biocpkg('Voyager')` has a special function for the construction of the weight matrix in Visium data `findVisiumGraph`. This function defines the neigbours to be the surrounding spots.
 
 ::: {.panel-tabset}
 

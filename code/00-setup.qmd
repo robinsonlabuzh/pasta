@@ -4,9 +4,9 @@ R and Python have become the most popular languages for analysis of (spatial) om
 
 Our goal is to use the best of both worlds. In this spirit, we try to show analyses in both R and Python where possible. Especially in point pattern analysis however, the existing libraries in Python lack behind such that we focus on the analysis in R in these chapters.
 
-To facilitate the transition between R and Python, we will show how to convert objects between the languages such that analysis can be transitioned from one language to another.
+To facilitate the transition between R and Python, we will show how to convert objects between the languages such that analyses can be transitioned from one language to another.
 
-In R we will use `r BiocStyle::Biocpkg('SpatialExperiment')` and  `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` objects [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022, @mosesVoyagerExploratorySinglecell2023]. The latter is an extension to the first and additionally contains geometric annotations that are encoded as simple features of the `r BiocStyle::CRANpkg('sf')` library [@pebesmaSpatialDataScience2023].
+In R we will use `r BiocStyle::Biocpkg('SpatialExperiment')` and  `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` objects [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022, @mosesVoyagerExploratorySinglecell2023]. The latter is an extension of the first and additionally contains geometric annotations that are encoded as simple features of the `r BiocStyle::CRANpkg('sf')` library [@pebesmaSpatialDataScience2023].
 
 In Python we will use the `anndata` object [@virshup2024anndata].
 
@@ -33,7 +33,7 @@ sfe_tissue <- sfe_tissue[rowSums(counts(sfe_tissue)) > 0, ]
 sfe_tissue <- scater::logNormCounts(sfe_tissue)
 ```
 
-For the conversion from a `SingleCellExperiment` to a `AnnData` object we will use `r BiocStyle::Biocpkg('zellkonverter')` package. More details can be found in their vignettes. Note that the `SpatialExperiment` and `SpatialFeatureExperiment` objects inherit from the `SingleCellExperiment` class, therefore we can use the function `SCE2AnnData`. 
+For the conversion from a `SingleCellExperiment` to a `AnnData` object we will use the `r BiocStyle::Biocpkg('zellkonverter')` package. More details can be found in their vignettes. Note that the `SpatialExperiment` and `SpatialFeatureExperiment` objects inherit from the `SingleCellExperiment` class, therefore we can use the function `SCE2AnnData`. 
 
 ```{r}
 # Convert to AnnData object

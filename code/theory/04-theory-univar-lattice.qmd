@@ -110,7 +110,7 @@ The global $G$ [@getisAnalysisSpatialAssociation1992] statistic is a generalisat
 
 $$G(d) = \frac{\sum_{i = 1}^n \sum_{j=1}^n w_{ij}(d)x_ix_j}{\sum_{i = 1}^n \sum_{j=1}^n x_i x_j} \text{s.t } j \neq i.$$
 
-The interpretation works by calculating a z-statistic to compare the observed with the expected $G(d)$ statistic. If this value is positive, we refer to this as a hot spot and if it is negative as a cold spot [@getisAnalysisSpatialAssociation1992;@anselin2024introduction].
+The interpretation works by calculating a $z$-statistic to compare the observed with the expected $G(d)$ statistic. If this value is positive, we refer to this as a hot spot and if it is negative as a cold spot [@getisAnalysisSpatialAssociation1992;@anselin2024introduction].
 
 The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the data points whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather consider both [@getisAnalysisSpatialAssociation1992].
 
@@ -144,7 +144,7 @@ for feature in features:
 
 :::
 
-The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the z-statistic is `r round(res$statistic[[1]], digits = 5)` the associated p-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
+The result of global Getis-Ord $G$ for the gene `r features[[1]]` is `r round(res$estimate[[1]], digits = 5)`, the $z$-statistic is `r round(res$statistic[[1]], digits = 5)` the associated $p$-values is `r res$p.value[[1]]`. This means that gene `r features[[1]]` shows `r if(res$statistic[[1]]>0){'a hot spot'}else{'a cold spot'}`
 
 ## Local measures
 
@@ -436,7 +436,7 @@ $$G_i(d) = \frac{\sum_{j \neq i } w_{ij}(d)x_j}{\sum_{j \neq i} x_j}$$
 
 There is a variant of this statistic, $G_i^*(d)$, which is the same as $G_i(d)$ except that the contribution when $j=i$ is included in the term [@getis1996local].
 
-The interpretation of the local Getis-Ord statistic $G_i(d)$ is the same as for the global variant. The easiest is to calculate a z-statistic. If this value is positive, we call the region a hotspot, if it is negative, we call it a cold spot [@anselin2024introduction].
+The interpretation of the local Getis-Ord statistic $G_i(d)$ is the same as for the global variant. The easiest is to calculate a $z$-statistic. If this value is positive, we call the region a hotspot, if it is negative, we call it a cold spot [@anselin2024introduction].
 
 ::: {.panel-tabset}
 

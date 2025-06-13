@@ -27,7 +27,7 @@ pp_ls <- lapply(zstack_list, selectZstacks, spe)
 names(pp_ls) <- zstack_list
 ```
 
-The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns2015]. The book has an accompanying package called `spatstat` which offers great functionality to the theoretical concepts described in the book [@baddeleySpatstatPackageAnalyzing2005]. This chapter relies heavily on both publications.
+The theory of spatial point patterns is discussed in great detail in [@baddeleySpatialPointPatterns2015]. The book has an accompanying package called `r BiocStyle::CRANpkg('spatstat')` which offers great functionality to the theoretical concepts described in the book [@baddeleySpatstatPackageAnalyzing2005]. This chapter relies heavily on both publications.
 
 ## Concepts and Definitions of Point Processes
 
@@ -35,7 +35,7 @@ The theory of spatial point patterns is discussed in great detail in [@baddeleyS
 
 In point pattern analysis we assume that the patterns we observe are a realisation of a stochastic process called a point process. The inferences we make about the point pattern are based on the point process. For example, if a pattern is created by a Poisson point process it will be evenly distributed in the observation window [@baddeleySpatialPointPatterns2015, pp. 127].
 
-When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two distinct ways looking at the data. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The distinction between these two views lies in the assumption that in the multitype framework all points stem from a single point process, while in the multivariate framework, types stem from distinct point processes, allowing us to consider dependencies of individual types. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types within one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
+When considering a pattern with $m$ multiple types, as we do in the [@moffittMolecularSpatialFunctional2018] dataset, there are two distinct ways of looking at the data. One can view the pattern as a multitype point pattern, where all the points are sampled from the same point process. The other option is to consider the pattern as a multivariate point pattern, where the points come from $m$ distinct point processes. The distinction between these two views lies in the assumption that in the multitype framework all points stem from a single point process, while in the multivariate framework, types stem from distinct point processes, allowing us to consider dependencies of individual types. Whether or not the patterns stem from the same point process depends on the biological question. If we analyse two cell types within one slice of a tissue, we should consider them as being sampled from one point process. However, if we consider the distribution of a cell type in two slices of the same tissue we have grounds to consider them as distinct processes [@baddeleySpatialPointPatterns2015, pp. 564-565].
 
 ### Observation Windows
 
@@ -115,7 +115,7 @@ p_ls <- lapply(list('-0.09', '0.01', '0.21'), function(elem){
 patchwork::wrap_plots(p_ls)
 ```
 
-Alternatively, one can lend from the concept of inhomogeneit correction (discussed later). Here, we calculate the density of the unmarked point pattern which is then we scale the density by the step size of the image. This allows us to use inhomogeneous functions such as `Kinhom` with a custom intensity based on the unmarked point pattern as `lambdaX = dens_im_scaled`. Both the restriction of the observation window based on the density of points and the inhomogeneity correction via the scaled density of the unmarked point pattern are discussed in more detail in @emonsPastaPatternAnalysis2024
+Alternatively, one can lend from the concept of inhomogeneity correction (discussed later). Here, we calculate the density of the unmarked point pattern. We then scale this density by the step size of the image. This allows us to use inhomogeneous functions such as `Kinhom` with a custom intensity based on the unmarked point pattern as `lambdaX = dens_im_scaled`. Both the restriction of the observation window based on the density of points and the inhomogeneity correction via the scaled density of the unmarked point pattern are discussed in more detail in @emonsPastaPatternAnalysis2024
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
 ppDens <- SPE2ppp(spe,
@@ -170,7 +170,7 @@ A point process is called isotropic, if its statistical properties are invariant
 
 ### Stationarity
 
-"A point process is called stationary if, when we view the process through a window $W$ , its statistical properties do not depend on the location of the window in two-dimensional space." [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218]. Not all metrics assume stationarity in its full sense. Inhomogeneous metrics only assume second-order / correlation stationarity. This means that while the intensity function can vary spatially (first-order stationarity is not given), the estimates of correlation functions (e.g. the inhomogeneous K-function) are expected to be consistent across different parts of the window [@baddeleySpatialPointPatterns2015, pp. 689 ff.].
+"A point process is called stationary if, when we view the process through a window $W$ , its statistical properties do not depend on the location of the window in two-dimensional space." [@baddeleySpatialPointPatterns2015, pp. 146]. This is the case for any homogeneous point process, where the statistical properties of the pattern are unchanged given shifting of the observation window. This means it is stationary in all statistical properties; first-order properties (e.g. intensity) and second-order properties (e.g. correlation) [@baddeleySpatialPointPatterns2015, pp. 218]. Not all metrics assume stationarity in its full sense. Inhomogeneous metrics only assume second-order / correlation stationarity. This means that while the intensity function can vary spatially (first-order stationarity is not given), the estimates of correlation functions (e.g. the inhomogeneous $K$-function) are expected to be consistent across different parts of the window [@baddeleySpatialPointPatterns2015, pp. 689 ff.].
 
 ### Local scaling
 

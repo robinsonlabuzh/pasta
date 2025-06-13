@@ -161,7 +161,7 @@ pp_sub |>
 Marks can as well be continuous as in the case of gene expression. We choose some genes from the original paper and look at their distribution [@baddeleySpatialPointPatterns2015 pp. 637; @moffittMolecularSpatialFunctional2018].
 
 ```{r}
-# subset the original SpatialExperiment to our example slide -0.09
+# subset the original SpatialExperiment to our example slice -0.09
 sub <- spe[, spe$sample_id == "-0.09"]
 #  Genes from Fig. 6 of Moffitt et al. (2018)
 genes <- c("Slc18a2", "Esr1", "Pgr")
@@ -218,7 +218,7 @@ Continuous marks can be compared as well, e.g. the expression of a gene across s
 
 ```{r, fig.height=5, fig.width=10}
 pp_df <- lapply(zstack_list, function(x) {
-  # subset the original SpatialExperiment to our example slide -0.09
+  # subset the original SpatialExperiment to our example slice -0.09
   sub <- spe[, spe$sample_id == x]
   #  Genes from Fig. 6 of Moffitt et al. (2018)
   genes <- c("Slc18a2", "Esr1", "Pgr")
@@ -298,7 +298,7 @@ p_ls <- lapply(res_ls, function(res) {
 wrap_plots(p_ls, guides = 'collect')
 ```
 
-The strongest estimate of association between oligodendrocytes is found for the slices $0.01$. Slice $0.21$ does not show such a high degree of association at radii $\leq300$ as the other two slices. This means that the apparent clustering we see in the distribution of points is mainly due to an overall higher number of cells in slide $0.21$ and not a higher degree of association per se. The black line indicates the expected $K$ respectively $L$ function for a completely spatially random poisson process [@baddeleySpatialPointPatterns2015, pp. 132 ff.].
+The strongest estimate of association between oligodendrocytes is found for the slices $0.01$. Slice $0.21$ does not show such a high degree of association at radii $\leq300$ as the other two slices. This means that the apparent clustering we see in the distribution of points is mainly due to an overall higher number of cells in slice $0.21$ and not a higher degree of association per se. The black line indicates the expected $K$ respectively $L$ function for a completely spatially random poisson process [@baddeleySpatialPointPatterns2015, pp. 132 ff.].
 
 Same can be done for the arrangement of `Microglia` cells across these three sections.
 

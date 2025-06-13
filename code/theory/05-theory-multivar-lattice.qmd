@@ -245,11 +245,11 @@ ax.set_axis_off()
 
 Geary’s $C$ is a measure of spatial autocorrelation that is based on the difference between a variable and its neighbours. [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995] defines it as
 
-$$c_i = \sum_{j=1}^n w_{ij}(x_i-y_j)^2$$
+$$C_i = \sum_{j=1}^n w_{ij}(x_i-y_j)^2$$
 
 and can be generalized to $k$ features (in our case genes) by expanding 
 
-$$c_{k,i} = \sum_{v=1}^k c_{v,i}$$
+$$C_{k,i} = \sum_{v=1}^k C_{v,i}$$
 
 where $c_{v,i}$ is the local Geary’s $C$ for the $v$th variable at location $i$. The number of variables that can be used is not fixed, which makes the interpretation a bit more difficult. In general, the metric summarizes similarity in the "multivariate attribute space" (i.e. the gene expression) to its geographic neighbours. The common difficulty in these analyses is the interpretation of the mixture of similarity in the physical space and similarity in the attribute space [@anselinLocalIndicatorMultivariate2019; @anselinLocalIndicatorsSpatial1995]. 
 
@@ -361,12 +361,12 @@ sf$Probability <- nbr_test$Probability
 sf$Cardinality <- nbr_test$Cardinality
 
 p <- ggplot() +
-  geom_sf(data = sf, aes(fill = Cardinality, color = Cardinality), size = plotsize * 0.65) +
+  geom_sf(data = sf, aes(fill = Cardinality, color = Cardinality), size = plotsize * 0.6) +
   theme_void() +
   scale_color_viridis_b() +
   scale_fill_viridis_b()
 q <- ggplot() +
-  geom_sf(data = sf, aes(fill = Probability, color = Probability), size = plotsize * 0.65)+
+  geom_sf(data = sf, aes(fill = Probability, color = Probability), size = plotsize * 0.6)+
   theme_void() +
   scale_color_viridis_c(option = "C", direction = -1) +
   scale_fill_viridis_c(option = "C", direction = -1)
@@ -416,13 +416,13 @@ for feature, ax in zip(neighborhood_match_test_features, axes):
 
 ::: 
 
-Cardinality is a measure of how many neighbours of the two matrices are common. Some regions show high cardinality with low probability and therefore share similarity on both attribute and physical space. In contrast to multivariate local Geary's $C$ this metric focuses directly on the distances and not on a weighted average. A problem of this approach is called the empty space problem which states that as the number of dimensions of the feature sets increase, the empty space between observations also increases [@anselinToblerLawMultivariate2020].
+Cardinality is a measure of how many neighbours of the two matrices are common. Some regions show high cardinality with low probability and therefore share similarity in both attribute and physical space. In contrast to multivariate local Geary's $C$ this metric focuses directly on the distances and not on a weighted average. A problem of this approach is called the empty space problem which states that as the number of dimensions of the feature sets increase, the empty space between observations also increases [@anselinToblerLawMultivariate2020].
 
 ## Measures for binary and categorical data
 
 ### Join count statistic
 
-In addition to measures of spatial autocorrelation of continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `spdep` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022; @cliff1981spatial].
+In addition to measures of spatial autocorrelation for continuous data as seen above, the join count statistic method applies the same concept to binary and categorical data. In essence, the joint count statistic compares the distribution of categorical marks in a lattice with frequencies that would occur randomly. These random occurrences can be computed using a theoretical approximation or random permutations. The same concept was also extended in a multivariate setting with more than two categories. The corresponding `r BiocStyle::CRANpkg('spdep')` functions are called `joincount.test` and `joincount.multi` [@daleSpatialAnalysisGuide2014; @bivandPackagesAnalyzingSpatial2022; @cliff1981spatial].
 
 First, we need to get categorical marks for each data point. We do so by running (non-spatial) PCA on the data followed by Leiden clustering [@traag2019louvain]. 
 

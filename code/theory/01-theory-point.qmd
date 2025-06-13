@@ -1,6 +1,6 @@
 ## Dependencies
 
-The script that is sourced contains functions that can be found in the [setup](../00-setup.qmd)
+The script that is sourced contains functions that can be found in the [setup](../00-setup.qmd).
 
 ```{r, cache=FALSE}
 source("utils.R")

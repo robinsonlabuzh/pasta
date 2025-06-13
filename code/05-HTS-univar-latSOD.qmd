@@ -100,7 +100,7 @@ adata
 ::: 
 
 
-Given this data from 10x we choose two genes to analyse henceforth, named _Slc5a12_ (solute carrier family 5, member 12) and _Calr_ (calreticulin) [@10xgenomicsAdultMouseKidney2021]. For further information on the preprocessing of visium datasets, please refer to the [Voyager 10x Visium vignette](https://pachterlab.github.io/voyager/articles/vig1_visium_basic.html).
+Given this data from 10x we choose two genes to analyse henceforth, named _Slc5a12_ (solute carrier family 5, member 12) and _Calr_ (calreticulin) [@10xgenomicsAdultMouseKidney2021]. For further information on preprocessing of the Visium dataset, please refer to the [Voyager 10x Visium vignette](https://pachterlab.github.io/voyager/articles/vig1_visium_basic.html).
 
 Here we set the arguments for the examples below.
 

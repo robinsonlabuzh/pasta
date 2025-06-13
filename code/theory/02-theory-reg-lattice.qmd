@@ -8,13 +8,13 @@ $$D = \{A_1, A_2,...,A_n\}$$
 
 where these units do not overlap
 
-$$A_i \cap A_j = \emptyset \forall i \neq j$$
+$$A_i \cap A_j = \emptyset \forall i \neq j$$.
 
 The data is then a random variable of the spatial unit along the lattice
 
-$$Y_i = Y(A_i)$$
+$$Y_i = Y(A_i)$$.
 
-Most lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship can be modelled with e.g. a spatial weight matrix $W$. There are a lot of ways to define a spatial weight matrix $W$. For example, the spatial weight matrix can be defined as a binary contiguity matrix where adjacent units are indicated by one and non-adjacent units as zero.
+Most lattice data analysis technique build on the concept of neighbours. Therefore, the spatial relationship can be modeled with e.g. a spatial weight matrix $W$. There are a lot of ways to define a spatial weight matrix $W$. For example, the spatial weight matrix can be defined as a binary contiguity matrix where adjacent units are indicated by one and non-adjacent units as zero.
 
 $$w_{ij} = \begin{cases} 1 \text{ if } A_i \text{ and } A_j \text{ are adjacent}\\ 0 \text{ otw} \end{cases}$$
 

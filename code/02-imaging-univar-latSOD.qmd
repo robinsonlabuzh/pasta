@@ -8,7 +8,7 @@ In this vignette we will show:
 
 - The use case is a CosMx data set from @heHighplexImagingRNA2022.
 
-- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using this data and methods are found in the [Voyager CosMx, vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html).
+- The `R` implementations rely on the `r BiocStyle::Biocpkg('Voyager')` package. The data is represented as `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` [@mosesVoyagerExploratorySinglecell2023]. Complementary resources using this data and methods are found in the [Voyager CosMx vignette](https://pachterlab.github.io/voyager/articles/vig4_cosmx.html).
 
 - `Python` implementations rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. Data representation rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 
@@ -151,7 +151,7 @@ pointsize = 30
 #| fig-height: 20
 plotSpatialFeature(sfe, features,
                    colGeometryName = "centroids", 
-                   nrow = 2, size = 2, scattermore = FALSE) +
+                   nrow = 2, size = pointsize, scattermore = FALSE) +
   theme_void()
 ```
 

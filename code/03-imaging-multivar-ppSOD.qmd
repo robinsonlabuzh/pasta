@@ -10,7 +10,7 @@ In this vignette we will show:
 
 - For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015.
 
-- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
+- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022]. For calculation of spatial functions we will use the package `r BiocStyle::Biocpkg('spatialFDA')`.
 
 ```{r}
 #| include: false
@@ -37,7 +37,6 @@ A pattern with multiple type of points, e.g. points representing different cell 
 Apart from CSRI an important aspect for analysis if we can assume stationarity, i.e. the statistical properties of the point pattern do not change in the window.
 
 For simplicity, we will focus on three cell types in our point pattern: Ependymal, OD Mature and Microglia.
-<!-- This is appropriate if we assume that the point processes are independent. We could also assume that they come from the same process. In this case we have to check the stationarity assumption of the pattern. -->
 
 ```{r}
 marks(pp) <- factor(marks(pp))
@@ -119,7 +118,7 @@ plot(dom,las=2,main="Dominant mark")
 
 ## Nearest neighbourhood contingency
 
-To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by @dixonNearestneighborContingencyTable2002. The statistical tests are implemented in the R package `dixon` [@delacruzMetodosParaAnalizar2008]. 
+To further investigate the spatial distribution of the marks we can investigate the nearest neighbourhood of each cell type. One possibility is to work with nearest neighborhood contingency tables developed by @dixonNearestneighborContingencyTable2002. The statistical tests are implemented in the R package `r BiocStyle::CRANpkg('dixon')` [@delacruzMetodosParaAnalizar2008]. 
 
 The measure of segregation $S$ is defined in @dixonNearestneighborContingencyTable2002 as 
 

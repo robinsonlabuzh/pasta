@@ -10,7 +10,7 @@ In this vignette we will show:
 
 - For more background on point pattern analysis we refer the reader to @baddeleySpatialPointPatterns2015. 
 
-- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022].
+- For the implementations we use `R`. Data is represented as `r BiocStyle::Biocpkg('SpatialExperiment')` [@righelliSpatialExperimentInfrastructureSpatiallyresolved2022]. For calculation of spatial functions we will use the package `r BiocStyle::Biocpkg('spatialFDA')`.
 
 # categorical Marks
 
@@ -236,7 +236,7 @@ p_scaled <- wrap_plots(p_ls, guides = 'collect')
 p_scaled
 ```
 
-We see, that in slice 0.01 oligodendrocytes are far from the Poisson process line, indicating a strong association. The other two slices show a less strong association.
+We see, that in slice $0.01$ oligodendrocytes are far from the Poisson process line, indicating a strong association. The other two slices show a less strong association.
 
 ```{r, cache=FALSE, fig.height = 10, fig.width = 16, include=TRUE}
 p <- wrap_plots(list(p_homo, p_inhomo, p_scaled),
@@ -301,7 +301,7 @@ There are inhomogeneous versions of these (e.g. `localLinhom`) that are not show
 
 ##### Functional PCA for the $n$ Curves
 
-We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsayPrincipalComponentsAnalysis2005]. We use the `R` package `refund` to perform functional PCA [@goldsmithRefundRegressionFunctional2024; @xiaoFastCovarianceEstimation2016].
+We apply functional PCA to retrieve the main trends in these individual curves. The idea of functional PCA is the same as for ordinary PCA but applied to functional data (i.e., each observation is a function). For the $n$ functions above, functional PCA will recover the main trends in the data [@ramsayPrincipalComponentsAnalysis2005]. We use the `R` package `r BiocStyle::CRANpkg('refund')` to perform functional PCA [@goldsmithRefundRegressionFunctional2024; @xiaoFastCovarianceEstimation2016].
 
 ```{r, error=FALSE, message=FALSE, warning=FALSE, results='hide'}
 #normalise the data
@@ -536,7 +536,7 @@ wrap_plots(p_ls, guides = 'collect')
 
 ### Accounting for Inhomogeneity in Spacing Functions
 
-There are inhomogeneous variants of the spacing functions explained above [@baddeleySpatialPointPatterns2015 pp. 277-278]
+There are inhomogeneous variants of the spacing functions explained above [@baddeleySpatialPointPatterns2015 pp. 277-278].
 
 ```{r}
 res_ls <- lapply(list('Ginhom', 'Finhom', 'Jinhom'), function(fun) {
@@ -600,9 +600,9 @@ p <- plotMetricPerFov(
 p
 ```
 
-The values of $\phi$ correspond to the orientation of the original point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom)
+The values of $\phi$ correspond to the orientation of the original point pattern. The horizontal axis goes from $180$ to $0$ (left to right) and the vertical from $90$ to $270$ (top to bottom).
 
-an easier representation of the above metric can be plotted as a rose diagram
+An easier representation of the metric above can be plotted as a rose diagram.
 
 ```{r, message=FALSE, warning=FALSE, fig.width=6, fig.height=6}
 lapply(seq_along(pp), function(x){rose(nnorient(pp[[x]]), main = names(pp)[x])})

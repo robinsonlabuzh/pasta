@@ -131,7 +131,7 @@ In this vignette we are highlighting lattice data analysis approaches for multiv
 #| fig-height: 10
 plotSpatialFeature(sfe, c("KRT17"),
                    colGeometryName = "centroids", 
-                   ncol = 2, size = 2, scattermore = FALSE) + 
+                   ncol = 2, size = 1, scattermore = FALSE) + 
   theme_void()
 ```
 
@@ -141,7 +141,7 @@ plotSpatialFeature(sfe, c("KRT17"),
 #| fig-height: 10
 plotSpatialFeature(sfe, c("TAGLN"),
                    colGeometryName = "centroids", 
-                   ncol = 2, size = 2, scattermore = FALSE) + 
+                   ncol = 2, size = 1, scattermore = FALSE) + 
   theme_void()
 ```
 

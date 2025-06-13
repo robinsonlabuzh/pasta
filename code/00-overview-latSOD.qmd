@@ -14,7 +14,7 @@ In this vignette we will show:
 
 In contrast to point pattern based methods, we can view the location of cells or spots as a fixed lattice and measure the corresponding marker expression at each location. HTS-based spatial transcriptomic technologies often produce data on a regular lattice (i.e., approximately evenly spaced spots or beads of uniform size and shape), whereas imaging-based technologies yield irregular lattice structures (i.e., with variable cell sizes and shapes, and non-uniform spacing).
 
-For the representation of the cells, we will rely in `R` on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10X Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('Voyager')` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object. The package `r BiocStyle::CRANpkg('spdep')` is designed for the analysis of spatial data with lattice structure.
+For the representation of the cells, we will rely in `R` on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` package (see below for more details). For preprocessing of the dataset and code examples, we refer the reader to this [10x Visium vignette](https://pachterlab.github.io/voyager/articles/vig2_visium.html) of the `r BiocStyle::Biocpkg('Voyager')` package [@mosesVoyagerExploratorySinglecell2023]. The `r BiocStyle::Biocpkg('Voyager')` package also provides wrapper functions around the package `r BiocStyle::CRANpkg('spdep')` [@pebesmaSpatialDataScience2023] that work directly on the `r BiocStyle::Biocpkg('SpatialFeatureExperiment')` object. The package `r BiocStyle::CRANpkg('spdep')` is designed for the analysis of spatial data with lattice structure.
 
 For the implementation in `Python` we will rely on the the packages [esda](https://pysal.org/esda/), [pysal](https://pysal.org/) and [squidpy](https://squidpy.readthedocs.io/en/stable/) [@reyPySALPythonLibrary2010; @pallaSquidpyScalableFramework2022]. For the data representation we rely on the [anndata](https://anndata.readthedocs.io/en/stable/) structure [@virshup2024anndata].
 
@@ -267,7 +267,7 @@ p2 <- plotAnnotGraph(sfe_tissue,
 ) + theme_void()
 ```
 
-As we can see below, the graphs look quite distinct. On the left side, in the contiguous neigbhbour graph (neighbours in direct contact), we notice the formation of patches, while in the knn graph isolated patches are interconnected.
+As we can see below, the graphs look quite distinct. On the left side, in the contiguous neigbhbour graph (neighbours in direct contact), we notice the formation of patches, while in the $k$NN graph isolated patches are interconnected.
 
 ```{r}
 p1 + p2
@@ -689,7 +689,7 @@ Therefore, in `Python` we add the lower triangular matrix to the upper triangle 
 -   Regular lattices have uniform, evenly spaced spots, while irregular lattices have variable sizes and shapes with non-uniform spacing.
 -   The spatial weight matrix models spatial relationships between lattice units. Different methods exist to define the spatial weight matrix.
 -   Global spatial autocorrelation measures, like Moran's $I$, summarize spatial correlation over the entire field, while local measures identify local clusters of similarity or dissimilarity.
-- There exist measures of spatial autocorrelation for continous and categorical data.
+- There exist measures of spatial autocorrelation for continuous and categorical data.
 
 # Appendix
 

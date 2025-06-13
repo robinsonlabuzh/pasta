@@ -114,7 +114,7 @@ The interpretation works by calculating a $z$-statistic to compare the observed 
 
 The global $G(d)$ statistic is very similar to global Moran's $I$. The global $G(d)$ statistic is based on the sum of the products of the data points whereas global Moran's $I$ is based on the sum of the covariances. Since these two approaches capture different aspects of a structure, their values will differ as well. A good approach would be to not use one statistic in isolation but rather consider both [@getisAnalysisSpatialAssociation1992].
 
-This framework was established for binary weights but can be extended to nonbinary weights as well [@ordLocalSpatialAutocorrelation1995]. We will use the `spdep` package directly to calculate the global $G$ statistic.
+This framework was established for binary weights but can be extended to nonbinary weights as well [@ordLocalSpatialAutocorrelation1995]. We will use the `r BiocStyle::CRANpkg('spdep')` package directly to calculate the global $G$ statistic.
 
 ::: {.panel-tabset}
 
